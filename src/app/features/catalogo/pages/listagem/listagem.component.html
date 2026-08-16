@@ -1,0 +1,48 @@
+@if (categoriaAtual(); as categoria) {
+  <section class="listagem-cabecalho tema-{{ categoria.slug }}">
+    <div class="container-pagina listagem-cabecalho__conteudo">
+      <span class="listagem-cabecalho__icone">{{ categoria.icone }}</span>
+      <div>
+        <h1>{{ categoria.nome }}</h1>
+        <p>{{ categoria.descricaoCurta }}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="container-pagina">
+    <div class="listagem-filtros">
+      <input
+        type="text"
+        placeholder="Buscar produto nesta categoria..."
+        [value]="termoBusca()"
+        (input)="atualizarBusca($any($event.target).value)"
+      />
+
+      <nav class="listagem-filtros__categorias">
+        @for (item of categorias(); track item.id) {
+          <a
+            [routerLink]="['/categoria', item.slug]"
+            class="listagem-filtros__chip"
+            [class.ativo]="item.slug === categoria.slug"
+          >
+            {{ item.icone }} {{ item.nome }}
+          </a>
+        }
+      </nav>
+    </div>
+
+    @if (produtosFiltrados().length > 0) {
+      <div class="listagem-grade">
+        @for (produto of produtosFiltrados(); track produto.id) {
+          <app-cartao-produto [produto]="produto" />
+        }
+      </div>
+    } @else {
+      <p class="listagem-vazio">Nenhum produto encontrado para "{{ termoBusca() }}".</p>
+    }
+  </section>
+} @else {
+  <div class="container-pagina">
+    <p>Categoria não encontrada.</p>
+  </div>
+}

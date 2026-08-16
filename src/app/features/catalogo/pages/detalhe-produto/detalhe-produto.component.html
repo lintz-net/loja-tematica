@@ -1,0 +1,115 @@
+@if (produto(); as produto) {
+  <section class="container-pagina detalhe-produto">
+    <app-galeria-produto [imagens]="produto.imagens" [alt]="produto.nome" />
+
+    <div class="detalhe-produto__info">
+      <h1>{{ produto.nome }}</h1>
+      <p class="detalhe-produto__descricao">{{ produto.descricao }}</p>
+      <p class="detalhe-produto__preco">R$ {{ precoExibido().toFixed(2) }}</p>
+
+      @if (coresDisponiveis().length > 0) {
+        <div class="detalhe-produto__opcao">
+          <h4>Cor{{ corSelecionada() ? ': ' + corSelecionada() : '' }}</h4>
+          <div class="detalhe-produto__swatches">
+            @for (opcao of coresComDisponibilidade(); track opcao.cor) {
+              <button
+                type="button"
+                class="detalhe-produto__swatch"
+                [class.selecionado]="corSelecionada() === opcao.cor"
+                [class.indisponivel]="!opcao.disponivel"
+                [style.background]="opcao.estiloSwatch"
+                [disabled]="!opcao.disponivel"
+                [attr.aria-label]="opcao.cor"
+                [title]="opcao.cor + (!opcao.disponivel ? ' (indisponível)' : '')"
+                (click)="selecionarCor(opcao.cor, opcao.disponivel)"
+              ></button>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="detalhe-produto__opcao">
+        <div class="detalhe-produto__opcao-cabecalho">
+          <h4>Tamanho</h4>
+          @if (exibirGuiaMedidas()) {
+            <button type="button" class="detalhe-produto__link-medidas" (click)="abrirGuiaMedidas()">
+              Guia de medidas
+            </button>
+          }
+        </div>
+        <div class="detalhe-produto__botoes">
+          @for (opcao of tamanhosComDisponibilidade(); track opcao.tamanho) {
+            <button
+              type="button"
+              [class.selecionado]="tamanhoSelecionado() === opcao.tamanho"
+              [class.indisponivel]="!opcao.disponivel"
+              [disabled]="!opcao.disponivel"
+              [title]="!opcao.disponivel ? 'Sem estoque neste tamanho' : ''"
+              (click)="selecionarTamanho(opcao.tamanho, opcao.disponivel)"
+            >
+              {{ opcao.tamanho }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="detalhe-produto__opcao">
+        <h4>Quantidade</h4>
+        <div class="detalhe-produto__quantidade">
+          <button type="button" (click)="alterarQuantidade(-1)">−</button>
+          <span>{{ quantidade() }}</span>
+          <button type="button" (click)="alterarQuantidade(1)">+</button>
+        </div>
+      </div>
+
+      @if (!varianteSelecionada()) {
+        <p class="detalhe-produto__aviso">Selecione tamanho e cor para adicionar ao carrinho.</p>
+      } @else if (varianteSelecionada()!.quantidadeEstoque === 0) {
+        <p class="detalhe-produto__aviso">Variante sem estoque.</p>
+      }
+
+      <div class="detalhe-produto__acoes">
+        <button
+          type="button"
+          class="botao-primario"
+          [disabled]="!varianteSelecionada()"
+          (click)="adicionarAoCarrinho()"
+        >
+          Adicionar ao carrinho
+        </button>
+
+        @if (itemAdicionado()) {
+          <button type="button" class="botao-secundario" (click)="irParaCarrinho()">
+            Ver carrinho
+          </button>
+        }
+      </div>
+    </div>
+  </section>
+
+  <app-modal [aberto]="guiaMedidasAberto()" titulo="Guia de medidas" (fechar)="fecharGuiaMedidas()">
+    <table class="guia-medidas">
+      <thead>
+        <tr>
+          <th>Tamanho</th>
+          <th>Largura (cm)</th>
+          <th>Comprimento (cm)</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (linha of guiaMedidas(); track linha.tamanho) {
+          <tr>
+            <td>{{ linha.tamanho }}</td>
+            <td>{{ linha.larguraCm }}</td>
+            <td>{{ linha.comprimentoCm }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+    <p class="guia-medidas__nota">Medidas aproximadas, tiradas peça a peça. Margem de tolerância de 2 cm.</p>
+  </app-modal>
+} @else {
+  <div class="container-pagina">
+    <p>Produto não encontrado.</p>
+  </div>
+}

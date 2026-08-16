@@ -1,0 +1,20 @@
+import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
+import { environment } from '../environments/environment';
+import { routes } from './app.routes';
+import { CatalogoRepositorio } from './core/servicos/catalogo.repositorio';
+import { CatalogoMockService } from './core/servicos/catalogo-mock.service';
+import { CatalogoApiService } from './core/servicos/catalogo-api.service';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideZoneChangeDetection({ eventCoalescing: true }),
+    provideRouter(routes),
+    provideHttpClient(),
+    {
+      provide: CatalogoRepositorio,
+      useClass: environment.useMock ? CatalogoMockService : CatalogoApiService,
+    },
+  ],
+};

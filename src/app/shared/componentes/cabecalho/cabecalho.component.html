@@ -1,0 +1,24 @@
+<header class="cabecalho">
+  <div class="cabecalho__conteudo">
+    <a routerLink="/" class="cabecalho__logo">🛍️ Vitrine Tribal</a>
+
+    <nav class="cabecalho__navegacao">
+      <a routerLink="/categoria/musica" routerLinkActive="ativo">Música</a>
+      <a routerLink="/categoria/futebol" routerLinkActive="ativo">Futebol</a>
+      <a routerLink="/categoria/geek" routerLinkActive="ativo">Geek</a>
+      <a routerLink="/categoria/automotivo" routerLinkActive="ativo">Automotivo</a>
+      <a routerLink="/categoria/cinema" routerLinkActive="ativo">Cinema</a>
+      <a routerLink="/categoria/humor" routerLinkActive="ativo">Humor</a>
+    </nav>
+
+    <div class="cabecalho__acoes">
+      <a routerLink="/conta" class="cabecalho__icone" title="Minha conta">👤</a>
+      <a routerLink="/carrinho" class="cabecalho__icone" title="Carrinho">
+        🛒
+        @if (quantidadeTotalItens() > 0) {
+          <span class="cabecalho__badge">{{ quantidadeTotalItens() }}</span>
+        }
+      </a>
+    </div>
+  </div>
+</header>

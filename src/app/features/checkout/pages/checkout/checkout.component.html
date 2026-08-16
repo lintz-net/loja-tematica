@@ -1,0 +1,71 @@
+@if (pedidoFinalizado()) {
+  <section class="container-pagina checkout-sucesso">
+    <span class="checkout-sucesso__icone">✅</span>
+    <h1>Pedido simulado com sucesso!</h1>
+    <p>Nenhum pagamento real foi processado — esta é apenas a validação visual do fluxo.</p>
+    <button type="button" class="botao-primario" (click)="voltarParaHome()">Voltar à loja</button>
+  </section>
+} @else {
+  <section class="container-pagina checkout">
+    <h1>Finalizar pedido</h1>
+
+    <div class="checkout__grade">
+      <div class="checkout__formulario">
+        <h3>Endereço de entrega</h3>
+        <input type="text" placeholder="Nome completo" />
+        <input type="text" placeholder="Endereço" />
+        <div class="checkout__linha">
+          <input type="text" placeholder="Cidade" />
+          <input type="text" placeholder="CEP" />
+        </div>
+
+        <h3>Forma de pagamento</h3>
+        <div class="checkout__pagamento">
+          <button
+            type="button"
+            [class.selecionado]="formaPagamento() === 'pix'"
+            (click)="selecionarFormaPagamento('pix')"
+          >
+            Pix
+          </button>
+          <button
+            type="button"
+            [class.selecionado]="formaPagamento() === 'cartao'"
+            (click)="selecionarFormaPagamento('cartao')"
+          >
+            Cartão
+          </button>
+          <button
+            type="button"
+            [class.selecionado]="formaPagamento() === 'boleto'"
+            (click)="selecionarFormaPagamento('boleto')"
+          >
+            Boleto
+          </button>
+        </div>
+
+        @if (formaPagamento() === 'cartao') {
+          <input type="text" placeholder="Número do cartão" />
+        }
+      </div>
+
+      <div class="checkout__resumo">
+        <h3>Resumo do pedido</h3>
+        @for (item of itens(); track item.variante.id) {
+          <div class="checkout__resumo-item">
+            <span>{{ item.produto.nome }} ({{ item.quantidade }}x)</span>
+            <span>R$ {{ ((item.variante.precoOverride ?? item.produto.precoBase) * item.quantidade).toFixed(2) }}</span>
+          </div>
+        }
+        <div class="checkout__resumo-total">
+          <span>Total</span>
+          <span>R$ {{ valorTotal().toFixed(2) }}</span>
+        </div>
+
+        <button type="button" class="botao-primario checkout__botao-finalizar" (click)="finalizarPedidoSimulado()">
+          Finalizar pedido (simulado)
+        </button>
+      </div>
+    </div>
+  </section>
+}

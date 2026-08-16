@@ -1,0 +1,13 @@
+<a class="cartao-produto" [routerLink]="['/produto', produto.slug]">
+  <div class="cartao-produto__imagem">
+    <img class="cartao-produto__foto cartao-produto__foto--principal" [src]="imagemPrincipal()" [alt]="produto.nome" loading="lazy" />
+    @if (temSegundaImagem()) {
+      <img class="cartao-produto__foto cartao-produto__foto--hover" [src]="imagemHover()" [alt]="produto.nome" loading="lazy" />
+    }
+  </div>
+  <div class="cartao-produto__info">
+    <h3>{{ produto.nome }}</h3>
+    <p class="cartao-produto__descricao">{{ produto.descricao }}</p>
+    <span class="cartao-produto__preco">R$ {{ produto.precoBase.toFixed(2) }}</span>
+  </div>
+</a>

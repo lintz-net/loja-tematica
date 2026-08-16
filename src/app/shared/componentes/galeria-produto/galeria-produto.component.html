@@ -1,0 +1,51 @@
+<div class="galeria-produto">
+  @if (imagens.length > 1) {
+    <div class="galeria-produto__miniaturas">
+      @for (img of imagens; track img; let i = $index) {
+        <button
+          type="button"
+          class="galeria-produto__miniatura"
+          [class.selecionada]="i === indiceAtual()"
+          (click)="irPara(i)"
+        >
+          <img [src]="img" [alt]="alt + ' - miniatura ' + (i + 1)" loading="lazy" />
+        </button>
+      }
+    </div>
+  }
+
+  <div
+    class="galeria-produto__principal"
+    (touchstart)="aoTocarInicio($event)"
+    (touchend)="aoTocarFim($event)"
+  >
+    @for (img of imagens; track img; let i = $index) {
+      <img
+        class="galeria-produto__foto"
+        [class.ativa]="i === indiceAtual()"
+        [src]="img"
+        [alt]="alt"
+        loading="lazy"
+      />
+    }
+
+    @if (imagens.length > 1) {
+      <button
+        type="button"
+        class="galeria-produto__seta galeria-produto__seta--anterior"
+        (click)="anterior()"
+        aria-label="Imagem anterior"
+      >
+        ‹
+      </button>
+      <button
+        type="button"
+        class="galeria-produto__seta galeria-produto__seta--proxima"
+        (click)="proxima()"
+        aria-label="Próxima imagem"
+      >
+        ›
+      </button>
+    }
+  </div>
+</div>

@@ -1,0 +1,53 @@
+<section class="container-pagina carrinho">
+  <h1>Seu carrinho</h1>
+
+  @if (itens().length === 0) {
+    <div class="carrinho__vazio">
+      <p>Seu carrinho está vazio.</p>
+      <a routerLink="/" class="botao-primario">Continuar comprando</a>
+    </div>
+  } @else {
+    <div class="carrinho__lista">
+      @for (item of itens(); track item.variante.id) {
+        <div class="carrinho__item">
+          <div
+            class="carrinho__item-imagem"
+            [style.backgroundImage]="'url(' + item.produto.imagens[0] + ')'"
+          ></div>
+
+          <div class="carrinho__item-info">
+            <h3>{{ item.produto.nome }}</h3>
+            <p class="carrinho__item-variante">
+              Tamanho: {{ item.variante.tamanho }} · Cor: {{ item.variante.cor }}
+            </p>
+            <p class="carrinho__item-preco">R$ {{ calcularPrecoUnitario(item).toFixed(2) }}</p>
+          </div>
+
+          <div class="carrinho__item-quantidade">
+            <button type="button" (click)="atualizarQuantidade(item.variante.id, item.quantidade - 1)">−</button>
+            <span>{{ item.quantidade }}</span>
+            <button type="button" (click)="atualizarQuantidade(item.variante.id, item.quantidade + 1)">+</button>
+          </div>
+
+          <div class="carrinho__item-subtotal">
+            R$ {{ (calcularPrecoUnitario(item) * item.quantidade).toFixed(2) }}
+          </div>
+
+          <button type="button" class="carrinho__item-remover" (click)="removerItem(item.variante.id)">
+            Remover
+          </button>
+        </div>
+      }
+    </div>
+
+    <div class="carrinho__resumo">
+      <span>Total</span>
+      <span class="carrinho__resumo-valor">R$ {{ valorTotal().toFixed(2) }}</span>
+    </div>
+
+    <div class="carrinho__acoes">
+      <a routerLink="/" class="botao-secundario">Continuar comprando</a>
+      <a routerLink="/checkout" class="botao-primario">Ir para o checkout</a>
+    </div>
+  }
+</section>

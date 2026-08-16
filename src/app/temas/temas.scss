@@ -1,0 +1,53 @@
+// Tokens visuais por categoria — cada "vibe" tem cor, gradiente e fonte de destaque.
+
+:root {
+  --cor-fundo: #0f0f12;
+  --cor-fundo-alt: #17171c;
+  --cor-texto: #f4f4f6;
+  --cor-texto-suave: #a9a9b3;
+  --cor-borda: #2a2a31;
+  --raio-padrao: 12px;
+  --fonte-base: 'Segoe UI', system-ui, sans-serif;
+}
+
+.tema-musica {
+  --cor-primaria: #ff2d6f;
+  --cor-primaria-escura: #b8144c;
+  --gradiente-tema: linear-gradient(135deg, #ff2d6f, #7b2ff7);
+  --fonte-destaque: 'Impact', 'Segoe UI', sans-serif;
+}
+
+.tema-futebol {
+  --cor-primaria: #1fa34d;
+  --cor-primaria-escura: #14722f;
+  --gradiente-tema: linear-gradient(135deg, #1fa34d, #0c6b46);
+  --fonte-destaque: 'Arial Black', 'Segoe UI', sans-serif;
+}
+
+.tema-geek {
+  --cor-primaria: #7b2ff7;
+  --cor-primaria-escura: #571fb0;
+  --gradiente-tema: linear-gradient(135deg, #7b2ff7, #00d4ff);
+  --fonte-destaque: 'Consolas', 'Courier New', monospace;
+}
+
+.tema-automotivo {
+  --cor-primaria: #ff8a00;
+  --cor-primaria-escura: #cc6e00;
+  --gradiente-tema: linear-gradient(135deg, #ff8a00, #ff2d2d);
+  --fonte-destaque: 'Arial Narrow', 'Segoe UI', sans-serif;
+}
+
+.tema-cinema {
+  --cor-primaria: #c9a227;
+  --cor-primaria-escura: #96791a;
+  --gradiente-tema: linear-gradient(135deg, #c9a227, #3d3d3d);
+  --fonte-destaque: 'Georgia', 'Times New Roman', serif;
+}
+
+.tema-humor {
+  --cor-primaria: #ffd400;
+  --cor-primaria-escura: #cca800;
+  --gradiente-tema: linear-gradient(135deg, #ffd400, #ff8a00);
+  --fonte-destaque: 'Comic Sans MS', 'Segoe UI', sans-serif;
+}

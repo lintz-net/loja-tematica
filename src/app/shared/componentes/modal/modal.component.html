@@ -1,0 +1,13 @@
+@if (aberto) {
+  <div class="modal-backdrop" (click)="fecharPorBackdrop()">
+    <div class="modal-conteudo" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header class="modal-cabecalho">
+        <h3>{{ titulo }}</h3>
+        <button type="button" class="modal-fechar" (click)="fechar.emit()" aria-label="Fechar">✕</button>
+      </header>
+      <div class="modal-corpo">
+        <ng-content />
+      </div>
+    </div>
+  </div>
+}

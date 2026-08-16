@@ -1,0 +1,19 @@
+.rodape {
+  border-top: 1px solid var(--cor-borda);
+  background: var(--cor-fundo-alt);
+  margin-top: 40px;
+}
+
+.rodape__conteudo {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px;
+  color: var(--cor-texto-suave);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.rodape__aviso {
+  margin-top: 4px;
+  opacity: 0.7;
+}
