@@ -4,10 +4,13 @@
     @if (temSegundaImagem()) {
       <img class="cartao-produto__foto cartao-produto__foto--hover" [src]="imagemHover()" [alt]="produto.nome" loading="lazy" />
     }
+    <span class="cartao-produto__etiqueta">R$ {{ produto.precoBase.toFixed(2) }}</span>
+    @if (esgotado()) {
+      <span class="cartao-produto__esgotado">Esgotado</span>
+    }
   </div>
   <div class="cartao-produto__info">
     <h3>{{ produto.nome }}</h3>
     <p class="cartao-produto__descricao">{{ produto.descricao }}</p>
-    <span class="cartao-produto__preco">R$ {{ produto.precoBase.toFixed(2) }}</span>
   </div>
 </a>

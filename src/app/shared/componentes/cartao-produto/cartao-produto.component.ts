@@ -16,4 +16,8 @@ export class CartaoProdutoComponent {
   readonly imagemHover = computed(() => this.produto.imagens[1] ?? this.produto.imagens[0]);
 
   readonly temSegundaImagem = computed(() => this.produto.imagens.length > 1);
+
+  readonly esgotado = computed(() =>
+    this.produto.variantes.every((variante) => variante.quantidadeEstoque === 0)
+  );
 }

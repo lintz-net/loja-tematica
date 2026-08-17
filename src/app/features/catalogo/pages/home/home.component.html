@@ -1,22 +1,37 @@
 <section class="home-hero">
   <div class="container-pagina home-hero__conteudo">
-    <h1>Encontre a sua tribo</h1>
-    <p>Camisetas, acessórios, ímãs e lembranças para quem vive de paixões: música, futebol, geek, automotivo, cinema e humor.</p>
+    <span class="rotulo">Vitrine Tribal</span>
+    <h1>Qual lembrança <em>você usaria</em> hoje?</h1>
+    <p>
+      {{ totalProdutos() }} estampas de games, cinema, música, futebol, carros e humor —
+      a coleção que você já amou, em forma de camiseta.
+    </p>
+    <div class="home-hero__acoes">
+      <a href="#categorias" class="botao-primario">Ver a coleção</a>
+      <a routerLink="/categoria/geek" class="botao-secundario">Direto pra Geek →</a>
+    </div>
   </div>
 </section>
 
-<section class="container-pagina">
-  <h2 class="home-titulo-secao">Escolha sua vibe</h2>
+<section id="categorias" class="container-pagina">
+  <span class="rotulo">Escolha sua tribo</span>
+  <h2 class="home-titulo-secao">Seis vitrines, uma coleção</h2>
 
   <div class="home-grade-categorias">
     @for (categoria of categorias(); track categoria.id) {
       <a
-        class="home-card-categoria tema-{{ categoria.slug }}"
+        class="home-card-categoria home-card-categoria--{{ categoria.slug }} tema-{{ categoria.slug }}"
         [routerLink]="['/categoria', categoria.slug]"
       >
-        <span class="home-card-categoria__icone">{{ categoria.icone }}</span>
-        <h3>{{ categoria.nome }}</h3>
-        <p>{{ categoria.descricaoCurta }}</p>
+        <span class="home-card-categoria__cena"></span>
+        <span class="home-card-categoria__marca">{{ categoria.icone }}</span>
+        <div class="home-card-categoria__texto">
+          <span class="home-card-categoria__contagem">
+            {{ quantidadePorCategoria().get(categoria.slug) ?? 0 }} peças
+          </span>
+          <h3>{{ categoria.nome }}</h3>
+          <p>{{ categoria.descricaoCurta }}</p>
+        </div>
       </a>
     }
   </div>

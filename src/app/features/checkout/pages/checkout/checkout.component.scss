@@ -16,12 +16,22 @@
   background: var(--cor-fundo-alt);
   border: 1px solid var(--cor-borda);
   border-radius: var(--raio-padrao);
-  padding: 20px;
+  padding: 22px;
 }
 
 .checkout__formulario h3,
 .checkout__resumo h3 {
-  margin-top: 0;
+  margin: 0 0 16px;
+  font-family: var(--fonte-mono);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--cor-texto-suave);
+}
+
+.checkout__formulario h3:not(:first-child) {
+  margin-top: 26px;
 }
 
 .checkout__formulario input {
@@ -30,8 +40,12 @@
   border: 1px solid var(--cor-borda);
   color: var(--cor-texto);
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: var(--raio-padrao);
   margin-bottom: 12px;
+}
+
+.checkout__formulario input::placeholder {
+  color: var(--cor-texto-fraco);
 }
 
 .checkout__linha {
@@ -51,18 +65,21 @@
   border: 1px solid var(--cor-borda);
   color: var(--cor-texto);
   padding: 10px;
-  border-radius: 8px;
+  border-radius: var(--raio-padrao);
+  font-weight: 600;
+  transition: border-color 0.15s ease;
 }
 
 .checkout__pagamento button.selecionado {
-  border-color: var(--cor-primaria, #ff2d6f);
-  background: var(--cor-primaria, #ff2d6f);
-  color: #fff;
+  border-color: var(--cor-primaria, #ffb545);
+  background: var(--cor-primaria, #ffb545);
+  color: var(--cor-primaria-contraste, #241705);
 }
 
 .checkout__resumo-item {
   display: flex;
   justify-content: space-between;
+  gap: 12px;
   font-size: 0.85rem;
   color: var(--cor-texto-suave);
   margin-bottom: 8px;
@@ -73,6 +90,8 @@
   justify-content: space-between;
   font-weight: 700;
   font-size: 1.1rem;
+  font-family: var(--fonte-mono);
+  color: var(--cor-texto);
   border-top: 1px solid var(--cor-borda);
   padding-top: 12px;
   margin-top: 10px;
@@ -86,13 +105,25 @@
 
 .checkout-sucesso {
   text-align: center;
-  padding: 80px 0;
+  padding: 90px 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .checkout-sucesso__icone {
-  font-size: 3rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--cor-acento-secundario) 18%, transparent);
+  color: var(--cor-acento-secundario, #0c7d71);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkout-sucesso p {
+  color: var(--cor-texto-suave);
+  max-width: 40ch;
 }

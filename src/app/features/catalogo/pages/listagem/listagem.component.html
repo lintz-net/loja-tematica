@@ -1,8 +1,10 @@
 @if (categoriaAtual(); as categoria) {
   <section class="listagem-cabecalho tema-{{ categoria.slug }}">
+    <div class="listagem-cabecalho__textura"></div>
     <div class="container-pagina listagem-cabecalho__conteudo">
       <span class="listagem-cabecalho__icone">{{ categoria.icone }}</span>
       <div>
+        <span class="rotulo listagem-cabecalho__rotulo">{{ produtosFiltrados().length }} peças</span>
         <h1>{{ categoria.nome }}</h1>
         <p>{{ categoria.descricaoCurta }}</p>
       </div>

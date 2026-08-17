@@ -1,8 +1,13 @@
 @if (produto(); as produto) {
   <section class="container-pagina detalhe-produto">
-    <app-galeria-produto [imagens]="produto.imagens" [alt]="produto.nome" />
+    <app-galeria-produto
+      [imagens]="produto.imagens"
+      [alt]="produto.nome"
+      [indiceForcado]="indiceImagemDaCor()"
+    />
 
     <div class="detalhe-produto__info">
+      <span class="rotulo">{{ produto.categorias[0] }}</span>
       <h1>{{ produto.nome }}</h1>
       <p class="detalhe-produto__descricao">{{ produto.descricao }}</p>
       <p class="detalhe-produto__preco">R$ {{ precoExibido().toFixed(2) }}</p>

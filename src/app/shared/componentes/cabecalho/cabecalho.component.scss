@@ -2,62 +2,104 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  background: var(--cor-fundo-alt);
+  background: color-mix(in srgb, var(--cor-fundo) 88%, transparent);
+  backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--cor-borda);
 }
 
 .cabecalho__conteudo {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 14px 20px;
+  padding: 16px 20px;
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 28px;
 }
 
 .cabecalho__logo {
+  font-family: var(--fonte-titulo);
   font-weight: 800;
-  font-size: 1.2rem;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
   white-space: nowrap;
+}
+
+.cabecalho__logo-marca {
+  color: var(--cor-texto);
+}
+
+// Marcador estilo caneta marca-texto — mantém contraste (texto sempre em --cor-texto)
+// e usa o âmbar como destaque, não como cor de letra.
+.cabecalho__logo-tribal {
+  color: var(--cor-texto);
+  background-image: linear-gradient(transparent 62%, var(--cor-primaria) 62%);
 }
 
 .cabecalho__navegacao {
   display: flex;
-  gap: 18px;
+  gap: 22px;
   flex: 1;
   overflow-x: auto;
-  font-size: 0.92rem;
+  font-family: var(--fonte-mono);
+  font-size: 0.72rem;
   font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--cor-texto-suave);
+}
+
+.cabecalho__navegacao a {
+  position: relative;
+  padding: 4px 0;
+  transition: color 0.15s ease;
 }
 
 .cabecalho__navegacao a.ativo {
   color: var(--cor-texto);
 }
 
+.cabecalho__navegacao a.ativo::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 2px;
+  background: var(--cor-primaria);
+}
+
 .cabecalho__navegacao a:hover {
-  color: var(--cor-texto);
+  color: var(--cor-acento-secundario);
 }
 
 .cabecalho__acoes {
   display: flex;
-  gap: 14px;
+  gap: 16px;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .cabecalho__icone {
   position: relative;
-  font-size: 1.3rem;
+  display: flex;
+  color: var(--cor-texto-suave);
+  transition: color 0.15s ease;
+}
+
+.cabecalho__icone:hover {
+  color: var(--cor-texto);
 }
 
 .cabecalho__badge {
   position: absolute;
   top: -8px;
   right: -10px;
-  background: #ff2d6f;
-  color: #fff;
+  background: var(--cor-primaria);
+  color: #241705;
+  font-family: var(--fonte-mono);
   font-size: 0.65rem;
   font-weight: 700;
   padding: 2px 6px;
   border-radius: 999px;
+  line-height: 1.3;
 }

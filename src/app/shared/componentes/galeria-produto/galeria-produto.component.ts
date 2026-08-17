@@ -19,6 +19,15 @@ export class GaleriaProdutoComponent {
     return this._imagens;
   }
 
+  /** Permite ao componente pai (ex.: seleção de cor) apontar a imagem principal para um
+   * índice específico sem alterar o conjunto de fotos exibido nas miniaturas. */
+  @Input()
+  set indiceForcado(valor: number | null | undefined) {
+    if (valor != null && valor >= 0 && valor < this._imagens.length) {
+      this.indiceAtual.set(valor);
+    }
+  }
+
   readonly indiceAtual = signal(0);
 
   private inicioToqueX = 0;

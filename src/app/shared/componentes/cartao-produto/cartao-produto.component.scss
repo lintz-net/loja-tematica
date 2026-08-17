@@ -5,12 +5,14 @@
   border: 1px solid var(--cor-borda);
   border-radius: var(--raio-padrao);
   overflow: hidden;
-  transition: transform 0.15s ease, border-color 0.15s ease;
+  box-shadow: 0 1px 3px rgba(23, 20, 26, 0.06);
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .cartao-produto:hover {
   transform: translateY(-4px);
-  border-color: var(--cor-primaria, #ff2d6f);
+  border-color: var(--cor-borda-forte);
+  box-shadow: 0 10px 22px rgba(23, 20, 26, 0.12);
 }
 
 .cartao-produto__imagem {
@@ -50,6 +52,48 @@
   }
 }
 
+// Etiqueta de preço estilo ingresso/tag de fita — fica sobre a foto, não no rodapé do card.
+.cartao-produto__etiqueta {
+  position: absolute;
+  z-index: 1;
+  top: 12px;
+  left: 0;
+  background: var(--cor-primaria, #ffb545);
+  color: var(--cor-primaria-contraste, #241705);
+  font-family: var(--fonte-mono);
+  font-weight: 700;
+  font-size: 0.76rem;
+  padding: 5px 11px 5px 15px;
+  letter-spacing: 0.01em;
+}
+
+.cartao-produto__etiqueta::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cor-fundo-alt);
+}
+
+.cartao-produto__esgotado {
+  position: absolute;
+  z-index: 1;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(16, 14, 19, 0.82);
+  color: var(--cor-texto-suave);
+  font-family: var(--fonte-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border: 1px solid var(--cor-borda-forte);
+}
+
 .cartao-produto__info {
   padding: 14px 16px 18px;
   display: flex;
@@ -60,7 +104,9 @@
 .cartao-produto__info h3 {
   margin: 0;
   font-size: 1rem;
-  font-family: var(--fonte-destaque, inherit);
+  font-family: var(--fonte-titulo, inherit);
+  font-weight: 700;
+  letter-spacing: normal;
 }
 
 .cartao-produto__descricao {
@@ -71,9 +117,4 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-.cartao-produto__preco {
-  font-weight: 700;
-  color: var(--cor-primaria, #ff2d6f);
 }

@@ -1,6 +1,10 @@
 @if (pedidoFinalizado()) {
   <section class="container-pagina checkout-sucesso">
-    <span class="checkout-sucesso__icone">✅</span>
+    <span class="checkout-sucesso__icone">
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M5 12.5l4.5 4.5L19 7.5" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </span>
     <h1>Pedido simulado com sucesso!</h1>
     <p>Nenhum pagamento real foi processado — esta é apenas a validação visual do fluxo.</p>
     <button type="button" class="botao-primario" (click)="voltarParaHome()">Voltar à loja</button>

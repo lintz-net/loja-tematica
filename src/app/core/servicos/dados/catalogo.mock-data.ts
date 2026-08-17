@@ -96,6 +96,17 @@ function imagensPlaceholder(seed: string): string[] {
   ];
 }
 
+/** Monta o mapa cor → fotos a partir dos números de foto já conferidos manualmente para o slug. */
+function imagensPorCorLocais(slug: string, porCor: Record<string, number[]>): Record<string, string[]> {
+  const resultado: Record<string, string[]> = {};
+  for (const [cor, indices] of Object.entries(porCor)) {
+    resultado[cor] = indices.map(
+      (indice) => `/imagens/produtos/${slug}/foto_${String(indice).padStart(2, '0')}.webp`
+    );
+  }
+  return resultado;
+}
+
 const TAMANHOS_CAMISETA = ['P', 'M', 'G', 'GG'];
 const TAMANHOS_UNICO = ['Único'];
 
@@ -132,7 +143,157 @@ function gerarProdutosOzkloEmMassa(): Produto[] {
 }
 
 export const PRODUTOS: Produto[] = [
-  
+  {
+    id: 'prod-01',
+    nome: 'Camiseta Trovão de Aço',
+    slug: 'camiseta-trovao-de-aco',
+    descricao:
+      'Camiseta estampada com a arte da turnê fictícia da banda de heavy metal Trovão de Aço.',
+    precoBase: 79.9,
+    categorias: ['musica'],
+    imagens: imagensPlaceholder('trovao-de-aco'),
+    variantes: gerarVariantes('prod-01', 'TDA', TAMANHOS_CAMISETA, ['Preto', 'Cinza']),
+  },
+  {
+    id: 'prod-02',
+    nome: 'Ímã Vinil Acústico Sereia',
+    slug: 'ima-vinil-acustico-sereia',
+    descricao: 'Ímã de geladeira em formato de vinil, homenagem à banda indie Acústico Sereia.',
+    precoBase: 19.9,
+    categorias: ['musica'],
+    imagens: imagensPlaceholder('acustico-sereia'),
+    variantes: gerarVariantes('prod-02', 'IVAS', TAMANHOS_UNICO, ['Colorido']),
+  },
+  {
+    id: 'prod-03',
+    nome: 'Boné Ritmo Selvagem',
+    slug: 'bone-ritmo-selvagem',
+    descricao: 'Boné bordado com o logo da banda de funk rock Ritmo Selvagem.',
+    precoBase: 59.9,
+    categorias: ['musica'],
+    imagens: imagensPlaceholder('ritmo-selvagem'),
+    variantes: gerarVariantes('prod-03', 'BRS', TAMANHOS_UNICO, ['Preto', 'Vermelho']),
+  },
+  {
+    id: 'prod-04',
+    nome: 'Camisa Falcões da Serra',
+    slug: 'camisa-falcoes-da-serra',
+    descricao: 'Camisa oficial fictícia do time Falcões da Serra, torcida apaixonada garantida.',
+    precoBase: 149.9,
+    categorias: ['futebol'],
+    imagens: imagensPlaceholder('falcoes-da-serra'),
+    variantes: gerarVariantes('prod-04', 'CFS', TAMANHOS_CAMISETA, ['Verde', 'Branco']),
+  },
+  {
+    id: 'prod-05',
+    nome: 'Cachecol Leões do Vale',
+    slug: 'cachecol-leoes-do-vale',
+    descricao: 'Cachecol de torcida do clube fictício Leões do Vale, ideal para dias de jogo.',
+    precoBase: 49.9,
+    categorias: ['futebol'],
+    imagens: imagensPlaceholder('leoes-do-vale'),
+    variantes: gerarVariantes('prod-05', 'CLV', TAMANHOS_UNICO, ['Amarelo e Azul']),
+  },
+  {
+    id: 'prod-06',
+    nome: 'Ímã Escudo Estrela do Norte',
+    slug: 'ima-escudo-estrela-do-norte',
+    descricao: 'Ímã de geladeira com o escudo do clube fictício Estrela do Norte.',
+    precoBase: 17.9,
+    categorias: ['futebol'],
+    imagens: imagensPlaceholder('estrela-do-norte'),
+    variantes: gerarVariantes('prod-06', 'IEN', TAMANHOS_UNICO, ['Colorido']),
+  },
+  {
+    id: 'prod-07',
+    nome: 'Camiseta Guardião do Pixel',
+    slug: 'camiseta-guardiao-do-pixel',
+    descricao: 'Camiseta com arte do personagem genérico Guardião do Pixel, herói 8-bits.',
+    precoBase: 74.9,
+    categorias: ['geek'],
+    imagens: imagensPlaceholder('guardiao-do-pixel'),
+    variantes: gerarVariantes('prod-07', 'CGP', TAMANHOS_CAMISETA, ['Preto', 'Roxo']),
+  },
+  {
+    id: 'prod-08',
+    nome: 'Caneca Portal Dimensional',
+    slug: 'caneca-portal-dimensional',
+    descricao: 'Caneca temática inspirada em universos de ficção científica genéricos.',
+    precoBase: 39.9,
+    categorias: ['geek'],
+    imagens: imagensPlaceholder('portal-dimensional'),
+    variantes: gerarVariantes('prod-08', 'CPD', TAMANHOS_UNICO, ['Branco', 'Preto']),
+  },
+  {
+    id: 'prod-09',
+    nome: 'Ímã Pixel Herói',
+    slug: 'ima-pixel-heroi',
+    descricao: 'Ímã de geladeira com arte pixelada de um herói de games retrô genérico.',
+    precoBase: 16.9,
+    categorias: ['geek'],
+    imagens: imagensPlaceholder('pixel-heroi'),
+    variantes: gerarVariantes('prod-09', 'IPH', TAMANHOS_UNICO, ['Colorido']),
+  },
+  {
+    id: 'prod-10',
+    nome: 'Camiseta Motor Rugido V8',
+    slug: 'camiseta-motor-rugido-v8',
+    descricao: 'Camiseta com arte de um motor V8 estilizado para amantes de carros clássicos.',
+    precoBase: 69.9,
+    categorias: ['automotivo'],
+    imagens: imagensPlaceholder('motor-rugido-v8'),
+    variantes: gerarVariantes('prod-10', 'CMR', TAMANHOS_CAMISETA, ['Preto', 'Cinza']),
+  },
+  {
+    id: 'prod-11',
+    nome: 'Chaveiro Pistão de Corrida',
+    slug: 'chaveiro-pistao-de-corrida',
+    descricao: 'Chaveiro em formato de pistão, lembrança perfeita para quem ama velocidade.',
+    precoBase: 24.9,
+    categorias: ['automotivo'],
+    imagens: imagensPlaceholder('pistao-de-corrida'),
+    variantes: gerarVariantes('prod-11', 'CPC', TAMANHOS_UNICO, ['Prata', 'Preto']),
+  },
+  {
+    id: 'prod-12',
+    nome: 'Camiseta Noite de Neon',
+    slug: 'camiseta-noite-de-neon',
+    descricao: 'Camiseta inspirada em clássicos de cinema noir e estética neon dos anos 80.',
+    precoBase: 79.9,
+    categorias: ['cinema'],
+    imagens: imagensPlaceholder('noite-de-neon'),
+    variantes: gerarVariantes('prod-12', 'CNN', TAMANHOS_CAMISETA, ['Preto', 'Roxo']),
+  },
+  {
+    id: 'prod-13',
+    nome: 'Pôster Fita Cassete do Destino',
+    slug: 'poster-fita-cassete-do-destino',
+    descricao: 'Pôster com arte retrô inspirada em filmes de aventura dos anos 80/90.',
+    precoBase: 44.9,
+    categorias: ['cinema'],
+    imagens: imagensPlaceholder('fita-cassete-do-destino'),
+    variantes: gerarVariantes('prod-13', 'PFC', TAMANHOS_UNICO, ['Colorido']),
+  },
+  {
+    id: 'prod-14',
+    nome: 'Camiseta Risada Garantida',
+    slug: 'camiseta-risada-garantida',
+    descricao: 'Camiseta com frase de humor "Risada Garantida", ideal pra descontrair.',
+    precoBase: 59.9,
+    categorias: ['humor'],
+    imagens: imagensPlaceholder('risada-garantida'),
+    variantes: gerarVariantes('prod-14', 'CRG', TAMANHOS_CAMISETA, ['Amarelo', 'Branco']),
+  },
+  {
+    id: 'prod-15',
+    nome: 'Ímã Frase Torta',
+    slug: 'ima-frase-torta',
+    descricao: 'Ímã de geladeira com frases engraçadas e trocadilhos para o dia a dia.',
+    precoBase: 14.9,
+    categorias: ['humor'],
+    imagens: imagensPlaceholder('frase-torta'),
+    variantes: gerarVariantes('prod-15', 'IFT', TAMANHOS_UNICO, ['Colorido']),
+  },
   // Produtos reais do catálogo Ozklo (linha masculino/geek), levantados em 2026-08-09
   // para o mock de revenda. Preço e variantes conferem com o site; as fotos foram
   // baixadas do fornecedor e ficam em public/imagens/produtos/<slug>.
@@ -209,6 +370,21 @@ export const PRODUTOS: Produto[] = [
     precoBase: 45.0,
     categorias: ['geek'],
     imagens: imagensLocais('camiseta-donkey-kong', 13),
+    // Mapeado manualmente conferindo as fotos: cada cor tem seu próprio registro no fornecedor.
+    // As demais 121 peças do lote Ozklo não têm esse mapeamento ainda (ver nota em imagensPorCor no model).
+    imagensPorCor: imagensPorCorLocais('camiseta-donkey-kong', {
+      Vermelho: [1, 2],
+      'Azul Marinho': [11, 3],
+      Mostarda: [5],
+      Preto: [6],
+      Vinho: [7],
+      'Azul Jeans': [8],
+      'Verde Claro': [9],
+      'Verde Musgo': [10],
+      Bege: [12],
+      // foto_13 (cinza) e foto_04 (tabela de medidas) não correspondem a nenhuma cor vendável
+      // e ficam de fora do mapa — ainda aparecem nas miniaturas via `imagens`.
+    }),
     variantes: gerarVariantes('prod-20', 'CDK', TAMANHOS_CAMISETA, [
       'Mostarda',
       'Preto',

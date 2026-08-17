@@ -1,13 +1,41 @@
-// Tokens visuais por categoria — cada "vibe" tem cor, gradiente e fonte de destaque.
+// Tokens visuais — base de marca (Vitrine Tribal) + variação por categoria.
+//
+// A base é clara (papel branco-quente + tinta escura para texto) — referência direta
+// a Nike/Adidas/Puma: fundo neutro pra a foto do produto ser a protagonista. Os acentos
+// de marca (marquise/âmbar e fliperama/ciano) viram blocos de cor e etiquetas, não fundo
+// de página. As classes .tema-* seguem existindo, sem alteração — continuam sendo painéis
+// coloridos (banner de categoria, cards da home) que se destacam justamente por contraste
+// com a página branca ao redor.
+//
+// Regra de contraste: --cor-primaria (âmbar) É USADA SÓ COMO FUNDO de chip/botão, sempre
+// pareada com --cor-primaria-contraste. Nunca usar --cor-primaria como cor de texto direto
+// sobre a página — em branco, o âmbar não tem contraste suficiente pra ser legível.
 
 :root {
-  --cor-fundo: #0f0f12;
-  --cor-fundo-alt: #17171c;
-  --cor-texto: #f4f4f6;
-  --cor-texto-suave: #a9a9b3;
-  --cor-borda: #2a2a31;
-  --raio-padrao: 12px;
-  --fonte-base: 'Segoe UI', system-ui, sans-serif;
+  --cor-fundo: #faf8f4;
+  --cor-fundo-alt: #f0ece4;
+  --cor-texto: #17141a;
+  --cor-texto-suave: #5c5566;
+  --cor-texto-fraco: #8b8496;
+  --cor-borda: rgba(23, 20, 26, 0.12);
+  --cor-borda-forte: rgba(23, 20, 26, 0.26);
+  --raio-padrao: 4px;
+
+  // Marquise (âmbar de letreiro) — acento primário de marca. Só como fundo de chip/botão.
+  --cor-primaria: #ffb545;
+  --cor-primaria-escura: #d98f24;
+  --cor-primaria-contraste: #241705;
+  // Cor de aviso/alerta — mesma família do âmbar, mas escura o bastante pra ler como texto.
+  --cor-aviso: #a15c00;
+  // Fliperama (ciano de tela) — acento secundário: links, rótulos, estados ativos.
+  // Escurecido em relação à Etapa 2 para funcionar como texto sobre fundo claro.
+  --cor-acento-secundario: #0c7d71;
+  --gradiente-tema: linear-gradient(135deg, #ffb545, #0c7d71);
+
+  --fonte-base: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --fonte-titulo: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --fonte-mono: ui-monospace, 'Consolas', 'Courier New', monospace;
+  --fonte-destaque: var(--fonte-titulo);
 }
 
 .tema-musica {

@@ -56,6 +56,18 @@ export class DetalheProdutoComponent {
   readonly itemAdicionado = signal(false);
   readonly guiaMedidasAberto = signal(false);
 
+  /** Índice, dentro de `produto.imagens`, da primeira foto da cor selecionada — usado para
+   * centralizar a imagem principal da galeria sem remover as demais fotos das miniaturas. */
+  readonly indiceImagemDaCor = computed<number | null>(() => {
+    const produto = this.produto();
+    const cor = this.corSelecionada();
+    if (!produto || !cor) return null;
+    const fotosDaCor = produto.imagensPorCor?.[cor];
+    if (!fotosDaCor || fotosDaCor.length === 0) return null;
+    const indice = produto.imagens.indexOf(fotosDaCor[0]);
+    return indice >= 0 ? indice : null;
+  });
+
   /** Tamanho é considerado indisponível quando não há nenhuma variante com estoque
    * para ele — respeitando a cor já escolhida, quando houver. */
   readonly tamanhosComDisponibilidade = computed(() => {
