@@ -28,7 +28,7 @@
 
 @media (max-width: 700px) {
   .carrinho__item {
-    grid-template-columns: 64px 1fr;
+    grid-template-columns: 92px 1fr;
     grid-template-areas:
       'imagem info'
       'imagem quantidade'
@@ -40,8 +40,8 @@
 
   .carrinho__item-imagem {
     grid-area: imagem;
-    width: 64px;
-    height: 64px;
+    width: 92px;
+    height: 92px;
   }
 
   .carrinho__item-info {
