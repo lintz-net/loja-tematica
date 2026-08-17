@@ -28,12 +28,37 @@
 
 @media (max-width: 700px) {
   .carrinho__item {
-    grid-template-columns: 60px 1fr;
+    grid-template-columns: 64px 1fr;
     grid-template-areas:
       'imagem info'
       'imagem quantidade'
       'imagem subtotal'
       'imagem remover';
+    align-items: start;
+    row-gap: 6px;
+  }
+
+  .carrinho__item-imagem {
+    grid-area: imagem;
+    width: 64px;
+    height: 64px;
+  }
+
+  .carrinho__item-info {
+    grid-area: info;
+  }
+
+  .carrinho__item-quantidade {
+    grid-area: quantidade;
+  }
+
+  .carrinho__item-subtotal {
+    grid-area: subtotal;
+  }
+
+  .carrinho__item-remover {
+    grid-area: remover;
+    justify-self: start;
   }
 }
 
