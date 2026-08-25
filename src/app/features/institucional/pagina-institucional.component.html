@@ -5,6 +5,32 @@
     <p>{{ paragrafo }}</p>
   }
 
+  @for (secao of dados.secoes; track secao.titulo) {
+    @if (secao.titulo) {
+      <h2 class="pagina-institucional__subtitulo">{{ secao.titulo }}</h2>
+    }
+    @for (paragrafo of secao.paragrafos; track paragrafo) {
+      <p>{{ paragrafo }}</p>
+    }
+    @if (secao.lista) {
+      <ul class="pagina-institucional__lista">
+        @for (item of secao.lista; track item) {
+          <li>{{ item }}</li>
+        }
+      </ul>
+    }
+    @if (secao.passos) {
+      <ol class="pagina-institucional__passos">
+        @for (passo of secao.passos; track passo.titulo) {
+          <li>
+            <strong>{{ passo.titulo }}</strong>
+            <p>{{ passo.texto }}</p>
+          </li>
+        }
+      </ol>
+    }
+  }
+
   @if (dados.passos) {
     <ol class="pagina-institucional__passos">
       @for (passo of dados.passos; track passo.titulo) {

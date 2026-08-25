@@ -80,10 +80,53 @@ const PAGINA_POLITICA_PRIVACIDADE: DadosPaginaInstitucional = {
 const PAGINA_TROCAS_DEVOLUCOES: DadosPaginaInstitucional = {
   titulo: 'Trocas e devoluções',
   paragrafos: [
-    'Você tem até 7 dias corridos após o recebimento do produto para solicitar troca ou devolução, conforme o Código de Defesa do Consumidor.',
-    'O produto deve estar sem uso, com a etiqueta original e na embalagem em que foi enviado. Entre em contato informando o número do pedido para iniciar o processo.',
+    'Na nossa loja, prezamos pela sua satisfação e oferecemos opções práticas para que você possa trocar ou devolver produtos adquiridos de forma simples e rápida.',
   ],
-  nota: 'Página de exemplo com conteúdo fictício, criada para validar a estrutura da loja.',
+  secoes: [
+    {
+      titulo: 'Onde trocar ou devolver?',
+      paragrafos: [
+        'Pelo e-mail: envie uma mensagem para contato@nostalgika.com.br solicitando a troca ou devolução. Entraremos em contato o mais breve possível para orientá-lo sobre os próximos passos e o envio do produto.',
+      ],
+    },
+    {
+      titulo: 'Prazo para trocas e devoluções',
+      paragrafos: [
+        'É importante lembrar que as devoluções só são aceitas dentro do prazo máximo de 15 dias corridos após a data da compra. Esse prazo está em conformidade com o Código de Defesa do Consumidor, garantindo seus direitos de forma justa.',
+      ],
+    },
+    {
+      titulo: 'Condições para troca e devolução',
+      paragrafos: ['Para que possamos processar sua solicitação, o produto deve estar:'],
+      lista: [
+        'Em perfeito estado de conservação;',
+        'Com todas as etiquetas e embalagens originais intactas;',
+        'Sem sinais de uso ou danos causados pelo consumidor.',
+      ],
+    },
+    {
+      titulo: 'Passo a passo para realizar a troca ou devolução',
+      passos: [
+        { titulo: '1. Verifique as condições', texto: 'Verifique se o produto atende às condições acima.' },
+        { titulo: '2. Apresente o comprovante', texto: 'Apresente o ticket de compra ou comprovante.' },
+        {
+          titulo: '3. Aguarde as instruções',
+          texto: 'Aguarde as instruções para o envio do produto, caso opte pelo atendimento via e-mail.',
+        },
+        {
+          titulo: '4. Receba a confirmação',
+          texto: 'Após receber e analisar o produto devolvido, confirmaremos a troca ou o reembolso.',
+        },
+      ],
+    },
+    {
+      titulo: 'Dúvidas?',
+      paragrafos: [
+        'Estamos à disposição para esclarecer qualquer dúvida sobre nosso processo de trocas e devoluções. Garantimos transparência e agilidade para que sua experiência seja sempre positiva.',
+        'Lembre-se: conhecer seus direitos e seguir os procedimentos corretos facilita todo o processo.',
+      ],
+    },
+  ],
 };
 
 export const routes: Routes = [

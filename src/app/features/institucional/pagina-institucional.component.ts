@@ -6,9 +6,17 @@ export interface Passo {
   texto: string;
 }
 
+export interface SecaoInstitucional {
+  titulo?: string;
+  paragrafos?: string[];
+  lista?: string[];
+  passos?: Passo[];
+}
+
 export interface DadosPaginaInstitucional {
   titulo: string;
   paragrafos?: string[];
+  secoes?: SecaoInstitucional[];
   passos?: Passo[];
   nota?: string;
 }
