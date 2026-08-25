@@ -7,7 +7,7 @@ import { Component } from '@angular/core';
   styleUrl: './conta.component.scss',
 })
 export class ContaComponent {
-  readonly usuarioMock = {
+  readonly usuario = {
     nome: 'Convidado Fã de Tudo',
     email: 'convidado@vitrinetribal.com.br',
   };
