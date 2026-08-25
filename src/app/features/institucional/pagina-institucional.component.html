@@ -1,0 +1,22 @@
+<section class="container-pagina pagina-institucional">
+  <h1>{{ dados.titulo }}</h1>
+
+  @for (paragrafo of dados.paragrafos; track paragrafo) {
+    <p>{{ paragrafo }}</p>
+  }
+
+  @if (dados.passos) {
+    <ol class="pagina-institucional__passos">
+      @for (passo of dados.passos; track passo.titulo) {
+        <li>
+          <strong>{{ passo.titulo }}</strong>
+          <p>{{ passo.texto }}</p>
+        </li>
+      }
+    </ol>
+  }
+
+  @if (dados.nota) {
+    <p class="pagina-institucional__nota">{{ dados.nota }}</p>
+  }
+</section>

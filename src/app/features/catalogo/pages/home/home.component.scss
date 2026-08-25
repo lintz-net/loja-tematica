@@ -51,6 +51,11 @@
   font-size: clamp(1.5rem, 3vw, 1.9rem);
 }
 
+.home-carrossel {
+  padding-top: 32px;
+  padding-bottom: 0;
+}
+
 .home-grade-categorias {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));

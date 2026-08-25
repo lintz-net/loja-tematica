@@ -5,52 +5,285 @@
         <path d="M5 12.5l4.5 4.5L19 7.5" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
     </span>
+    <span class="rotulo">Pedido {{ numeroPedido() }}</span>
     <h1>Pedido simulado com sucesso!</h1>
-    <p>Nenhum pagamento real foi processado — esta é apenas a validação visual do fluxo.</p>
+    <p>
+      Nenhum pagamento real foi processado — esta é apenas a validação visual do fluxo.
+      Um e-mail de confirmação seria enviado para <strong>{{ email() }}</strong> com os detalhes
+      do pedido, e o comprovante seguiria assim que o pagamento fosse confirmado.
+    </p>
     <button type="button" class="botao-primario" (click)="voltarParaHome()">Voltar à loja</button>
   </section>
 } @else {
   <section class="container-pagina checkout">
     <h1>Finalizar pedido</h1>
 
+    <nav class="checkout-passos" aria-label="Etapas da compra">
+      @for (etapa of etapas; track etapa.id; let indice = $index) {
+        <button
+          type="button"
+          class="checkout-passos__item"
+          [class.ativo]="etapa.id === etapaAtual()"
+          [class.concluido]="indice < indiceEtapaAtual()"
+          [disabled]="indice > indiceEtapaAtual()"
+          (click)="irParaEtapa(etapa.id)"
+        >
+          <span class="checkout-passos__numero">{{ indice + 1 }}</span>
+          <span class="checkout-passos__rotulo">{{ etapa.rotulo }}</span>
+        </button>
+      }
+    </nav>
+
     <div class="checkout__grade">
       <div class="checkout__formulario">
-        <h3>Endereço de entrega</h3>
-        <input type="text" placeholder="Nome completo" />
-        <input type="text" placeholder="Endereço" />
-        <div class="checkout__linha">
-          <input type="text" placeholder="Cidade" />
-          <input type="text" placeholder="CEP" />
-        </div>
+        @switch (etapaAtual()) {
+          @case ('contato') {
+            <h3>Dados de contato</h3>
+            <p class="checkout__ajuda">Pra entrarmos em contato sobre o seu pedido.</p>
+            <input
+              type="text"
+              placeholder="Nome completo"
+              [value]="nome()"
+              (input)="atualizarNome($any($event.target).value)"
+            />
+            <input
+              type="email"
+              placeholder="E-mail"
+              [value]="email()"
+              (input)="atualizarEmail($any($event.target).value)"
+            />
+            <input
+              type="tel"
+              placeholder="Telefone / WhatsApp"
+              [value]="telefone()"
+              (input)="atualizarTelefone($any($event.target).value)"
+            />
+          }
+          @case ('endereco') {
+            <h3>Endereço de entrega</h3>
+            <p class="checkout__ajuda">Confira se os dados estão certos pra evitar atrasos.</p>
+            <input
+              type="text"
+              placeholder="Endereço (rua, avenida...)"
+              [value]="endereco()"
+              (input)="atualizarEndereco($any($event.target).value)"
+            />
+            <div class="checkout__linha">
+              <input
+                type="text"
+                placeholder="Número"
+                [value]="numero()"
+                (input)="atualizarNumero($any($event.target).value)"
+              />
+              <input
+                type="text"
+                placeholder="Bairro"
+                [value]="bairro()"
+                (input)="atualizarBairro($any($event.target).value)"
+              />
+            </div>
+            <div class="checkout__linha">
+              <input
+                type="text"
+                placeholder="Cidade"
+                [value]="cidade()"
+                (input)="atualizarCidade($any($event.target).value)"
+              />
+              <input
+                type="text"
+                placeholder="UF"
+                maxlength="2"
+                class="checkout__campo-uf"
+                [value]="uf()"
+                (input)="atualizarUf($any($event.target).value)"
+              />
+              <input
+                type="text"
+                placeholder="CEP"
+                [value]="cep()"
+                (input)="atualizarCep($any($event.target).value)"
+              />
+            </div>
+          }
+          @case ('frete') {
+            <h3>Forma de frete</h3>
+            <p class="checkout__ajuda">Escolha entre rapidez, custo ou conveniência.</p>
+            <div class="checkout__opcoes-frete">
+              @for (opcao of opcoesFrete; track opcao.id) {
+                <button
+                  type="button"
+                  class="checkout__opcao-frete"
+                  [class.selecionado]="freteSelecionadoId() === opcao.id"
+                  (click)="selecionarFrete(opcao.id)"
+                >
+                  <span class="checkout__opcao-frete-nome">{{ opcao.nome }}</span>
+                  <span class="checkout__opcao-frete-prazo">{{ opcao.prazo }}</span>
+                  <span class="checkout__opcao-frete-preco">R$ {{ opcao.preco.toFixed(2) }}</span>
+                </button>
+              }
+            </div>
+          }
+          @case ('pagamento') {
+            <h3>Forma de pagamento</h3>
+            <p class="checkout__ajuda">Escolha como prefere pagar.</p>
+            <div class="checkout__pagamento">
+              <button
+                type="button"
+                [class.selecionado]="formaPagamento() === 'pix'"
+                (click)="selecionarFormaPagamento('pix')"
+              >
+                Pix
+              </button>
+              <button
+                type="button"
+                [class.selecionado]="formaPagamento() === 'cartao'"
+                (click)="selecionarFormaPagamento('cartao')"
+              >
+                Cartão
+              </button>
+            </div>
 
-        <h3>Forma de pagamento</h3>
-        <div class="checkout__pagamento">
-          <button
-            type="button"
-            [class.selecionado]="formaPagamento() === 'pix'"
-            (click)="selecionarFormaPagamento('pix')"
-          >
-            Pix
-          </button>
-          <button
-            type="button"
-            [class.selecionado]="formaPagamento() === 'cartao'"
-            (click)="selecionarFormaPagamento('cartao')"
-          >
-            Cartão
-          </button>
-          <button
-            type="button"
-            [class.selecionado]="formaPagamento() === 'boleto'"
-            (click)="selecionarFormaPagamento('boleto')"
-          >
-            Boleto
-          </button>
-        </div>
+            @if (formaPagamento() === 'cartao') {
+              <div class="checkout__cartao">
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  placeholder="Número do cartão"
+                  [value]="numeroCartao()"
+                  (input)="atualizarNumeroCartao($any($event.target).value)"
+                />
+                <input
+                  type="text"
+                  placeholder="Nome impresso no cartão"
+                  [value]="nomeCartao()"
+                  (input)="atualizarNomeCartao($any($event.target).value)"
+                />
+                <div class="checkout__linha">
+                  <input
+                    type="text"
+                    placeholder="Vencimento (MM/AA)"
+                    maxlength="5"
+                    [value]="validadeCartao()"
+                    (input)="atualizarValidadeCartao($any($event.target).value)"
+                  />
+                  <input
+                    type="text"
+                    inputmode="numeric"
+                    placeholder="CVV"
+                    maxlength="4"
+                    class="checkout__campo-cvv"
+                    [value]="cvvCartao()"
+                    (input)="atualizarCvvCartao($any($event.target).value)"
+                  />
+                </div>
 
-        @if (formaPagamento() === 'cartao') {
-          <input type="text" placeholder="Número do cartão" />
+                <select class="checkout__parcelas" (change)="atualizarParcelas($any($event.target).value)">
+                  @for (opcao of opcoesParcelas(); track opcao.numero) {
+                    <option [value]="opcao.numero" [selected]="opcao.numero === parcelas()">
+                      {{ opcao.numero }}x de R$ {{ opcao.valorParcela.toFixed(2) }} sem juros
+                    </option>
+                  }
+                </select>
+
+                <input
+                  type="text"
+                  placeholder="CPF ou CNPJ do portador do cartão"
+                  [value]="cpfCnpjCartao()"
+                  (input)="atualizarCpfCnpjCartao($any($event.target).value)"
+                />
+
+                <label class="checkout__checkbox">
+                  <input
+                    type="checkbox"
+                    [checked]="salvarCartao()"
+                    (change)="alternarSalvarCartao($any($event.target).checked)"
+                  />
+                  Manter salvo para próximas compras
+                </label>
+
+                <div class="checkout__bandeiras">
+                  <span class="rotulo">Cartões aceitos</span>
+                  <div class="checkout__bandeiras-lista">
+                    @for (bandeira of bandeirasAceitas; track bandeira) {
+                      <span class="checkout__bandeira" [attr.data-bandeira]="bandeira">{{ bandeira }}</span>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          }
+          @case ('revisao') {
+            <h3>Revise seu pedido</h3>
+            <p class="checkout__ajuda">Confira tudo antes de confirmar.</p>
+
+            <div class="checkout__revisao-bloco">
+              <div class="checkout__revisao-cabecalho">
+                <span class="rotulo">Contato</span>
+                <button type="button" class="checkout__revisao-editar" (click)="irParaEtapa('contato')">
+                  Editar
+                </button>
+              </div>
+              <p>{{ nome() }} · {{ email() }} · {{ telefone() }}</p>
+            </div>
+
+            <div class="checkout__revisao-bloco">
+              <div class="checkout__revisao-cabecalho">
+                <span class="rotulo">Endereço</span>
+                <button type="button" class="checkout__revisao-editar" (click)="irParaEtapa('endereco')">
+                  Editar
+                </button>
+              </div>
+              <p>
+                {{ endereco() }}, {{ numero() }} @if (bairro()) { · {{ bairro() }} }
+                <br />
+                {{ cidade() }}/{{ uf() }} · CEP {{ cep() }}
+              </p>
+            </div>
+
+            <div class="checkout__revisao-bloco">
+              <div class="checkout__revisao-cabecalho">
+                <span class="rotulo">Frete</span>
+                <button type="button" class="checkout__revisao-editar" (click)="irParaEtapa('frete')">
+                  Editar
+                </button>
+              </div>
+              <p>
+                {{ freteSelecionado()?.nome }} — {{ freteSelecionado()?.prazo }} — R$
+                {{ freteSelecionado()?.preco?.toFixed(2) }}
+              </p>
+            </div>
+
+            <div class="checkout__revisao-bloco">
+              <div class="checkout__revisao-cabecalho">
+                <span class="rotulo">Pagamento</span>
+                <button type="button" class="checkout__revisao-editar" (click)="irParaEtapa('pagamento')">
+                  Editar
+                </button>
+              </div>
+              <p class="checkout__revisao-pagamento">
+                {{ formaPagamentoRotulo() }}
+                @if (formaPagamento() === 'cartao') {
+                  · {{ numeroCartaoMascarado() }} · {{ parcelas() }}x
+                }
+              </p>
+            </div>
+          }
         }
+
+        <div class="checkout__navegacao">
+          @if (indiceEtapaAtual() > 0) {
+            <button type="button" class="botao-secundario" (click)="voltar()">Voltar</button>
+          }
+          @if (etapaAtual() !== 'revisao') {
+            <button type="button" class="botao-primario" [disabled]="!podeAvancar()" (click)="avancar()">
+              Continuar
+            </button>
+          } @else {
+            <button type="button" class="botao-primario" (click)="finalizarPedido()">
+              Confirmar e finalizar pedido
+            </button>
+          }
+        </div>
       </div>
 
       <div class="checkout__resumo">
@@ -61,14 +294,18 @@
             <span>R$ {{ ((item.variante.precoOverride ?? item.produto.precoBase) * item.quantidade).toFixed(2) }}</span>
           </div>
         }
+        <div class="checkout__resumo-linha">
+          <span>Subtotal</span>
+          <span>R$ {{ subtotal().toFixed(2) }}</span>
+        </div>
+        <div class="checkout__resumo-linha">
+          <span>Frete</span>
+          <span>{{ freteSelecionado() ? 'R$ ' + valorFrete().toFixed(2) : 'a definir' }}</span>
+        </div>
         <div class="checkout__resumo-total">
           <span>Total</span>
           <span>R$ {{ valorTotal().toFixed(2) }}</span>
         </div>
-
-        <button type="button" class="botao-primario checkout__botao-finalizar" (click)="finalizarPedidoSimulado()">
-          Finalizar pedido (simulado)
-        </button>
       </div>
     </div>
   </section>

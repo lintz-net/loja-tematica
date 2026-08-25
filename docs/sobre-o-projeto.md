@@ -1,4 +1,4 @@
-# Sobre o projeto — Loja Temática (Vitrine Tribal)
+# Sobre o projeto — Loja Temática (Nostálgika)
 
 ## Propósito
 

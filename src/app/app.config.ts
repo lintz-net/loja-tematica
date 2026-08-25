@@ -6,6 +6,9 @@ import { routes } from './app.routes';
 import { CatalogoRepositorio } from './core/servicos/catalogo.repositorio';
 import { CatalogoMockService } from './core/servicos/catalogo-mock.service';
 import { CatalogoApiService } from './core/servicos/catalogo-api.service';
+import { BannerRepositorio } from './core/servicos/banner.repositorio';
+import { BannerMockService } from './core/servicos/banner-mock.service';
+import { BannerApiService } from './core/servicos/banner-api.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -15,6 +18,10 @@ export const appConfig: ApplicationConfig = {
     {
       provide: CatalogoRepositorio,
       useClass: environment.useMock ? CatalogoMockService : CatalogoApiService,
+    },
+    {
+      provide: BannerRepositorio,
+      useClass: environment.useMock ? BannerMockService : BannerApiService,
     },
   ],
 };

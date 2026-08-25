@@ -1,6 +1,6 @@
 <section class="home-hero">
   <div class="container-pagina home-hero__conteudo">
-    <span class="rotulo">Vitrine Tribal</span>
+    <span class="rotulo">Nostálgika</span>
     <h1>Qual lembrança <em>você usaria</em> hoje?</h1>
     <p>
       {{ totalProdutos() }} estampas de games, cinema, música, futebol, carros e humor —
@@ -12,6 +12,12 @@
     </div>
   </div>
 </section>
+
+@if (banners().length > 0) {
+  <section class="container-pagina home-carrossel">
+    <app-carrossel [banners]="banners()" />
+  </section>
+}
 
 <section id="categorias" class="container-pagina">
   <span class="rotulo">Escolha sua tribo</span>

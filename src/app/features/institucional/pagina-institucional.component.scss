@@ -1,0 +1,64 @@
+.pagina-institucional {
+  max-width: 720px;
+}
+
+.pagina-institucional h1 {
+  margin-bottom: 20px;
+}
+
+.pagina-institucional p {
+  color: var(--cor-texto-suave);
+  line-height: 1.7;
+  margin: 0 0 16px;
+}
+
+.pagina-institucional__passos {
+  list-style: none;
+  margin: 24px 0;
+  padding: 0;
+  counter-reset: passo;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.pagina-institucional__passos li {
+  counter-increment: passo;
+  padding-left: 42px;
+  position: relative;
+}
+
+.pagina-institucional__passos li::before {
+  content: counter(passo);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--cor-primaria);
+  color: var(--cor-primaria-contraste);
+  font-family: var(--fonte-mono);
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagina-institucional__passos strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.pagina-institucional__passos p {
+  margin: 0;
+}
+
+.pagina-institucional__nota {
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid var(--cor-borda);
+  font-size: 0.82rem;
+  color: var(--cor-texto-fraco);
+}

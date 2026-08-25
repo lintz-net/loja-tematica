@@ -1,0 +1,40 @@
+<div
+  class="carrossel"
+  (mouseenter)="pausar()"
+  (mouseleave)="retomar()"
+  (touchstart)="aoTocarInicio($event)"
+  (touchend)="aoTocarFim($event)"
+>
+  @for (banner of banners; track banner.id; let i = $index) {
+    @if (banner.link) {
+      <a class="carrossel__slide" [class.ativo]="i === indiceAtual()" [routerLink]="banner.link">
+        <img [src]="banner.imagemUrl" [alt]="banner.alt" loading="lazy" />
+      </a>
+    } @else {
+      <div class="carrossel__slide" [class.ativo]="i === indiceAtual()">
+        <img [src]="banner.imagemUrl" [alt]="banner.alt" loading="lazy" />
+      </div>
+    }
+  }
+
+  @if (banners.length > 1) {
+    <button type="button" class="carrossel__seta carrossel__seta--anterior" (click)="anterior()" aria-label="Banner anterior">
+      ‹
+    </button>
+    <button type="button" class="carrossel__seta carrossel__seta--proxima" (click)="proximo()" aria-label="Próximo banner">
+      ›
+    </button>
+
+    <div class="carrossel__pontos">
+      @for (banner of banners; track banner.id; let i = $index) {
+        <button
+          type="button"
+          class="carrossel__ponto"
+          [class.ativo]="i === indiceAtual()"
+          (click)="irPara(i)"
+          [attr.aria-label]="'Ir para o banner ' + (i + 1)"
+        ></button>
+      }
+    </div>
+  }
+</div>

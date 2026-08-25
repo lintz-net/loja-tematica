@@ -1,3 +1,67 @@
+.checkout-passos {
+  display: flex;
+  gap: 4px;
+  margin-top: 22px;
+  overflow-x: auto;
+}
+
+.checkout-passos__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--cor-borda);
+  padding: 10px 14px 10px 4px;
+  white-space: nowrap;
+  color: var(--cor-texto-fraco);
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.checkout-passos__item:not(:disabled) {
+  cursor: pointer;
+}
+
+.checkout-passos__item:disabled {
+  cursor: default;
+}
+
+.checkout-passos__numero {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  font-family: var(--fonte-mono);
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.checkout-passos__rotulo {
+  font-family: var(--fonte-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.checkout-passos__item.concluido {
+  color: var(--cor-acento-secundario);
+  border-color: var(--cor-acento-secundario);
+}
+
+.checkout-passos__item.ativo {
+  color: var(--cor-texto);
+  border-color: var(--cor-primaria);
+}
+
+.checkout-passos__item.ativo .checkout-passos__numero {
+  background: var(--cor-primaria);
+  border-color: var(--cor-primaria);
+  color: var(--cor-primaria-contraste);
+}
+
 .checkout__grade {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
@@ -30,8 +94,10 @@
   color: var(--cor-texto-suave);
 }
 
-.checkout__formulario h3:not(:first-child) {
-  margin-top: 26px;
+.checkout__ajuda {
+  margin: -10px 0 18px;
+  font-size: 0.85rem;
+  color: var(--cor-texto-fraco);
 }
 
 .checkout__formulario input {
@@ -51,6 +117,191 @@
 .checkout__linha {
   display: flex;
   gap: 12px;
+}
+
+.checkout__linha input {
+  min-width: 0;
+}
+
+.checkout__campo-uf {
+  flex: 0 0 64px;
+}
+
+.checkout__campo-cvv {
+  flex: 0 0 90px;
+}
+
+.checkout__cartao {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--cor-borda);
+}
+
+.checkout__parcelas {
+  width: 100%;
+  background: var(--cor-fundo);
+  border: 1px solid var(--cor-borda);
+  color: var(--cor-texto);
+  padding: 10px 12px;
+  border-radius: var(--raio-padrao);
+  margin-bottom: 12px;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.checkout__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
+  margin-bottom: 18px;
+}
+
+.checkout__checkbox input {
+  width: auto;
+  margin: 0;
+  accent-color: var(--cor-primaria);
+}
+
+.checkout__bandeiras .rotulo {
+  margin-bottom: 10px;
+}
+
+.checkout__bandeiras-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.checkout__bandeira {
+  font-family: var(--fonte-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 5px 10px;
+  border-radius: var(--raio-padrao);
+  border: 1px solid var(--cor-borda);
+  color: var(--cor-texto-suave);
+  background: var(--cor-fundo);
+}
+
+.checkout__bandeira[data-bandeira='Visa'] {
+  color: #1a1f71;
+  border-color: #1a1f71;
+}
+
+.checkout__bandeira[data-bandeira='Mastercard'] {
+  color: #eb5c26;
+  border-color: #eb5c26;
+}
+
+.checkout__bandeira[data-bandeira='Elo'] {
+  color: #ffcb05;
+  border-color: #000;
+  background: #000;
+}
+
+.checkout__bandeira[data-bandeira='Amex'] {
+  color: #016fd0;
+  border-color: #016fd0;
+}
+
+.checkout__bandeira[data-bandeira='Hipercard'] {
+  color: #822124;
+  border-color: #822124;
+}
+
+.checkout__bandeira[data-bandeira='Diners'] {
+  color: #0079be;
+  border-color: #0079be;
+}
+
+.checkout__opcoes-frete {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.checkout__opcao-frete {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--cor-fundo);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-padrao);
+  padding: 12px 14px;
+  text-align: left;
+  transition: border-color 0.15s ease;
+}
+
+.checkout__opcao-frete.selecionado {
+  border-color: var(--cor-primaria);
+}
+
+.checkout__opcao-frete-nome {
+  font-weight: 700;
+}
+
+.checkout__opcao-frete-prazo {
+  flex: 1;
+  color: var(--cor-texto-suave);
+  font-size: 0.82rem;
+}
+
+.checkout__opcao-frete-preco {
+  font-family: var(--fonte-mono);
+  font-weight: 700;
+}
+
+.checkout__navegacao {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--cor-borda);
+}
+
+.checkout__navegacao button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.checkout__revisao-bloco {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.checkout__revisao-bloco:last-of-type {
+  border-bottom: none;
+}
+
+.checkout__revisao-bloco p {
+  margin: 8px 0 0;
+  color: var(--cor-texto-suave);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.checkout__revisao-pagamento {
+  text-transform: none;
+}
+
+.checkout__revisao-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.checkout__revisao-editar {
+  background: transparent;
+  color: var(--cor-acento-secundario);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .checkout__pagamento {
@@ -85,6 +336,16 @@
   margin-bottom: 8px;
 }
 
+.checkout__resumo-linha {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
+  padding-top: 10px;
+  border-top: 1px solid var(--cor-borda);
+  margin-top: 10px;
+}
+
 .checkout__resumo-total {
   display: flex;
   justify-content: space-between;
@@ -95,12 +356,6 @@
   border-top: 1px solid var(--cor-borda);
   padding-top: 12px;
   margin-top: 10px;
-}
-
-.checkout__botao-finalizar {
-  width: 100%;
-  margin-top: 16px;
-  text-align: center;
 }
 
 .checkout-sucesso {

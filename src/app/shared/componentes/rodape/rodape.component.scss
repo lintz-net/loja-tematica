@@ -1,20 +1,187 @@
 .rodape {
-  border-top: 1px solid var(--cor-borda);
-  background: var(--cor-fundo-alt);
   margin-top: 40px;
+  background: var(--cor-texto);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.rodape__topo {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px 20px 32px;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 40px;
+}
+
+@media (max-width: 760px) {
+  .rodape__topo {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
+.rodape__coluna {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rodape__coluna h3 {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+  color: #fff;
+}
+
+.rodape__logo {
+  font-family: var(--fonte-titulo);
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: #fff;
+  width: fit-content;
+}
+
+.rodape__logo-acento {
+  color: var(--cor-primaria);
+}
+
+.rodape__redes {
+  display: flex;
+  gap: 10px;
+}
+
+.rodape__icone-social {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.rodape__contato {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.88rem;
+  width: fit-content;
+}
+
+.rodape__contato:hover {
+  color: #fff;
+}
+
+.rodape__aviso {
+  margin: 4px 0 0;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.45);
+  max-width: 34ch;
+}
+
+.rodape__coluna--links {
+  gap: 10px;
+}
+
+.rodape__coluna--links a {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.88rem;
+  width: fit-content;
+}
+
+.rodape__coluna--links a:hover {
+  color: #fff;
+}
+
+.rodape__newsletter {
+  display: flex;
+  gap: 8px;
+}
+
+.rodape__newsletter input {
+  flex: 1;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+  padding: 9px 12px;
+  border-radius: var(--raio-padrao);
+}
+
+.rodape__newsletter input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.rodape__newsletter button {
+  background: var(--cor-primaria);
+  color: var(--cor-primaria-contraste);
+  font-weight: 700;
+  padding: 9px 16px;
+  border-radius: var(--raio-padrao);
+}
+
+.rodape__newsletter-confirmacao {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: var(--cor-acento-secundario);
+}
+
+.rodape__pagamentos {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+}
+
+.rodape__pagamentos .rotulo {
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 10px;
+}
+
+.rodape__pagamentos .rotulo::before {
+  background: currentColor;
+}
+
+.rodape__bandeiras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rodape__bandeira {
+  font-family: var(--fonte-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 5px 10px;
+  border-radius: var(--raio-padrao);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.rodape__bandeira[data-bandeira='Elo'] {
+  background: #000;
+  color: #ffcb05;
+  border-color: #ffcb05;
+}
+
+.rodape__envio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
 }
 
 .rodape__conteudo {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 24px 20px;
-  color: var(--cor-texto-suave);
-  font-size: 0.85rem;
+  padding: 20px 20px 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.8rem;
   text-align: center;
   font-family: var(--fonte-mono);
-}
-
-.rodape__aviso {
-  margin-top: 4px;
-  opacity: 0.7;
 }

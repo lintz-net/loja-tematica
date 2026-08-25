@@ -1,6 +1,81 @@
 <footer class="rodape">
+  <div class="rodape__topo">
+    <div class="rodape__coluna rodape__coluna--marca">
+      <a routerLink="/" class="rodape__logo">
+        <span>Nostál</span><span class="rodape__logo-acento">gika</span>
+      </a>
+
+      <div class="rodape__redes">
+        <span class="rodape__icone-social" title="Instagram">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6">
+            <rect x="3.5" y="3.5" width="17" height="17" rx="5" />
+            <circle cx="12" cy="12" r="4" />
+            <circle cx="17.2" cy="6.8" r="0.9" fill="currentColor" stroke="none" />
+          </svg>
+        </span>
+        <span class="rodape__icone-social" title="TikTok">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M14 4v10.2a3.3 3.3 0 1 1-3.3-3.3c.3 0 .6 0 .9.1" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M14 4c.4 2.1 2 3.6 4 3.9" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </span>
+      </div>
+
+      <a class="rodape__contato" href="mailto:contato@nostalgika.com.br">contato&#64;nostalgika.com.br</a>
+      <p class="rodape__aviso">Dados e produtos mockados. Nenhum pagamento é processado nesta etapa.</p>
+    </div>
+
+    <nav class="rodape__coluna rodape__coluna--links">
+      <a routerLink="/">Início</a>
+      <a routerLink="/categoria/geek">Produtos</a>
+      <a routerLink="/carrinho">Carrinho</a>
+      <a routerLink="/quem-somos">Quem somos</a>
+      <a routerLink="/como-comprar">Como comprar</a>
+      <a routerLink="/politica-privacidade">Política de privacidade</a>
+      <a routerLink="/trocas-devolucoes">Trocas e devoluções</a>
+    </nav>
+
+    <div class="rodape__coluna rodape__coluna--newsletter">
+      <h3>Newsletter</h3>
+      <form class="rodape__newsletter" (submit)="$event.preventDefault(); enviarNewsletter()">
+        <input
+          type="email"
+          placeholder="E-mail"
+          [value]="emailNewsletter()"
+          (input)="atualizarEmailNewsletter($any($event.target).value)"
+        />
+        <button type="submit">Enviar</button>
+      </form>
+      @if (newsletterEnviada()) {
+        <p class="rodape__newsletter-confirmacao">Cadastro simulado com sucesso!</p>
+      }
+    </div>
+  </div>
+
+  <div class="rodape__pagamentos">
+    <div>
+      <span class="rotulo">Meios de pagamento</span>
+      <div class="rodape__bandeiras">
+        @for (bandeira of bandeiras; track bandeira) {
+          <span class="rodape__bandeira" [attr.data-bandeira]="bandeira">{{ bandeira }}</span>
+        }
+      </div>
+    </div>
+    <div>
+      <span class="rotulo">Meios de envio</span>
+      <div class="rodape__envio">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6">
+          <rect x="2" y="7" width="13" height="9" rx="1.2" />
+          <path d="M15 10h3.5L21 13v3h-6z" />
+          <circle cx="7" cy="18" r="1.6" />
+          <circle cx="17.5" cy="18" r="1.6" />
+        </svg>
+        <span>Correios e transportadoras parceiras</span>
+      </div>
+    </div>
+  </div>
+
   <div class="rodape__conteudo">
-    <p>© {{ anoAtual }} Vitrine Tribal — loja fictícia para validação de layout.</p>
-    <p class="rodape__aviso">Dados e produtos mockados. Nenhum pagamento é processado nesta etapa.</p>
+    <p>© {{ anoAtual }} Nostálgika — loja fictícia para validação de layout.</p>
   </div>
 </footer>
