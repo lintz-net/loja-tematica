@@ -1,6 +1,6 @@
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withViewTransitions } from '@angular/router';
 import { environment } from '../environments/environment';
 import { routes } from './app.routes';
 import { CatalogoRepositorio } from './core/servicos/catalogo.repositorio';
@@ -13,7 +13,7 @@ import { BannerApiService } from './core/servicos/banner-api.service';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
-    provideRouter(routes),
+    provideRouter(routes, withViewTransitions()),
     provideHttpClient(),
     {
       provide: CatalogoRepositorio,

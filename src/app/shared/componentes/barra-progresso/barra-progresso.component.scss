@@ -1,0 +1,17 @@
+.barra-progresso {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2.5px;
+  width: 0%;
+  background: var(--gradiente-tema);
+  z-index: 300;
+  opacity: 0;
+  transition: width 0.2s ease, opacity 0.3s ease;
+}
+
+.barra-progresso.ativa {
+  opacity: 1;
+  width: 70%;
+  transition: width 4s cubic-bezier(0.1, 0.7, 0.3, 1), opacity 0.15s ease;
+}

@@ -18,6 +18,9 @@
     class="galeria-produto__principal"
     (touchstart)="aoTocarInicio($event)"
     (touchend)="aoTocarFim($event)"
+    (mouseenter)="ativarZoom()"
+    (mouseleave)="desativarZoom()"
+    (mousemove)="aoMoverMouse($event)"
   >
     @for (img of imagens; track img; let i = $index) {
       <img
@@ -28,6 +31,13 @@
         loading="lazy"
       />
     }
+
+    <div
+      class="galeria-produto__lupa"
+      [class.ativa]="zoomAtivo()"
+      [style.backgroundImage]="'url(' + imagemAtiva() + ')'"
+      [style.backgroundPosition]="posicaoZoom().x + '% ' + posicaoZoom().y + '%'"
+    ></div>
 
     @if (imagens.length > 1) {
       <button

@@ -37,9 +37,13 @@
 
 .cabecalho__navegacao {
   display: flex;
+  flex-wrap: nowrap;
   gap: 22px;
   flex: 1;
+  min-width: 0;
   overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
   font-family: var(--fonte-mono);
   font-size: 0.72rem;
   font-weight: 600;

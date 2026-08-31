@@ -1,0 +1,53 @@
+.cartao-esqueleto {
+  display: flex;
+  flex-direction: column;
+  background: var(--cor-fundo-alt);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-padrao);
+  overflow: hidden;
+}
+
+.cartao-esqueleto__imagem {
+  height: 200px;
+}
+
+.cartao-esqueleto__info {
+  padding: 14px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cartao-esqueleto__linha {
+  border-radius: 4px;
+}
+
+.cartao-esqueleto__linha--titulo {
+  height: 14px;
+  width: 70%;
+}
+
+.cartao-esqueleto__linha--texto {
+  height: 12px;
+  width: 90%;
+}
+
+.shimmer {
+  background: linear-gradient(
+    100deg,
+    var(--cor-borda) 30%,
+    var(--cor-borda-forte) 50%,
+    var(--cor-borda) 70%
+  );
+  background-size: 200% 100%;
+  animation: deslizar-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes deslizar-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

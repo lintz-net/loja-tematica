@@ -1,0 +1,58 @@
+<div class="gaveta-backdrop" [class.gaveta-backdrop--aberta]="aberta()" (click)="fechar()"></div>
+
+<aside class="gaveta" [class.gaveta--aberta]="aberta()" role="dialog" aria-modal="true" aria-label="Carrinho de compras">
+  <header class="gaveta__cabecalho">
+    <h2>Seu carrinho</h2>
+    <button type="button" class="gaveta__fechar" (click)="fechar()" aria-label="Fechar carrinho">✕</button>
+  </header>
+
+  @if (itens().length === 0) {
+    <div class="gaveta__vazio">
+      <p>Seu carrinho está vazio.</p>
+      <a routerLink="/" class="botao-primario" (click)="fechar()">Continuar comprando</a>
+    </div>
+  } @else {
+    <div class="gaveta__lista">
+      @for (item of itens(); track item.variante.id) {
+        <div class="gaveta__item">
+          <div
+            class="gaveta__item-imagem"
+            [style.backgroundImage]="'url(' + item.produto.imagens[0] + ')'"
+          ></div>
+
+          <div class="gaveta__item-info">
+            <h3>{{ item.produto.nome }}</h3>
+            <p class="gaveta__item-variante">
+              Tamanho: {{ item.variante.tamanho }} · Cor: {{ item.variante.cor }}
+            </p>
+            <div class="gaveta__item-quantidade">
+              <button type="button" (click)="atualizarQuantidade(item.variante.id, item.quantidade - 1)">−</button>
+              <span>{{ item.quantidade }}</span>
+              <button type="button" (click)="atualizarQuantidade(item.variante.id, item.quantidade + 1)">+</button>
+            </div>
+          </div>
+
+          <div class="gaveta__item-lateral">
+            <span class="gaveta__item-subtotal">
+              R$ {{ (calcularPrecoUnitario(item) * item.quantidade).toFixed(2) }}
+            </span>
+            <button type="button" class="gaveta__item-remover" (click)="removerItem(item.variante.id)">
+              Remover
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <footer class="gaveta__rodape">
+      <div class="gaveta__resumo">
+        <span>Total</span>
+        <span class="gaveta__resumo-valor">R$ {{ valorTotal().toFixed(2) }}</span>
+      </div>
+      <div class="gaveta__acoes">
+        <a routerLink="/carrinho" class="botao-secundario" (click)="fechar()">Ver carrinho completo</a>
+        <a routerLink="/checkout" class="botao-primario" (click)="fechar()">Finalizar compra</a>
+      </div>
+    </footer>
+  }
+</aside>

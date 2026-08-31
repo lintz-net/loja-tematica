@@ -18,6 +18,32 @@ body {
   color: #241705;
 }
 
+// Transição suave de rota via View Transitions API (Angular Router withViewTransitions()).
+// Navegadores sem suporte simplesmente trocam a página sem animação — sem necessidade de fallback.
+// Usa só opacidade (sem transform): um transform aqui faz o navegador considerar a área do
+// snapshot maior que o viewport durante a transição, deixando uma barra de rolagem residual.
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: rota-sair 0.15s ease both;
+  }
+
+  ::view-transition-new(root) {
+    animation: rota-entrar 0.2s ease both;
+  }
+}
+
+@keyframes rota-sair {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes rota-entrar {
+  from {
+    opacity: 0;
+  }
+}
+
 a {
   color: inherit;
   text-decoration: none;

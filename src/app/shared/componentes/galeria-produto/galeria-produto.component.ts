@@ -1,4 +1,4 @@
-import { Component, Input, signal } from '@angular/core';
+import { Component, Input, computed, signal } from '@angular/core';
 
 @Component({
   selector: 'app-galeria-produto',
@@ -30,7 +30,28 @@ export class GaleriaProdutoComponent {
 
   readonly indiceAtual = signal(0);
 
+  readonly imagemAtiva = computed(() => this.imagens[this.indiceAtual()] ?? '');
+
+  readonly zoomAtivo = signal(false);
+  readonly posicaoZoom = signal({ x: 50, y: 50 });
+
   private inicioToqueX = 0;
+
+  ativarZoom(): void {
+    this.zoomAtivo.set(true);
+  }
+
+  desativarZoom(): void {
+    this.zoomAtivo.set(false);
+  }
+
+  aoMoverMouse(evento: MouseEvent): void {
+    const alvo = evento.currentTarget as HTMLElement;
+    const limites = alvo.getBoundingClientRect();
+    const x = ((evento.clientX - limites.left) / limites.width) * 100;
+    const y = ((evento.clientY - limites.top) / limites.height) * 100;
+    this.posicaoZoom.set({ x, y });
+  }
 
   irPara(indice: number): void {
     this.indiceAtual.set(indice);

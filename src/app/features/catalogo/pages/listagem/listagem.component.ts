@@ -1,14 +1,15 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map, switchMap } from 'rxjs';
+import { map, switchMap, tap } from 'rxjs';
 import { CatalogoRepositorio } from '../../../../core/servicos/catalogo.repositorio';
 import { CartaoProdutoComponent } from '../../../../shared/componentes/cartao-produto/cartao-produto.component';
+import { CartaoProdutoEsqueletoComponent } from '../../../../shared/componentes/cartao-produto-esqueleto/cartao-produto-esqueleto.component';
 
 @Component({
   selector: 'app-listagem',
   standalone: true,
-  imports: [CartaoProdutoComponent, RouterLink],
+  imports: [CartaoProdutoComponent, CartaoProdutoEsqueletoComponent, RouterLink],
   templateUrl: './listagem.component.html',
   styleUrl: './listagem.component.scss',
 })
@@ -25,6 +26,7 @@ export class ListagemComponent {
   );
 
   readonly termoBusca = signal('');
+  readonly carregando = signal(true);
 
   readonly categoriaAtual = toSignal(
     this.slugCategoria$.pipe(
@@ -35,7 +37,9 @@ export class ListagemComponent {
 
   private readonly produtosDaCategoria = toSignal(
     this.slugCategoria$.pipe(
-      switchMap((slug) => this.catalogoRepositorio.obterProdutosPorCategoria(slug))
+      tap(() => this.carregando.set(true)),
+      switchMap((slug) => this.catalogoRepositorio.obterProdutosPorCategoria(slug)),
+      tap(() => this.carregando.set(false))
     ),
     { initialValue: [] }
   );

@@ -33,7 +33,13 @@
       </nav>
     </div>
 
-    @if (produtosFiltrados().length > 0) {
+    @if (carregando()) {
+      <div class="listagem-grade">
+        @for (item of [1, 2, 3, 4, 5, 6, 7, 8]; track item) {
+          <app-cartao-produto-esqueleto />
+        }
+      </div>
+    } @else if (produtosFiltrados().length > 0) {
       <div class="listagem-grade">
         @for (produto of produtosFiltrados(); track produto.id) {
           <app-cartao-produto [produto]="produto" />

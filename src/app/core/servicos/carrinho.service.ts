@@ -19,6 +19,9 @@ export class CarrinhoService {
    * (assíncrona, depende do catálogo) ainda não terminou. */
   private carregado = false;
 
+  private readonly gavetaAbertaSignal = signal(false);
+  readonly gavetaAberta = computed(() => this.gavetaAbertaSignal());
+
   readonly itensCarrinho = computed(() => this.itens());
 
   readonly quantidadeTotalItens = computed(() =>
@@ -51,6 +54,19 @@ export class CarrinhoService {
       }
       return [...atual, { produto, variante, quantidade }];
     });
+    this.abrirGaveta();
+  }
+
+  abrirGaveta(): void {
+    this.gavetaAbertaSignal.set(true);
+  }
+
+  fecharGaveta(): void {
+    this.gavetaAbertaSignal.set(false);
+  }
+
+  alternarGaveta(): void {
+    this.gavetaAbertaSignal.update((atual) => !atual);
   }
 
   removerItem(varianteId: string): void {
