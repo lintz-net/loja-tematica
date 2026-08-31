@@ -1,15 +1,12 @@
 .carrossel {
   position: relative;
+  // Mesma proporção em qualquer largura: as imagens dos banners têm texto/elementos
+  // espalhados de ponta a ponta, então mudar para uma proporção mais "quadrada" no mobile
+  // (como era antes) fazia o object-fit: cover cortar conteúdo importante nas laterais.
   aspect-ratio: 16 / 7;
   overflow: hidden;
   border-radius: var(--raio-padrao);
   background: var(--cor-fundo-alt);
-}
-
-@media (max-width: 700px) {
-  .carrossel {
-    aspect-ratio: 4 / 3;
-  }
 }
 
 .carrossel__slide {
