@@ -150,6 +150,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'favoritos',
+    loadComponent: () =>
+      import('./features/favoritos/pages/favoritos/favoritos.component').then(
+        (m) => m.FavoritosComponent
+      ),
+  },
+  {
     path: 'carrinho',
     loadComponent: () =>
       import('./features/carrinho/pages/carrinho/carrinho.component').then(

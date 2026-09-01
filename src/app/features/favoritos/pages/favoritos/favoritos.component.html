@@ -1,0 +1,16 @@
+<section class="container-pagina favoritos">
+  <h1>Meus favoritos</h1>
+
+  @if (produtos().length === 0) {
+    <div class="favoritos__vazio">
+      <p>Você ainda não favoritou nenhum produto.</p>
+      <a routerLink="/" class="botao-primario">Continuar comprando</a>
+    </div>
+  } @else {
+    <div class="favoritos__grade">
+      @for (produto of produtos(); track produto.id) {
+        <app-cartao-produto [produto]="produto" />
+      }
+    </div>
+  }
+</section>

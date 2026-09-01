@@ -82,6 +82,31 @@
   background: var(--cor-fundo-alt);
 }
 
+.cartao-produto__favorito {
+  position: absolute;
+  z-index: 1;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--cor-fundo) 82%, transparent);
+  backdrop-filter: blur(4px);
+  color: var(--cor-texto-suave);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.cartao-produto__favorito:hover {
+  transform: scale(1.08);
+}
+
+.cartao-produto__favorito.ativo {
+  color: #ff2d6f;
+}
+
 .cartao-produto__esgotado {
   position: absolute;
   z-index: 1;

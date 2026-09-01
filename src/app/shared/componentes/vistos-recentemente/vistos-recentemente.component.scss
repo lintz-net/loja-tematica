@@ -1,0 +1,21 @@
+.vistos-recentemente {
+  margin-top: 48px;
+  padding-top: 32px;
+  border-top: 1px solid var(--cor-borda);
+}
+
+.vistos-recentemente__titulo {
+  font-size: clamp(1.3rem, 2.6vw, 1.6rem);
+  margin-bottom: 18px;
+}
+
+.vistos-recentemente__lista {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.vistos-recentemente__item {
+  flex: 0 0 200px;
+}

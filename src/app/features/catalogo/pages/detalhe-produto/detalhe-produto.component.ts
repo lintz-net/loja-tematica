@@ -1,13 +1,16 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, switchMap } from 'rxjs';
 import { CatalogoRepositorio } from '../../../../core/servicos/catalogo.repositorio';
 import { CarrinhoService } from '../../../../core/servicos/carrinho.service';
+import { FavoritosService } from '../../../../core/servicos/favoritos.service';
+import { VistosRecentementeService } from '../../../../core/servicos/vistos-recentemente.service';
 import { FaixaMedida } from '../../../../core/modelos/produto.model';
 import { corParaEstiloSwatch } from '../../../../core/utilitarios/cor.util';
 import { GaleriaProdutoComponent } from '../../../../shared/componentes/galeria-produto/galeria-produto.component';
 import { ModalComponent } from '../../../../shared/componentes/modal/modal.component';
+import { VistosRecentementeComponent } from '../../../../shared/componentes/vistos-recentemente/vistos-recentemente.component';
 
 const GUIA_MEDIDAS_PADRAO: FaixaMedida[] = [
   { tamanho: 'P', larguraCm: 48, comprimentoCm: 68 },
@@ -19,7 +22,7 @@ const GUIA_MEDIDAS_PADRAO: FaixaMedida[] = [
 @Component({
   selector: 'app-detalhe-produto',
   standalone: true,
-  imports: [GaleriaProdutoComponent, ModalComponent],
+  imports: [GaleriaProdutoComponent, ModalComponent, VistosRecentementeComponent],
   templateUrl: './detalhe-produto.component.html',
   styleUrl: './detalhe-produto.component.scss',
 })
@@ -28,6 +31,8 @@ export class DetalheProdutoComponent {
   private readonly router = inject(Router);
   private readonly catalogoRepositorio = inject(CatalogoRepositorio);
   private readonly carrinhoService = inject(CarrinhoService);
+  private readonly favoritosService = inject(FavoritosService);
+  private readonly vistosRecentementeService = inject(VistosRecentementeService);
 
   private readonly slugProduto$ = this.route.paramMap.pipe(
     map((params) => params.get('slug') ?? '')
@@ -100,6 +105,15 @@ export class DetalheProdutoComponent {
 
   readonly guiaMedidas = computed(() => this.produto()?.guiaMedidas ?? GUIA_MEDIDAS_PADRAO);
 
+  constructor() {
+    effect(() => {
+      const produto = this.produto();
+      if (produto) {
+        this.vistosRecentementeService.registrarVisita(produto);
+      }
+    });
+  }
+
   readonly varianteSelecionada = computed(() => {
     const variantes = this.produto()?.variantes ?? [];
     return variantes.find(
@@ -141,6 +155,18 @@ export class DetalheProdutoComponent {
 
   irParaCarrinho(): void {
     this.router.navigate(['/carrinho']);
+  }
+
+  readonly favoritado = computed(() => {
+    const produto = this.produto();
+    return produto ? this.favoritosService.estaFavoritado(produto.id) : false;
+  });
+
+  alternarFavorito(): void {
+    const produto = this.produto();
+    if (produto) {
+      this.favoritosService.alternar(produto);
+    }
   }
 
   abrirGuiaMedidas(): void {

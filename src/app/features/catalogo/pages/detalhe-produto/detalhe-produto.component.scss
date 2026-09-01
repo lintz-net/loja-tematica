@@ -10,6 +10,33 @@
   }
 }
 
+.detalhe-produto__cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.detalhe-produto__favorito {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: var(--cor-texto-suave);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 4px 2px;
+  transition: color 0.15s ease;
+}
+
+.detalhe-produto__favorito:hover {
+  color: var(--cor-texto);
+}
+
+.detalhe-produto__favorito.ativo {
+  color: #ff2d6f;
+}
+
 .detalhe-produto__info h1 {
   margin: 10px 0 8px;
   font-size: 1.9rem;

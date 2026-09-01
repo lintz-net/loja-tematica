@@ -4,11 +4,12 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { CatalogoRepositorio } from '../../../../core/servicos/catalogo.repositorio';
 import { BannerRepositorio } from '../../../../core/servicos/banner.repositorio';
 import { CarrosselComponent } from '../../../../shared/componentes/carrossel/carrossel.component';
+import { VistosRecentementeComponent } from '../../../../shared/componentes/vistos-recentemente/vistos-recentemente.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink, CarrosselComponent],
+  imports: [RouterLink, CarrosselComponent, VistosRecentementeComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
 })

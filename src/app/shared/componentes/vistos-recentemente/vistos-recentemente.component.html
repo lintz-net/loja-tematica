@@ -1,0 +1,12 @@
+@if (produtos().length > 0) {
+  <section class="vistos-recentemente">
+    <h2 class="vistos-recentemente__titulo">Vistos recentemente</h2>
+    <div class="vistos-recentemente__lista">
+      @for (produto of produtos(); track produto.id) {
+        <div class="vistos-recentemente__item">
+          <app-cartao-produto [produto]="produto" />
+        </div>
+      }
+    </div>
+  </section>
+}

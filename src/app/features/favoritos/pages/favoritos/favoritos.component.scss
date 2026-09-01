@@ -1,0 +1,16 @@
+.favoritos__vazio {
+  text-align: center;
+  padding: 70px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  color: var(--cor-texto-suave);
+}
+
+.favoritos__grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
