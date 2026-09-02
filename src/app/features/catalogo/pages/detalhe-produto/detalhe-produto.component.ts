@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, switchMap } from 'rxjs';
@@ -109,7 +109,10 @@ export class DetalheProdutoComponent {
     effect(() => {
       const produto = this.produto();
       if (produto) {
-        this.vistosRecentementeService.registrarVisita(produto);
+        // untracked: registrarVisita lê e escreve signals do VistosRecentementeService;
+        // sem isso, o efeito passa a depender delas também e reagenda a si mesmo a cada
+        // escrita (novo array = nova referência), entrando em loop infinito e travando a aba.
+        untracked(() => this.vistosRecentementeService.registrarVisita(produto));
       }
     });
   }
