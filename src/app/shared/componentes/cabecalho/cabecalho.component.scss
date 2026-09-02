@@ -107,3 +107,113 @@
   border-radius: 999px;
   line-height: 1.3;
 }
+
+.cabecalho__hamburguer {
+  display: none;
+  color: var(--cor-texto-suave);
+  flex-shrink: 0;
+}
+
+.cabecalho__hamburguer:hover {
+  color: var(--cor-texto);
+}
+
+// Abaixo de ~780px a navegação de categorias vira uma tirinha rolável horizontal e
+// disputa espaço com os ícones de ação — troca por hambúrguer + drawer nesse ponto.
+@media (max-width: 780px) {
+  .cabecalho__conteudo {
+    gap: 14px;
+  }
+
+  .cabecalho__hamburguer {
+    display: flex;
+  }
+
+  .cabecalho__navegacao {
+    display: none;
+  }
+
+  .cabecalho__logo {
+    flex: 1;
+  }
+}
+
+.menu-mobile-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 100;
+}
+
+.menu-mobile-backdrop--aberto {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.menu-mobile {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: min(320px, 100vw);
+  background: var(--cor-fundo-alt);
+  border-right: 1px solid var(--cor-borda);
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+}
+
+.menu-mobile--aberto {
+  transform: translateX(0);
+}
+
+.menu-mobile__cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.menu-mobile__cabecalho h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.menu-mobile__fechar {
+  background: transparent;
+  color: var(--cor-texto-suave);
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 4px 8px;
+}
+
+.menu-mobile__fechar:hover {
+  color: var(--cor-texto);
+}
+
+.menu-mobile__navegacao {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px;
+  font-family: var(--fonte-mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cor-texto-suave);
+}
+
+.menu-mobile__navegacao a {
+  padding: 14px 8px;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.menu-mobile__navegacao a.ativo {
+  color: var(--cor-texto);
+}

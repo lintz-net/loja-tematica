@@ -1,5 +1,18 @@
 <header class="cabecalho">
   <div class="cabecalho__conteudo">
+    <button
+      type="button"
+      class="cabecalho__hamburguer"
+      title="Categorias"
+      aria-label="Abrir menu de categorias"
+      [attr.aria-expanded]="menuMobileAberto()"
+      (click)="abrirMenuMobile()"
+    >
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M3.5 6.5h17M3.5 12h17M3.5 17.5h17" stroke-linecap="round" />
+      </svg>
+    </button>
+
     <a routerLink="/" class="cabecalho__logo">
       <span class="cabecalho__logo-marca">Nostál</span><span class="cabecalho__logo-acento">gika</span>
     </a>
@@ -53,3 +66,31 @@
     </div>
   </div>
 </header>
+
+<div
+  class="menu-mobile-backdrop"
+  [class.menu-mobile-backdrop--aberto]="menuMobileAberto()"
+  (click)="fecharMenuMobile()"
+></div>
+
+<aside
+  class="menu-mobile"
+  [class.menu-mobile--aberto]="menuMobileAberto()"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Menu de categorias"
+>
+  <header class="menu-mobile__cabecalho">
+    <h2>Categorias</h2>
+    <button type="button" class="menu-mobile__fechar" (click)="fecharMenuMobile()" aria-label="Fechar menu">✕</button>
+  </header>
+
+  <nav class="menu-mobile__navegacao">
+    <a routerLink="/categoria/musica" routerLinkActive="ativo">Música</a>
+    <a routerLink="/categoria/futebol" routerLinkActive="ativo">Futebol</a>
+    <a routerLink="/categoria/geek" routerLinkActive="ativo">Geek</a>
+    <a routerLink="/categoria/automotivo" routerLinkActive="ativo">Automotivo</a>
+    <a routerLink="/categoria/cinema" routerLinkActive="ativo">Cinema</a>
+    <a routerLink="/categoria/humor" routerLinkActive="ativo">Humor</a>
+  </nav>
+</aside>

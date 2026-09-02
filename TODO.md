@@ -1,15 +1,5 @@
 # TODO
 
-## Menu mobile no cabeçalho
-
-`CabecalhoComponent` (`cabecalho.component.scss`) não tem breakpoint próprio. Em telas
-estreitas, logo + 6 links de categoria + 4 ícones de ação disputam o mesmo espaço, e o
-menu de categorias vira uma tirinha que só funciona rolando horizontalmente com texto
-cortado.
-
-Solução proposta: menu hambúrguer no mobile, abrindo as categorias em um painel/drawer
-(mesmo padrão já usado na gaveta do carrinho e no painel de busca).
-
 ## Acompanhamento de pedido
 
 Hoje o cliente não tem como acompanhar o pedido depois da compra:
