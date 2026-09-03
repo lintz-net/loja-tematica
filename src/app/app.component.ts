@@ -5,6 +5,7 @@ import { RodapeComponent } from './shared/componentes/rodape/rodape.component';
 import { CarrinhoGavetaComponent } from './shared/componentes/carrinho-gaveta/carrinho-gaveta.component';
 import { BuscaGlobalComponent } from './shared/componentes/busca-global/busca-global.component';
 import { BarraProgressoComponent } from './shared/componentes/barra-progresso/barra-progresso.component';
+import { WhatsappFlutuanteComponent } from './shared/componentes/whatsapp-flutuante/whatsapp-flutuante.component';
 
 @Component({
   selector: 'app-root',
@@ -16,6 +17,7 @@ import { BarraProgressoComponent } from './shared/componentes/barra-progresso/ba
     CarrinhoGavetaComponent,
     BuscaGlobalComponent,
     BarraProgressoComponent,
+    WhatsappFlutuanteComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',

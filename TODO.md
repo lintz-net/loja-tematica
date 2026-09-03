@@ -90,3 +90,43 @@ Recomendação: escolher o PSP primeiro (decisão de negócio), depois desenhar 
 pedidos + integração de pagamento junto — os dois TODOs desta seção e o de
 "Acompanhamento de pedido" acima compartilham a mesma dependência raiz (backend real de
 pedidos), então faz sentido planejar as três coisas como uma frente só.
+
+## Marketing: tráfego pago e integração com redes sociais (SSR/Angular Universal)
+
+Foco aqui é marketing — pixels de conversão, campanhas pagas e preview de link ao
+compartilhar produtos —, não login social. Hoje `src/index.html` não tem nenhuma tag
+`og:*`/`twitter:*` e o projeto não tem SSR configurado (`ng add @angular/ssr`, sucessor
+do antigo Angular Universal) — greenfield nos dois. São duas frentes distintas,
+resolvidas de jeitos diferentes:
+
+- **SSR (Angular Universal/`@angular/ssr`) resolve:**
+  - Preview de link ao compartilhar produtos em redes sociais e apps de mensagem
+    (WhatsApp, Instagram, TikTok, Facebook) — os crawlers desses apps não executam JS,
+    então numa SPA pura eles não conseguem montar o card (imagem/título/preço) a partir
+    de tags `og:*`/`twitter:*`. Precisa de HTML já pronto no servidor. Isso importa tanto
+    pra compartilhamento orgânico quanto pra anúncios que usam a própria página de
+    produto como destino (ex.: catálogo dinâmico do Meta Ads).
+  - SEO orgânico no Google (indexação mais rápida e completa) — reduz dependência de
+    tráfego 100% pago.
+  - Performance de primeira carga (FCP/LCP), o que também ajuda o Quality Score/CPC de
+    campanhas pagas.
+  - Também precisa gerar `og:*` por página (produto, categoria) dinamicamente — SSR
+    sozinho não gera as tags, só faz elas existirem no HTML servido.
+
+- **SSR não resolve** (pixels/tags são scripts client-side, funcionam normal em SPA):
+  - **Pixels de conversão** (Meta Pixel, TikTok Pixel, Google Ads tag, GA4) — funcionam
+    em SPA, mas precisam disparar em cada troca de rota (hook em `Router` →
+    `NavigationEnd`, já que uma SPA não recarrega a página como esses scripts esperam
+    por padrão) e mapear o evento de conversão real (provavelmente "pedido finalizado"
+    no checkout).
+  - Consentimento de cookies/LGPD pra esses pixels é obrigatório antes de carregá-los
+    (hoje a `Política de privacidade` do rodapé não fala em cookies de terceiros/pixels).
+
+- **Ainda em aberto (decisão de negócio, não técnica):** qual(is) plataforma(s) de
+  tráfego pago vão rodar primeiro (Meta Ads, Google Ads, TikTok Ads) — define quais
+  pixels instalar e se catálogo de produto dinâmico (que depende de SSR + feed de
+  produtos) entra no escopo.
+
+Recomendação: SSR é pré-requisito só pro item de preview social/catálogo dinâmico — dá
+pra instalar pixels de conversão e GA4 sem SSR, então essas frentes podem ser paralelas,
+não sequenciais. Vale decidir as plataformas de anúncio antes de instalar qualquer pixel.
