@@ -49,10 +49,12 @@ Pendente pra depois:
 PSP escolhido: **Mercado Pago**. Escopo definido: **Pix primeiro** (mais simples — sem
 tokenização de cartão), cartão fica pra uma etapa seguinte.
 
-**Bloqueado**: criação da conta Mercado Pago travou na validação de documentos. Enquanto
-isso não resolve, este item fica parado. Ver `docs/supabase/schema.sql` — a tabela
-`pedidos` já tem `forma_pagamento` e `status`, então quando o Pix for implementado é só
-adicionar a etapa de geração do QR code (Edge Function do Supabase chamando a API do
+**Bloqueado**: validação de documentos da conta já foi resolvida, mas agora a criação da
+aplicação/credenciais de teste no painel de desenvolvedor do Mercado Pago está dando erro
+genérico ("Ocorreu um erro. Tente novamente mais tarde") — parece instabilidade do lado
+deles. Enquanto isso não resolve, este item fica parado. Ver `docs/supabase/schema.sql` —
+a tabela `pedidos` já tem `forma_pagamento` e `status`, então quando o Pix for implementado
+é só adicionar a etapa de geração do QR code (Edge Function do Supabase chamando a API do
 Mercado Pago) e um webhook que atualiza o `status` do pedido na confirmação.
 
 Continua valendo do planejamento original:
