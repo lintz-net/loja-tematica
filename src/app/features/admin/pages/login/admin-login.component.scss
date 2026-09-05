@@ -1,0 +1,35 @@
+.admin-login {
+  max-width: 360px;
+  margin: 0 auto;
+  padding: 90px 0;
+
+  h1 {
+    margin-bottom: 24px;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  input {
+    padding: 10px 12px;
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-padrao);
+    font-size: 1rem;
+  }
+}
+
+.admin-login__erro {
+  color: #b3261e;
+  font-size: 0.9rem;
+}

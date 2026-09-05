@@ -1,4 +1,5 @@
-import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Injectable, PLATFORM_ID, computed, effect, inject, signal } from '@angular/core';
 import { ItemCarrinho } from '../modelos/carrinho.model';
 import { Produto, VarianteProduto } from '../modelos/produto.model';
 import { CatalogoRepositorio } from './catalogo.repositorio';
@@ -14,6 +15,7 @@ const CHAVE_ARMAZENAMENTO = 'nostalgika:carrinho';
 @Injectable({ providedIn: 'root' })
 export class CarrinhoService {
   private readonly catalogoRepositorio = inject(CatalogoRepositorio);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly itens = signal<ItemCarrinho[]>([]);
   /** Evita sobrescrever o carrinho salvo com um array vazio enquanto a restauração
    * (assíncrona, depende do catálogo) ainda não terminou. */
@@ -95,6 +97,7 @@ export class CarrinhoService {
   /** Salva só os IDs (produto/variante/quantidade) — nunca o objeto Produto inteiro, pra
    * sempre reidratar com preço, estoque e imagens atuais do catálogo, nunca uma foto antiga. */
   private salvarNoArmazenamento(itens: ItemCarrinho[]): void {
+    if (!this.isBrowser) return;
     const persistidos: ItemCarrinhoPersistido[] = itens.map((item) => ({
       produtoId: item.produto.id,
       varianteId: item.variante.id,
@@ -104,6 +107,11 @@ export class CarrinhoService {
   }
 
   private restaurarDoArmazenamento(): void {
+    if (!this.isBrowser) {
+      this.carregado = true;
+      return;
+    }
+
     const bruto = localStorage.getItem(CHAVE_ARMAZENAMENTO);
     const persistidos = this.parsearPersistidos(bruto);
     if (persistidos.length === 0) {

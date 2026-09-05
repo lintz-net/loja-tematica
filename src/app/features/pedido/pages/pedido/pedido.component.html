@@ -1,0 +1,73 @@
+@if (carregando()) {
+  <section class="container-pagina pedido-estado">
+    <p>Carregando pedido…</p>
+  </section>
+}
+
+@if (!carregando() && naoEncontrado()) {
+  <section class="container-pagina pedido-estado">
+    <h1>Pedido não encontrado</h1>
+    <p>Confira se o código digitado está correto.</p>
+    <a class="botao-primario" routerLink="/">Voltar à loja</a>
+  </section>
+}
+
+@if (!carregando() && pedido()) {
+  <section class="container-pagina pedido">
+    <span class="rotulo">Pedido {{ pedido()!.codigo }}</span>
+    <h1>Acompanhamento do pedido</h1>
+    <p class="pedido__data">
+      Feito em {{ pedido()!.criadoEm | date: 'dd/MM/yyyy, HH:mm' }}
+    </p>
+
+    <ol class="pedido__status">
+      @for (etapa of etapasStatus; track etapa) {
+        <li
+          [class.concluido]="indiceEtapaAtual(etapa) <= indiceEtapaAtual(pedido()!.status)"
+          [class.atual]="etapa === pedido()!.status"
+        >
+          {{ rotulosStatus[etapa] }}
+        </li>
+      }
+    </ol>
+
+    <div class="pedido__secao">
+      <h2>Itens</h2>
+      <ul class="pedido__itens">
+        @for (item of pedido()!.itens; track item.produtoSlug) {
+          <li>
+            <img [src]="item.imagem" [alt]="item.produtoNome" />
+            <div>
+              <p class="pedido__item-nome">{{ item.produtoNome }}</p>
+              <p class="pedido__item-detalhe">
+                {{ item.tamanho }} · {{ item.cor }} · {{ item.quantidade }}x
+              </p>
+            </div>
+            <span class="pedido__item-preco">
+              {{ item.precoUnitario * item.quantidade | currency: 'BRL' }}
+            </span>
+          </li>
+        }
+      </ul>
+    </div>
+
+    <div class="pedido__secao">
+      <h2>Entrega</h2>
+      <p>
+        {{ pedido()!.endereco.endereco }}, {{ pedido()!.endereco.numero }}
+        @if (pedido()!.endereco.bairro) {
+          · {{ pedido()!.endereco.bairro }}
+        }
+        <br />
+        {{ pedido()!.endereco.cidade }}/{{ pedido()!.endereco.uf }} · CEP {{ pedido()!.endereco.cep }}
+      </p>
+    </div>
+
+    <div class="pedido__secao pedido__total">
+      <span>Total</span>
+      <strong>{{ pedido()!.valorTotal | currency: 'BRL' }}</strong>
+    </div>
+
+    <a class="botao-secundario" routerLink="/">Voltar à loja</a>
+  </section>
+}

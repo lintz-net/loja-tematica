@@ -382,3 +382,13 @@
   color: var(--cor-texto-suave);
   max-width: 40ch;
 }
+
+.checkout-sucesso__acoes {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+
+  a {
+    text-decoration: none;
+  }
+}

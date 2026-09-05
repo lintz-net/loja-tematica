@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { DadosPaginaInstitucional } from './features/institucional/pagina-institucional.component';
+import { adminGuard } from './core/guards/admin.guard';
 
 const PAGINA_COMO_COMPRAR: DadosPaginaInstitucional = {
   titulo: 'Como comprar',
@@ -168,6 +169,26 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/checkout/pages/checkout/checkout.component').then(
         (m) => m.CheckoutComponent
+      ),
+  },
+  {
+    path: 'pedido/:codigo',
+    loadComponent: () =>
+      import('./features/pedido/pages/pedido/pedido.component').then((m) => m.PedidoComponent),
+  },
+  {
+    path: 'admin/login',
+    loadComponent: () =>
+      import('./features/admin/pages/login/admin-login.component').then(
+        (m) => m.AdminLoginComponent
+      ),
+  },
+  {
+    path: 'admin/pedidos',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./features/admin/pages/pedidos/admin-pedidos.component').then(
+        (m) => m.AdminPedidosComponent
       ),
   },
   {

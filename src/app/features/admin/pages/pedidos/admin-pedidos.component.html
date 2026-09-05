@@ -1,0 +1,57 @@
+<section class="container-pagina admin-pedidos">
+  <header class="admin-pedidos__cabecalho">
+    <h1>Pedidos</h1>
+    <button type="button" class="botao-secundario" (click)="sair()">Sair</button>
+  </header>
+
+  @if (erro()) {
+    <p class="admin-pedidos__erro">{{ erro() }}</p>
+  }
+
+  @if (carregando()) {
+    <p>Carregando pedidos…</p>
+  } @else if (pedidos().length === 0) {
+    <p>Nenhum pedido ainda.</p>
+  } @else {
+    <div class="admin-pedidos__tabela-wrap">
+      <table class="admin-pedidos__tabela">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Data</th>
+            <th>Cliente</th>
+            <th>Total</th>
+            <th>Pagamento</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (pedido of pedidos(); track pedido.codigo) {
+            <tr>
+              <td>{{ pedido.codigo }}</td>
+              <td>{{ pedido.criadoEm | date: 'dd/MM/yyyy, HH:mm' }}</td>
+              <td>
+                {{ pedido.nomeCliente }}
+                <br />
+                <span class="admin-pedidos__detalhe">{{ pedido.telefoneCliente }}</span>
+              </td>
+              <td>{{ pedido.valorTotal | currency: 'BRL' }}</td>
+              <td>{{ pedido.formaPagamento === 'pix' ? 'Pix' : 'Cartão' }}</td>
+              <td>
+                <select
+                  [value]="pedido.status"
+                  [disabled]="codigoSalvando() === pedido.codigo"
+                  (change)="atualizarStatus(pedido.codigo, $any($event.target).value)"
+                >
+                  @for (status of statusDisponiveis; track status) {
+                    <option [value]="status">{{ rotulosStatus[status] }}</option>
+                  }
+                </select>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

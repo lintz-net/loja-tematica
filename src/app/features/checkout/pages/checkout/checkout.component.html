@@ -11,7 +11,16 @@
       Um e-mail de confirmação foi enviado para <strong>{{ email() }}</strong> com os detalhes
       do pedido, e o comprovante seguirá assim que o pagamento for confirmado.
     </p>
-    <button type="button" class="botao-primario" (click)="voltarParaHome()">Voltar à loja</button>
+    <div class="checkout-sucesso__acoes">
+      <a class="botao-primario" [routerLink]="['/pedido', numeroPedido()]">Acompanhar pedido</a>
+      <button type="button" class="botao-secundario" (click)="voltarParaHome()">Voltar à loja</button>
+    </div>
+  </section>
+} @else if (erroFinalizacao()) {
+  <section class="container-pagina checkout-sucesso">
+    <h1>Não foi possível finalizar o pedido</h1>
+    <p>{{ erroFinalizacao() }}</p>
+    <button type="button" class="botao-primario" (click)="finalizarPedido()">Tentar novamente</button>
   </section>
 } @else {
   <section class="container-pagina checkout">
@@ -278,8 +287,13 @@
               Continuar
             </button>
           } @else {
-            <button type="button" class="botao-primario" (click)="finalizarPedido()">
-              Confirmar e finalizar pedido
+            <button
+              type="button"
+              class="botao-primario"
+              [disabled]="finalizandoPedido()"
+              (click)="finalizarPedido()"
+            >
+              {{ finalizandoPedido() ? 'Enviando pedido…' : 'Confirmar e finalizar pedido' }}
             </button>
           }
         </div>

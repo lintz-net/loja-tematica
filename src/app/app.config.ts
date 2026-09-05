@@ -9,6 +9,7 @@ import { CatalogoApiService } from './core/servicos/catalogo-api.service';
 import { BannerRepositorio } from './core/servicos/banner.repositorio';
 import { BannerMockService } from './core/servicos/banner-mock.service';
 import { BannerApiService } from './core/servicos/banner-api.service';
+import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -26,6 +27,6 @@ export const appConfig: ApplicationConfig = {
     {
       provide: BannerRepositorio,
       useClass: environment.useMock ? BannerMockService : BannerApiService,
-    },
+    }, provideClientHydration(withEventReplay()),
   ],
 };

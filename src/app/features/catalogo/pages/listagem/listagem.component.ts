@@ -1,8 +1,9 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, switchMap, tap } from 'rxjs';
 import { CatalogoRepositorio } from '../../../../core/servicos/catalogo.repositorio';
+import { SeoService } from '../../../../core/servicos/seo.service';
 import { CartaoProdutoComponent } from '../../../../shared/componentes/cartao-produto/cartao-produto.component';
 import { CartaoProdutoEsqueletoComponent } from '../../../../shared/componentes/cartao-produto-esqueleto/cartao-produto-esqueleto.component';
 
@@ -16,6 +17,7 @@ import { CartaoProdutoEsqueletoComponent } from '../../../../shared/componentes/
 export class ListagemComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly catalogoRepositorio = inject(CatalogoRepositorio);
+  private readonly seoService = inject(SeoService);
 
   readonly categorias = toSignal(this.catalogoRepositorio.obterCategorias(), {
     initialValue: [],
@@ -56,5 +58,14 @@ export class ListagemComponent {
 
   atualizarBusca(valor: string): void {
     this.termoBusca.set(valor);
+  }
+
+  constructor() {
+    effect(() => {
+      const categoria = this.categoriaAtual();
+      if (categoria) {
+        this.seoService.definir({ titulo: categoria.nome, descricao: categoria.descricaoCurta });
+      }
+    });
   }
 }

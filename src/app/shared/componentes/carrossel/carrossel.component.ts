@@ -1,4 +1,5 @@
-import { Component, Input, OnDestroy, OnInit, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Component, Input, OnDestroy, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Banner } from '../../../core/modelos/banner.model';
 
@@ -12,6 +13,7 @@ const INTERVALO_AUTOPLAY_MS = 5000;
   styleUrl: './carrossel.component.scss',
 })
 export class CarrosselComponent implements OnInit, OnDestroy {
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private _banners: Banner[] = [];
   @Input({ required: true })
   set banners(valor: Banner[]) {
@@ -37,7 +39,7 @@ export class CarrosselComponent implements OnInit, OnDestroy {
 
   private iniciarAutoplay(): void {
     this.pararAutoplay();
-    if (this.banners.length < 2) return;
+    if (!this.isBrowser || this.banners.length < 2) return;
     this.temporizador = setInterval(() => this.proximo(), INTERVALO_AUTOPLAY_MS);
   }
 

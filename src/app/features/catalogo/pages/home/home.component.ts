@@ -5,6 +5,7 @@ import { CatalogoRepositorio } from '../../../../core/servicos/catalogo.reposito
 import { BannerRepositorio } from '../../../../core/servicos/banner.repositorio';
 import { CarrosselComponent } from '../../../../shared/componentes/carrossel/carrossel.component';
 import { VistosRecentementeComponent } from '../../../../shared/componentes/vistos-recentemente/vistos-recentemente.component';
+import { SeoService } from '../../../../core/servicos/seo.service';
 
 @Component({
   selector: 'app-home',
@@ -16,6 +17,11 @@ import { VistosRecentementeComponent } from '../../../../shared/componentes/vist
 export class HomeComponent {
   private readonly catalogoRepositorio = inject(CatalogoRepositorio);
   private readonly bannerRepositorio = inject(BannerRepositorio);
+  private readonly seoService = inject(SeoService);
+
+  constructor() {
+    this.seoService.redefinirPadrao();
+  }
 
   readonly banners = toSignal(this.bannerRepositorio.obterBanners(), { initialValue: [] });
 

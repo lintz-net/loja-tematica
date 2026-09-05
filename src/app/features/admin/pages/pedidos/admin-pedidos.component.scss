@@ -1,0 +1,49 @@
+.admin-pedidos {
+  padding: 48px 0 80px;
+}
+
+.admin-pedidos__cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.admin-pedidos__erro {
+  color: #b3261e;
+  margin-bottom: 16px;
+}
+
+.admin-pedidos__tabela-wrap {
+  overflow-x: auto;
+}
+
+.admin-pedidos__tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+
+  th,
+  td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--cor-borda);
+    white-space: nowrap;
+  }
+
+  th {
+    color: var(--cor-texto-suave);
+    font-weight: 600;
+  }
+
+  select {
+    padding: 6px 8px;
+    border-radius: var(--raio-padrao);
+    border: 1px solid var(--cor-borda);
+  }
+}
+
+.admin-pedidos__detalhe {
+  color: var(--cor-texto-suave);
+  font-size: 0.8rem;
+}

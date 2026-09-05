@@ -1,4 +1,5 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { Produto } from '../modelos/produto.model';
 import { CatalogoRepositorio } from './catalogo.repositorio';
 
@@ -8,6 +9,7 @@ const LIMITE_VISTOS = 12;
 @Injectable({ providedIn: 'root' })
 export class VistosRecentementeService {
   private readonly catalogoRepositorio = inject(CatalogoRepositorio);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   /** IDs do mais recente pro mais antigo — só os IDs são persistidos, os dados completos
    * do produto (preço/estoque/imagens) são sempre reidratados do catálogo, igual ao
@@ -27,7 +29,9 @@ export class VistosRecentementeService {
       LIMITE_VISTOS
     );
     this.idsVistos.set(idsAtualizados);
-    localStorage.setItem(CHAVE_ARMAZENAMENTO, JSON.stringify(idsAtualizados));
+    if (this.isBrowser) {
+      localStorage.setItem(CHAVE_ARMAZENAMENTO, JSON.stringify(idsAtualizados));
+    }
 
     const produtosAtualizados = [
       produto,
@@ -37,6 +41,8 @@ export class VistosRecentementeService {
   }
 
   private restaurarDoArmazenamento(): void {
+    if (!this.isBrowser) return;
+
     const bruto = localStorage.getItem(CHAVE_ARMAZENAMENTO);
     const ids = this.parsearIds(bruto);
     if (ids.length === 0) return;

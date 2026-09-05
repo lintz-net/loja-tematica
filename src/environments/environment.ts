@@ -5,4 +5,10 @@ export const environment = {
   apiUrl: '/api',
   /** Latência artificial do mock, em ms, para simular uma chamada de rede real. */
   mockDelayMs: 400,
+  supabaseUrl: 'https://tmrtyotlvrznavjorkay.supabase.co',
+  supabaseKey: 'sb_publishable_C-19JMHS11IjYHJ4ngIFQw_wfojX8DA',
+  /** nostalgika.com.br já existe mas aponta pra outro site (não pra esta app) — usar
+   * localhost enquanto só rodamos localmente. Trocar pro domínio real assim que a loja for
+   * publicada de verdade nele, senão o link do e-mail de confirmação e o og:image quebram. */
+  siteUrl: 'http://localhost:4300',
 };

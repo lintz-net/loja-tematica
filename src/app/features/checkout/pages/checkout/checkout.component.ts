@@ -1,6 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { CarrinhoService } from '../../../../core/servicos/carrinho.service';
+import { PedidoService } from '../../../../core/servicos/pedido.service';
+import { ItemPedido } from '../../../../core/modelos/pedido.model';
 
 type EtapaCheckout = 'contato' | 'endereco' | 'frete' | 'pagamento' | 'revisao';
 
@@ -38,11 +40,13 @@ const BANDEIRAS_ACEITAS = ['Visa', 'Mastercard', 'Elo', 'Amex', 'Hipercard', 'Di
 @Component({
   selector: 'app-checkout',
   standalone: true,
+  imports: [RouterLink],
   templateUrl: './checkout.component.html',
   styleUrl: './checkout.component.scss',
 })
 export class CheckoutComponent {
   private readonly carrinhoService = inject(CarrinhoService);
+  private readonly pedidoService = inject(PedidoService);
   private readonly router = inject(Router);
 
   readonly itens = this.carrinhoService.itensCarrinho;
@@ -133,6 +137,8 @@ export class CheckoutComponent {
 
   readonly pedidoFinalizado = signal(false);
   readonly numeroPedido = signal('');
+  readonly finalizandoPedido = signal(false);
+  readonly erroFinalizacao = signal<string | null>(null);
 
   atualizarNome(valor: string): void {
     this.nome.set(valor);
@@ -253,10 +259,52 @@ export class CheckoutComponent {
   }
 
   finalizarPedido(): void {
-    const codigo = Date.now().toString(36).toUpperCase().slice(-6);
-    this.numeroPedido.set(`VT-${codigo}`);
-    this.pedidoFinalizado.set(true);
-    this.carrinhoService.limparCarrinho();
+    this.finalizandoPedido.set(true);
+    this.erroFinalizacao.set(null);
+
+    const itensPedido: ItemPedido[] = this.itens().map((item) => ({
+      produtoNome: item.produto.nome,
+      produtoSlug: item.produto.slug,
+      imagem: item.produto.imagens[0] ?? '',
+      tamanho: item.variante.tamanho,
+      cor: item.variante.cor,
+      quantidade: item.quantidade,
+      precoUnitario: item.variante.precoOverride ?? item.produto.precoBase,
+    }));
+
+    this.pedidoService
+      .criarPedido({
+        nomeCliente: this.nome(),
+        emailCliente: this.email(),
+        telefoneCliente: this.telefone(),
+        endereco: {
+          endereco: this.endereco(),
+          numero: this.numero(),
+          bairro: this.bairro(),
+          cidade: this.cidade(),
+          uf: this.uf(),
+          cep: this.cep(),
+        },
+        itens: itensPedido,
+        formaPagamento: this.formaPagamento(),
+        parcelas: this.formaPagamento() === 'cartao' ? this.parcelas() : 1,
+        valorFrete: this.valorFrete(),
+        valorTotal: this.valorTotal(),
+      })
+      .subscribe({
+        next: (pedido) => {
+          this.numeroPedido.set(pedido.codigo);
+          this.pedidoFinalizado.set(true);
+          this.finalizandoPedido.set(false);
+          this.carrinhoService.limparCarrinho();
+        },
+        error: () => {
+          this.finalizandoPedido.set(false);
+          this.erroFinalizacao.set(
+            'Houve um problema ao registrar seu pedido. Tente novamente em instantes.'
+          );
+        },
+      });
   }
 
   voltarParaHome(): void {

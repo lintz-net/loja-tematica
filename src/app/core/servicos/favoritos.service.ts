@@ -1,4 +1,5 @@
-import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Injectable, PLATFORM_ID, computed, effect, inject, signal } from '@angular/core';
 import { Produto } from '../modelos/produto.model';
 import { CatalogoRepositorio } from './catalogo.repositorio';
 
@@ -7,6 +8,7 @@ const CHAVE_ARMAZENAMENTO = 'nostalgika:favoritos';
 @Injectable({ providedIn: 'root' })
 export class FavoritosService {
   private readonly catalogoRepositorio = inject(CatalogoRepositorio);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly idsFavoritos = signal<Set<string>>(new Set());
   private carregado = false;
 
@@ -21,7 +23,7 @@ export class FavoritosService {
     this.restaurarDoArmazenamento();
     effect(() => {
       const ids = this.idsFavoritos();
-      if (this.carregado) {
+      if (this.carregado && this.isBrowser) {
         localStorage.setItem(CHAVE_ARMAZENAMENTO, JSON.stringify(Array.from(ids)));
       }
     });
@@ -51,6 +53,11 @@ export class FavoritosService {
   }
 
   private restaurarDoArmazenamento(): void {
+    if (!this.isBrowser) {
+      this.carregado = true;
+      return;
+    }
+
     const bruto = localStorage.getItem(CHAVE_ARMAZENAMENTO);
     const ids = this.parsearIds(bruto);
     if (ids.length === 0) {

@@ -6,6 +6,7 @@ import { CatalogoRepositorio } from '../../../../core/servicos/catalogo.reposito
 import { CarrinhoService } from '../../../../core/servicos/carrinho.service';
 import { FavoritosService } from '../../../../core/servicos/favoritos.service';
 import { VistosRecentementeService } from '../../../../core/servicos/vistos-recentemente.service';
+import { SeoService } from '../../../../core/servicos/seo.service';
 import { FaixaMedida } from '../../../../core/modelos/produto.model';
 import { corParaEstiloSwatch } from '../../../../core/utilitarios/cor.util';
 import { GaleriaProdutoComponent } from '../../../../shared/componentes/galeria-produto/galeria-produto.component';
@@ -33,6 +34,7 @@ export class DetalheProdutoComponent {
   private readonly carrinhoService = inject(CarrinhoService);
   private readonly favoritosService = inject(FavoritosService);
   private readonly vistosRecentementeService = inject(VistosRecentementeService);
+  private readonly seoService = inject(SeoService);
 
   private readonly slugProduto$ = this.route.paramMap.pipe(
     map((params) => params.get('slug') ?? '')
@@ -113,6 +115,12 @@ export class DetalheProdutoComponent {
         // sem isso, o efeito passa a depender delas também e reagenda a si mesmo a cada
         // escrita (novo array = nova referência), entrando em loop infinito e travando a aba.
         untracked(() => this.vistosRecentementeService.registrarVisita(produto));
+        this.seoService.definir({
+          titulo: produto.nome,
+          descricao: produto.descricao,
+          imagem: produto.imagens[0],
+          tipo: 'product',
+        });
       }
     });
   }

@@ -1,0 +1,35 @@
+<section class="container-pagina admin-login">
+  <h1>Acesso administrativo</h1>
+
+  <form (submit)="$event.preventDefault(); entrar()">
+    <label>
+      E-mail
+      <input
+        type="email"
+        [value]="email()"
+        (input)="atualizarEmail($any($event.target).value)"
+        required
+        autocomplete="username"
+      />
+    </label>
+
+    <label>
+      Senha
+      <input
+        type="password"
+        [value]="senha()"
+        (input)="atualizarSenha($any($event.target).value)"
+        required
+        autocomplete="current-password"
+      />
+    </label>
+
+    @if (erro()) {
+      <p class="admin-login__erro">{{ erro() }}</p>
+    }
+
+    <button type="submit" class="botao-primario" [disabled]="entrando()">
+      {{ entrando() ? 'Entrando…' : 'Entrar' }}
+    </button>
+  </form>
+</section>
