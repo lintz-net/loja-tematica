@@ -83,6 +83,27 @@ WhatsApp/Instagram/Facebook e SEO orgânico já funcionam.
 - A imagem padrão `og-padrao.jpg` referenciada em `environment.prod.ts`/`SeoService` é
   fictícia — subir uma imagem de preview de verdade antes de publicar.
 
+### ⚠️ Limitação conhecida: SSR das rotas dinâmicas não funciona no Netlify
+
+O site está publicado em `strong-centaur-0240eb.netlify.app` e funciona pra home, checkout,
+`/admin` e e-mail de confirmação. Mas a Edge Function do Angular (`angular-ssr`, via
+`@netlify/angular-runtime`) não está sendo invocada em produção pras rotas dinâmicas
+(`/produto/:slug`, `/categoria/:slug`) — mesmo com o build local confirmando que o handler
+funciona perfeitamente (testado direto via Node, gera HTML com as tags `og:*` corretas). Em
+produção, essas rotas caem no fallback estático do Netlify (servem a home genérica), então
+**o preview de link específico por produto/categoria não funciona nesse host hoje**.
+
+Investigado sem sucesso: configurações de build corretas (Runtime: Angular, publish
+directory certo), função aparece implantada na aba Edge Functions mas com 0 invocações
+mesmo em tempo real, "Clear cache and deploy" não resolveu. Parece bug/particularidade da
+plataforma Netlify nesse site específico (possivelmente por ter sido criado originalmente
+como site estático antes do SSR existir).
+
+Não bloqueia o funcionamento da loja — só a funcionalidade de preview de link dinâmico por
+página. Se for revisitar: considerar recriar o site do zero no Netlify (mesmo repo) ou abrir
+chamado no suporte deles descrevendo "Edge Function deployed but never invoked for
+non-prerendered routes".
+
 ## Marketing: tráfego pago e pixels de conversão
 
 Com SSR resolvido, falta a parte de tráfego pago em si — pixels e catálogo dinâmico:
