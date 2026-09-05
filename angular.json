@@ -37,9 +37,10 @@
             "scripts": [],
             "server": "src/main.server.ts",
             "security": {
-              "allowedHosts": ["*"]
+              "allowedHosts": ["localhost", "*.netlify.app", "nostalgika.com.br", "*.nostalgika.com.br"]
             },
             "prerender": true,
+            "outputMode": "server",
             "ssr": {
               "entry": "src/server.ts"
             }
