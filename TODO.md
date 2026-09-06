@@ -132,23 +132,25 @@ rotas respondem 200 com HTML completo e tags corretas).
 - A imagem padrão `og-padrao.jpg` referenciada em `environment.prod.ts`/`SeoService` é
   fictícia — subir uma imagem de preview de verdade antes de publicar.
 
-### ⚠️ Ação necessária antes do próximo deploy: reconferir a Edge Function no Netlify
+### ✅ SSR funcionando de verdade em produção — feito
 
-Antes desta mudança pro catálogo real, já tínhamos observado que a Edge Function do Angular
-(`angular-ssr`, via `@netlify/angular-runtime`) não estava sendo invocada em produção
-(`strong-centaur-0240eb.netlify.app`) pras rotas que não eram pré-renderizadas em build —
-só as rotas estáticas (servidas direto do CDN) funcionavam; produto/categoria caíam no
-fallback genérico do Netlify. Investigado sem sucesso na época: configurações de build
-corretas, função aparece implantada mas com 0 invocações mesmo em tempo real, "Clear cache
-and deploy" não resolveu.
+O problema anterior ("Edge Function nunca invocada") era, na real, dois bugs distintos que
+faziam a Edge Function rodar mas cair pra um resultado vazio/quebrado — não a ausência de
+invocação:
 
-**Isso importa muito mais agora**: como o pré-render em build foi desativado por completo
-(seção acima) — toda rota, incluindo a home, agora depende de a Edge Function realmente
-rodar. Se aquele bug do Netlify continuar, o site pode não funcionar **em nenhuma rota**
-depois do próximo deploy (não testado ainda nesta configuração). Antes de fazer o próximo
-deploy: testar em produção assim que subir, e se a home não carregar dados reais, considerar
-recriar o site do zero no Netlify (mesmo repo) ou abrir chamado no suporte deles descrevendo
-"Edge Function deployed but never invoked".
+1. **Deopt silencioso pra CSR**: o `AngularAppEngine` recebia o header `x-forwarded-for` que
+   o proxy do Netlify sempre adiciona, não reconhecia como confiável, e servia só o shell
+   client-side vazio (sem os dados buscados no servidor) em vez de travar/logar um erro
+   claro. Corrigido passando `trustProxyHeaders: true` no `AngularAppEngine` (`server.ts`) —
+   seguro porque o proxy do Netlify é uma borda confiável.
+2. **`ReferenceError: Buffer is not defined`**: o `HttpClient` do Angular usa `xhr2` como
+   backend padrão no servidor, que depende de `Buffer` — indisponível no runtime **Deno**
+   das Edge Functions do Netlify (Node e Deno não são a mesma coisa). Corrigido trocando pro
+   backend `fetch` nativo do próprio Angular (`provideHttpClient(withFetch())` em
+   `app.config.ts`), compatível com Node, Deno e browser.
+
+Confirmado em produção (`strong-centaur-0240eb.netlify.app`): home com os 128 produtos reais,
+`/produto/:slug` e `/categoria/:slug` com dados e tags `og:*` corretas.
 
 ## Marketing: tráfego pago e pixels de conversão
 
