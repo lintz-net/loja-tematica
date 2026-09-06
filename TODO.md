@@ -46,9 +46,9 @@ Pendente pra depois:
 
 ## ✅ Catálogo real (sem mock) — feito
 
-Categorias, produtos e banners saíram do mock em memória (`catalogo.mock-data.ts`) e agora
-vêm de tabelas reais no Supabase (`categorias`, `produtos`, `banners` — schema em
-`docs/supabase/migration-004-catalogo.sql`). `useMock: false` em todos os `environment*.ts`.
+Categorias, produtos e banners saíram do mock em memória e agora vêm de tabelas reais no
+Supabase (`categorias`, `produtos`, `banners` — schema em
+`docs/supabase/migration-004-catalogo.sql`).
 
 - **Imagens continuam estáticas no repositório** (`public/imagens/produtos/<slug>/`, 256MB)
   — decisão consciente por enquanto, sem custo extra e já funcionando via CDN. Migrar pra
@@ -57,11 +57,15 @@ vêm de tabelas reais no Supabase (`categorias`, `produtos`, `banners` — schem
 - **Sem tela de admin de produtos ainda** — pra adicionar/editar/remover produto hoje só via
   SQL direto no Supabase (as policies de `produtos`/`categorias`/`banners` só liberam
   `select`, nenhum insert/update/delete pra ninguém).
-- Os 128 produtos, 6 categorias e 3 banners do mock foram migrados de uma vez via
-  `scripts/gerar-seed-catalogo.ts` (rodar com `npx tsx scripts/gerar-seed-catalogo.ts`),
-  que gera `docs/supabase/seed-catalogo-gerado.sql` a partir do mock — útil de referência se
-  precisar reimportar ou comparar dados no futuro, mas não faz parte do fluxo normal (já
-  rodado uma vez).
+- Os 128 produtos, 6 categorias e 3 banners do mock foram migrados de uma vez via um script
+  descartável (`scripts/gerar-seed-catalogo.ts`, já removido do repo depois de rodado). O
+  resultado gerado (`docs/supabase/seed-catalogo-gerado.sql`) ficou como referência histórica
+  caso precise reimportar ou comparar dados no futuro.
+- **Limpeza feita**: removidos `catalogo-mock.service.ts`, `banner-mock.service.ts`,
+  `catalogo.mock-data.ts`, `banner.mock-data.ts`, `catalogo-ozklo.manifest.ts` e a flag
+  `useMock`/`apiUrl`/`mockDelayMs` dos `environment*.ts` — código morto desde que o
+  catálogo passou a vir do Supabase. `app.config.ts` agora injeta
+  `CatalogoApiService`/`BannerApiService` direto, sem branching.
 
 **Achado importante durante a migração — evitar no futuro**: o cliente completo
 `@supabase/supabase-js` (`createClient`) sempre inicializa um `RealtimeClient` internamente,
@@ -151,6 +155,15 @@ invocação:
 
 Confirmado em produção (`strong-centaur-0240eb.netlify.app`): home com os 128 produtos reais,
 `/produto/:slug` e `/categoria/:slug` com dados e tags `og:*` corretas.
+
+## Outros mocks/dados fixos que restam
+
+- **`/conta`** mostra um usuário fake fixo ("Convidado Fã de Tudo"), sem cadastro/login real
+  de cliente — diferente do login de admin (`/admin/login`), que já é real. Implementar
+  requer decidir o modelo (cadastro completo vs. só via Supabase Auth) — não iniciado.
+- **Frete no checkout** — as opções (`OPCOES_FRETE` em `checkout.component.ts`) são valores
+  fixos no código, não vêm de uma calculadora de frete real (Correios/transportadora). Junto
+  seguiria a integração de rastreio real já anotada na seção de acompanhamento de pedido.
 
 ## Marketing: tráfego pago e pixels de conversão
 

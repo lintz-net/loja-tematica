@@ -1,10 +1,5 @@
 export const environment = {
   production: false,
-  /** Quando true, usa CatalogoMockService (dados em memória). Quando false, usa CatalogoApiService (Supabase). */
-  useMock: false,
-  apiUrl: '/api',
-  /** Latência artificial do mock, em ms, para simular uma chamada de rede real. */
-  mockDelayMs: 400,
   supabaseUrl: 'https://tmrtyotlvrznavjorkay.supabase.co',
   supabaseKey: 'sb_publishable_C-19JMHS11IjYHJ4ngIFQw_wfojX8DA',
   /** Domínio real (vistanostalgica.com.br) ainda não registrado — usar localhost enquanto
