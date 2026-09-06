@@ -1,5 +1,5 @@
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideRouter, withInMemoryScrolling, withViewTransitions } from '@angular/router';
 import { environment } from '../environments/environment';
 import { routes } from './app.routes';
@@ -19,7 +19,12 @@ export const appConfig: ApplicationConfig = {
       withViewTransitions(),
       withInMemoryScrolling({ scrollPositionRestoration: 'top', anchorScrolling: 'enabled' })
     ),
-    provideHttpClient(),
+    /** withFetch: sem isso, o HttpClient usa xhr2 no servidor, que depende de `Buffer` —
+     * indisponível no runtime Deno das Edge Functions do Netlify ("Buffer is not defined").
+     * O backend fetch nativo funciona em Node, Deno e browser sem essa dependência, e
+     * continua sendo rastreado corretamente pelo Zone.js pra estabilidade do SSR (ao
+     * contrário de chamar `fetch` diretamente, sem passar pelo HttpClient). */
+    provideHttpClient(withFetch()),
     {
       provide: CatalogoRepositorio,
       useClass: environment.useMock ? CatalogoMockService : CatalogoApiService,
