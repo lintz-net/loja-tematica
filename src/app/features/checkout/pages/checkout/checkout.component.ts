@@ -3,6 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { CarrinhoService } from '../../../../core/servicos/carrinho.service';
 import { PedidoService } from '../../../../core/servicos/pedido.service';
 import { ItemPedido } from '../../../../core/modelos/pedido.model';
+import { imagemDaVariante } from '../../../../core/utilitarios/imagem-produto.util';
 
 type EtapaCheckout = 'contato' | 'endereco' | 'frete' | 'pagamento' | 'revisao';
 
@@ -265,7 +266,7 @@ export class CheckoutComponent {
     const itensPedido: ItemPedido[] = this.itens().map((item) => ({
       produtoNome: item.produto.nome,
       produtoSlug: item.produto.slug,
-      imagem: item.produto.imagens[0] ?? '',
+      imagem: imagemDaVariante(item.produto, item.variante),
       tamanho: item.variante.tamanho,
       cor: item.variante.cor,
       quantidade: item.quantidade,

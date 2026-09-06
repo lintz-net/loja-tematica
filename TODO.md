@@ -50,13 +50,6 @@ Categorias, produtos e banners saíram do mock em memória e agora vêm de tabel
 Supabase (`categorias`, `produtos`, `banners` — schema em
 `docs/supabase/migration-004-catalogo.sql`).
 
-- **Imagens continuam estáticas no repositório** (`public/imagens/produtos/<slug>/`, 256MB)
-  — decisão consciente por enquanto, sem custo extra e já funcionando via CDN. Migrar pra
-  Supabase Storage só faria sentido junto com uma tela de admin de produtos (não existe
-  ainda — ver abaixo).
-- **Sem tela de admin de produtos ainda** — pra adicionar/editar/remover produto hoje só via
-  SQL direto no Supabase (as policies de `produtos`/`categorias`/`banners` só liberam
-  `select`, nenhum insert/update/delete pra ninguém).
 - Os 128 produtos, 6 categorias e 3 banners do mock foram migrados de uma vez via um script
   descartável (`scripts/gerar-seed-catalogo.ts`, já removido do repo depois de rodado). O
   resultado gerado (`docs/supabase/seed-catalogo-gerado.sql`) ficou como referência histórica
@@ -77,8 +70,48 @@ só nunca resolve) em Node < 22 ao tentar sincronizar o token de auth via WebSoc
   (não `fetch` puro: o Zone.js não rastreia `fetch` nativo no Node, o que causaria a página
   ser servida com dados vazios no SSR por uma corrida entre a serialização e a resposta).
 - O cliente completo (`supabase.client.ts`, com GoTrue) só é usado por `AuthService` e pelas
-  operações de admin (`listarTodos`/`atualizarStatus` em `pedido.service.ts`) — todas
-  restritas a rodar só no browser (nunca durante SSR), então nunca disparam o travamento.
+  operações de admin (`listarTodos`/`atualizarStatus` em `pedido.service.ts`,
+  `admin-produto.service.ts` inteiro) — todas restritas a rodar só no browser (nunca durante
+  SSR), então nunca disparam o travamento.
+
+### ✅ Gestão de produtos no admin (CRUD completo) — feito
+
+`/admin/produtos` lista os produtos, com criar/editar/excluir (`AdminProdutoFormComponent` +
+`AdminProdutoService`). Imagens migradas pro **Supabase Storage** (bucket `produtos`,
+`docs/supabase/migration-005-admin-produtos.sql`) — os 128 produtos existentes tiveram suas
+1006 imagens migradas via `scripts/migrar-imagens-storage.ts` (script pontual, pasta
+`public/imagens/produtos` removida do repo depois, -255MB). Upload de imagem nova no
+formulário sobe direto pro Storage.
+
+Tamanho/cor no formulário usam checkboxes com listas fixas (não texto livre) + botão "Gerar
+variantes" que monta a matriz tamanho×cor automaticamente — corrigido depois que o texto
+livre permitiu criar uma matriz incompleta (ex.: 1 cor por tamanho) que deixava a seleção da
+página de produto "travada" (botão "Adicionar ao carrinho" nunca habilitava, porque
+`varianteSelecionada()` nunca achava uma variante batendo com os dois seletores).
+
+**Testado e funcionando** (confirmado pelo usuário) — mas com melhorias pendentes que ele
+quer revisitar depois (telas ainda simples):
+
+- Reordenar imagens (hoje só entram na ordem em que foram enviadas, sem drag-and-drop).
+- Excluir imagem do Storage de verdade ao remover do produto (hoje só tira do array
+  `imagens`, o arquivo fica órfão no bucket).
+- ✅ `imagensPorCor` (mapa cor → fotos específicas) já tem UI — seção "Fotos por cor" no
+  formulário, aparece depois de marcar as cores e ter imagens enviadas. Só afeta produtos
+  cadastrados/editados pelo admin daqui pra frente — os 127 produtos antigos sem esse
+  de-para (só a Camiseta Donkey Kong tinha, curada manualmente antes do admin existir)
+  precisam ser editados um a um se quiser adicionar isso a eles.
+- `guiaMedidas` (tabela de medidas) ainda não tem UI — só dá pra editar via SQL direto.
+- Sem confirmação de "descartar alterações" ao sair do formulário sem salvar.
+- Geral: refinar UX/visual das telas (o próprio usuário achou "bem simples").
+
+### ✅ Imagem do item no carrinho respeita a cor escolhida — feito
+
+Carrinho, gaveta lateral e checkout (que grava a imagem no pedido/e-mail de confirmação)
+mostravam sempre `produto.imagens[0]` — a primeira foto do produto, ignorando qual cor foi
+selecionada. Criado `imagem-produto.util.ts` (`imagemDaVariante`) que usa a primeira foto de
+`imagensPorCor[cor]` quando existir, com fallback pra primeira imagem geral. Só tem efeito
+visível pra produtos com "Fotos por cor" preenchido no admin (ver item acima) — sem isso,
+continua mostrando a foto genérica do produto, que é o único fallback possível.
 
 ## Pagamento (Pix e Cartão de crédito)
 

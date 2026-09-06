@@ -2,6 +2,7 @@ import { Component, HostListener, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CarrinhoService } from '../../../core/servicos/carrinho.service';
 import { ItemCarrinho } from '../../../core/modelos/carrinho.model';
+import { imagemDaVariante } from '../../../core/utilitarios/imagem-produto.util';
 
 @Component({
   selector: 'app-carrinho-gaveta',
@@ -26,6 +27,10 @@ export class CarrinhoGavetaComponent {
 
   calcularPrecoUnitario(item: ItemCarrinho): number {
     return item.variante.precoOverride ?? item.produto.precoBase;
+  }
+
+  imagemDoItem(item: ItemCarrinho): string {
+    return imagemDaVariante(item.produto, item.variante);
   }
 
   atualizarQuantidade(varianteId: string, quantidade: number): void {

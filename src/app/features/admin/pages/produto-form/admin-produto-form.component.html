@@ -1,0 +1,181 @@
+<section class="container-pagina admin-produto-form">
+  <header class="admin-produto-form__cabecalho">
+    <h1>{{ modoEdicao ? 'Editar produto' : 'Novo produto' }}</h1>
+    <a routerLink="/admin/produtos" class="botao-secundario">Voltar</a>
+  </header>
+
+  @if (carregando()) {
+    <p>Carregando…</p>
+  } @else {
+    @if (erro()) {
+      <p class="admin-produto-form__erro">{{ erro() }}</p>
+    }
+
+    <form (submit)="$event.preventDefault(); salvar()">
+      <label>
+        Nome
+        <input type="text" [value]="nome()" (input)="atualizarNome($any($event.target).value)" required />
+      </label>
+
+      <label>
+        Slug (URL)
+        <input type="text" [value]="slug()" (input)="atualizarSlug($any($event.target).value)" required />
+      </label>
+
+      <label>
+        Descrição
+        <textarea rows="3" [value]="descricao()" (input)="atualizarDescricao($any($event.target).value)"></textarea>
+      </label>
+
+      <label>
+        Preço base (R$)
+        <input
+          type="number"
+          step="0.01"
+          min="0"
+          [value]="precoBase()"
+          (input)="atualizarPrecoBase($any($event.target).value)"
+        />
+      </label>
+
+      <fieldset class="admin-produto-form__categorias">
+        <legend>Categorias</legend>
+        @for (categoria of categoriasDisponiveis(); track categoria.id) {
+          <label class="admin-produto-form__checkbox">
+            <input
+              type="checkbox"
+              [checked]="categoriaSelecionada(categoria.slug)"
+              (change)="alternarCategoria(categoria.slug, $any($event.target).checked)"
+            />
+            {{ categoria.icone }} {{ categoria.nome }}
+          </label>
+        }
+      </fieldset>
+
+      <fieldset class="admin-produto-form__imagens">
+        <legend>Imagens</legend>
+
+        @if (imagens().length > 0) {
+          <div class="admin-produto-form__grade-imagens">
+            @for (url of imagens(); track url) {
+              <div class="admin-produto-form__imagem">
+                <img [src]="url" alt="" />
+                <button type="button" (click)="removerImagem(url)">Remover</button>
+              </div>
+            }
+          </div>
+        }
+
+        <input type="file" accept="image/*" multiple (change)="aoSelecionarArquivos($event)" [disabled]="!slug()" />
+        @if (!slug()) {
+          <p class="admin-produto-form__aviso">Preencha o nome/slug antes de enviar imagens.</p>
+        }
+        @if (enviandoImagem()) {
+          <p>Enviando imagem…</p>
+        }
+      </fieldset>
+
+      <fieldset class="admin-produto-form__tamanhos">
+        <legend>Tamanhos</legend>
+        @for (tamanho of tamanhosPadrao; track tamanho) {
+          <label class="admin-produto-form__checkbox">
+            <input
+              type="checkbox"
+              [checked]="tamanhosMarcados().has(tamanho)"
+              (change)="alternarTamanho(tamanho, $any($event.target).checked)"
+            />
+            {{ tamanho }}
+          </label>
+        }
+      </fieldset>
+
+      <fieldset class="admin-produto-form__cores">
+        <legend>Cores</legend>
+        @for (cor of coresConhecidas; track cor) {
+          <label class="admin-produto-form__checkbox">
+            <input
+              type="checkbox"
+              [checked]="coresMarcadas().has(cor)"
+              (change)="alternarCor(cor, $any($event.target).checked)"
+            />
+            <span class="admin-produto-form__swatch" [style.background]="corParaEstiloSwatch(cor)"></span>
+            {{ cor }}
+          </label>
+        }
+      </fieldset>
+
+      <button type="button" class="botao-secundario" (click)="gerarVariantes()">
+        Gerar variantes ({{ tamanhosMarcados().size }} tamanhos × {{ coresMarcadas().size }} cores)
+      </button>
+
+      @if (variantes().length > 0) {
+        <fieldset class="admin-produto-form__variantes">
+          <legend>Estoque por variante</legend>
+
+          @for (variante of variantes(); track variante.id) {
+            <div class="admin-produto-form__linha-variante">
+              <span class="admin-produto-form__variante-nome">{{ variante.tamanho }} · {{ variante.cor }}</span>
+              <input
+                type="number"
+                min="0"
+                placeholder="Estoque"
+                [value]="variante.quantidadeEstoque"
+                (input)="atualizarVariante(variante.id, 'quantidadeEstoque', $any($event.target).value)"
+              />
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="Preço (opcional)"
+                [value]="variante.precoOverride"
+                (input)="atualizarVariante(variante.id, 'precoOverride', $any($event.target).value)"
+              />
+            </div>
+          }
+        </fieldset>
+      } @else {
+        <p class="admin-produto-form__aviso">
+          Marque os tamanhos e cores acima e clique em "Gerar variantes".
+        </p>
+      }
+
+      @if (coresMarcadas().size > 0 && imagens().length > 0) {
+        <fieldset class="admin-produto-form__fotos-por-cor">
+          <legend>Fotos por cor (opcional)</legend>
+          <p class="admin-produto-form__aviso">
+            Marque quais fotos são daquela cor — ao selecionar a cor na página do produto, a
+            galeria pula direto pra essas fotos. Cor sem nenhuma foto marcada mostra a
+            galeria completa normalmente.
+          </p>
+
+          @for (cor of coresMarcadas(); track cor) {
+            <div class="admin-produto-form__cor-fotos">
+              <h4>
+                <span class="admin-produto-form__swatch" [style.background]="corParaEstiloSwatch(cor)"></span>
+                {{ cor }}
+              </h4>
+              <div class="admin-produto-form__grade-imagens">
+                @for (url of imagens(); track url) {
+                  <label class="admin-produto-form__imagem-selecionavel">
+                    <img [src]="url" alt="" />
+                    <input
+                      type="checkbox"
+                      [checked]="imagemMarcadaParaCor(cor, url)"
+                      (change)="alternarImagemDaCor(cor, url, $any($event.target).checked)"
+                    />
+                  </label>
+                }
+              </div>
+            </div>
+          }
+        </fieldset>
+      }
+
+      <div class="admin-produto-form__acoes">
+        <button type="submit" class="botao-primario" [disabled]="!podeSalvar() || salvando()">
+          {{ salvando() ? 'Salvando…' : 'Salvar produto' }}
+        </button>
+      </div>
+    </form>
+  }
+</section>

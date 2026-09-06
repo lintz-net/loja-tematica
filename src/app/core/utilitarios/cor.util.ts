@@ -30,3 +30,9 @@ export function corParaEstiloSwatch(nomeCor: string): string {
   const chave = nomeCor.trim().toLowerCase();
   return MAPA_CORES[chave] ?? '#9a9aa5';
 }
+
+/** Nomes de cor conhecidos (capitalizados), pra oferecer como opção fixa em vez de texto
+ * livre — evita variantes com nome de cor digitado errado/inconsistente. */
+export const CORES_CONHECIDAS: string[] = Object.keys(MAPA_CORES).map(
+  (chave) => chave.charAt(0).toUpperCase() + chave.slice(1)
+);

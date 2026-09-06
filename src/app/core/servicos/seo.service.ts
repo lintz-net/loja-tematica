@@ -44,8 +44,9 @@ export class SeoService {
     this.definirTag('twitter:image', imagemAbsoluta);
   }
 
-  /** Crawlers de redes sociais exigem og:image absoluto — imagens do catálogo hoje vêm
-   * com caminho relativo (ex.: /imagens/produtos/...). */
+  /** Crawlers de redes sociais exigem og:image absoluto. Imagens de produto já vêm do
+   * Supabase Storage como URL absoluta (passa direto); mantido como salvaguarda pra
+   * qualquer imagem que ainda venha com caminho relativo. */
   private tornarAbsoluta(caminho: string | undefined): string | undefined {
     if (!caminho) return undefined;
     if (/^https?:\/\//.test(caminho)) return caminho;

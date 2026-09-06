@@ -1,0 +1,61 @@
+<section class="container-pagina admin-produtos">
+  <header class="admin-produtos__cabecalho">
+    <h1>Produtos</h1>
+    <div class="admin-produtos__acoes-cabecalho">
+      <a routerLink="/admin/pedidos" class="botao-secundario">Pedidos</a>
+      <a routerLink="/admin/produtos/novo" class="botao-primario">Novo produto</a>
+      <button type="button" class="botao-secundario" (click)="sair()">Sair</button>
+    </div>
+  </header>
+
+  @if (erro()) {
+    <p class="admin-produtos__erro">{{ erro() }}</p>
+  }
+
+  @if (carregando()) {
+    <p>Carregando produtos…</p>
+  } @else if (produtos().length === 0) {
+    <p>Nenhum produto cadastrado ainda.</p>
+  } @else {
+    <div class="admin-produtos__tabela-wrap">
+      <table class="admin-produtos__tabela">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Nome</th>
+            <th>Categorias</th>
+            <th>Preço</th>
+            <th>Variantes</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (produto of produtos(); track produto.id) {
+            <tr>
+              <td>
+                @if (produto.imagens[0]) {
+                  <img [src]="produto.imagens[0]" [alt]="produto.nome" class="admin-produtos__miniatura" />
+                }
+              </td>
+              <td>{{ produto.nome }}</td>
+              <td>{{ produto.categorias.join(', ') }}</td>
+              <td>{{ produto.precoBase | currency: 'BRL' }}</td>
+              <td>{{ produto.variantes.length }}</td>
+              <td class="admin-produtos__acoes">
+                <a [routerLink]="['/admin/produtos', produto.id, 'editar']" class="botao-secundario">Editar</a>
+                <button
+                  type="button"
+                  class="admin-produtos__excluir"
+                  [disabled]="excluindoId() === produto.id"
+                  (click)="excluir(produto)"
+                >
+                  Excluir
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

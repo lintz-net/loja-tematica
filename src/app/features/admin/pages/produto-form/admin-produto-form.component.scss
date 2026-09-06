@@ -1,0 +1,165 @@
+.admin-produto-form {
+  padding: 48px 0 80px;
+  max-width: 720px;
+}
+
+.admin-produto-form__cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.admin-produto-form__erro {
+  color: #b3261e;
+  margin-bottom: 16px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+input[type='text'],
+input[type='number'],
+textarea {
+  padding: 10px 12px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-padrao);
+  font-size: 1rem;
+  font-weight: 400;
+  font-family: inherit;
+}
+
+fieldset {
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-padrao);
+  padding: 16px;
+}
+
+legend {
+  font-weight: 700;
+  padding: 0 6px;
+}
+
+.admin-produto-form__categorias,
+.admin-produto-form__tamanhos,
+.admin-produto-form__cores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin-produto-form__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 400;
+}
+
+.admin-produto-form__swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid var(--cor-borda-forte);
+}
+
+.admin-produto-form__grade-imagens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.admin-produto-form__imagem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+
+  img {
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: var(--raio-padrao);
+  }
+
+  button {
+    background: transparent;
+    border: 1px solid #b3261e;
+    color: #b3261e;
+    padding: 4px 8px;
+    border-radius: var(--raio-padrao);
+    font-size: 0.75rem;
+  }
+}
+
+.admin-produto-form__aviso {
+  color: var(--cor-texto-suave);
+  font-size: 0.85rem;
+  margin: 8px 0 0;
+}
+
+.admin-produto-form__linha-variante {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+  align-items: center;
+
+  input {
+    font-weight: 400;
+  }
+}
+
+.admin-produto-form__variante-nome {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.admin-produto-form__cor-fotos {
+  margin-bottom: 20px;
+
+  h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 10px;
+    font-size: 0.9rem;
+  }
+}
+
+.admin-produto-form__imagem-selecionavel {
+  position: relative;
+  display: block;
+  width: 70px;
+  height: 70px;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: var(--raio-padrao);
+  }
+
+  input {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+  }
+}
+
+.admin-produto-form__acoes {
+  display: flex;
+  justify-content: flex-end;
+}

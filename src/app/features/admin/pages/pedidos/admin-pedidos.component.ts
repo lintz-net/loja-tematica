@@ -1,6 +1,6 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Pedido, StatusPedido } from '../../../../core/modelos/pedido.model';
 import { AuthService } from '../../../../core/servicos/auth.service';
 import { PedidoService } from '../../../../core/servicos/pedido.service';
@@ -17,7 +17,7 @@ const ROTULOS_STATUS: Record<StatusPedido, string> = {
 @Component({
   selector: 'app-admin-pedidos',
   standalone: true,
-  imports: [DatePipe, CurrencyPipe],
+  imports: [DatePipe, CurrencyPipe, RouterLink],
   templateUrl: './admin-pedidos.component.html',
   styleUrl: './admin-pedidos.component.scss',
 })

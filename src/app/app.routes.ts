@@ -192,6 +192,30 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'admin/produtos',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./features/admin/pages/produtos/admin-produtos.component').then(
+        (m) => m.AdminProdutosComponent
+      ),
+  },
+  {
+    path: 'admin/produtos/novo',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./features/admin/pages/produto-form/admin-produto-form.component').then(
+        (m) => m.AdminProdutoFormComponent
+      ),
+  },
+  {
+    path: 'admin/produtos/:id/editar',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./features/admin/pages/produto-form/admin-produto-form.component').then(
+        (m) => m.AdminProdutoFormComponent
+      ),
+  },
+  {
     path: 'conta',
     loadComponent: () =>
       import('./features/conta/pages/conta/conta.component').then((m) => m.ContaComponent),
