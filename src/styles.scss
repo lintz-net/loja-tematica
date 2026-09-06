@@ -18,6 +18,27 @@ body {
   color: #241705;
 }
 
+/** Utilitário de animação pra estados de carregamento (skeletons). */
+.shimmer {
+  background: linear-gradient(
+    100deg,
+    var(--cor-borda) 30%,
+    var(--cor-borda-forte) 50%,
+    var(--cor-borda) 70%
+  );
+  background-size: 200% 100%;
+  animation: deslizar-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes deslizar-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 // Transição suave de rota via View Transitions API (Angular Router withViewTransitions()).
 // Navegadores sem suporte simplesmente trocam a página sem animação — sem necessidade de fallback.
 // Usa só opacidade (sem transform): um transform aqui faz o navegador considerar a área do

@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 
 const NUMERO_WHATSAPP = '5519991354644';
-const MENSAGEM_PADRAO = 'Olá! Preciso de ajuda com um produto da Nostálgika.';
+const MENSAGEM_PADRAO = 'Olá! Preciso de ajuda com um produto da Vista Nostálgica.';
 
 @Component({
   selector: 'app-whatsapp-flutuante',

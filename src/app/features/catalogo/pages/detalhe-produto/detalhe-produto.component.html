@@ -1,4 +1,4 @@
-@if (produto(); as produto) {
+@if (!carregando() && produto(); as produto) {
   <section class="container-pagina detalhe-produto">
     <app-galeria-produto
       [imagens]="produto.imagens"
@@ -132,6 +132,17 @@
     </table>
     <p class="guia-medidas__nota">Medidas aproximadas, tiradas peça a peça. Margem de tolerância de 2 cm.</p>
   </app-modal>
+} @else if (carregando()) {
+  <section class="container-pagina detalhe-produto">
+    <span class="detalhe-produto-esqueleto__imagem shimmer"></span>
+    <div class="detalhe-produto-esqueleto__info">
+      <span class="detalhe-produto-esqueleto__linha shimmer" style="width: 80px"></span>
+      <span class="detalhe-produto-esqueleto__linha detalhe-produto-esqueleto__linha--titulo shimmer"></span>
+      <span class="detalhe-produto-esqueleto__linha shimmer" style="width: 50%"></span>
+      <span class="detalhe-produto-esqueleto__linha detalhe-produto-esqueleto__linha--preco shimmer"></span>
+      <span class="detalhe-produto-esqueleto__linha shimmer" style="width: 100%; height: 44px"></span>
+    </div>
+  </section>
 } @else {
   <div class="container-pagina">
     <p>Produto não encontrado.</p>

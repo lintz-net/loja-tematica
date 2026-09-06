@@ -3,7 +3,7 @@ import { Injectable, PLATFORM_ID, computed, effect, inject, signal } from '@angu
 import { Produto } from '../modelos/produto.model';
 import { CatalogoRepositorio } from './catalogo.repositorio';
 
-const CHAVE_ARMAZENAMENTO = 'nostalgika:favoritos';
+const CHAVE_ARMAZENAMENTO = 'vistanostalgica:favoritos';
 
 @Injectable({ providedIn: 'root' })
 export class FavoritosService {

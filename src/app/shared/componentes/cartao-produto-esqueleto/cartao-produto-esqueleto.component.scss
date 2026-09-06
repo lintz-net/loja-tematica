@@ -31,23 +31,3 @@
   height: 12px;
   width: 90%;
 }
-
-.shimmer {
-  background: linear-gradient(
-    100deg,
-    var(--cor-borda) 30%,
-    var(--cor-borda-forte) 50%,
-    var(--cor-borda) 70%
-  );
-  background-size: 200% 100%;
-  animation: deslizar-shimmer 1.4s ease-in-out infinite;
-}
-
-@keyframes deslizar-shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}

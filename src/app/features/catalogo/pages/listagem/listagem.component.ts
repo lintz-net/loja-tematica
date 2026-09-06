@@ -30,9 +30,16 @@ export class ListagemComponent {
   readonly termoBusca = signal('');
   readonly carregando = signal(true);
 
+  /** Diferencia "ainda carregando" de "categoria não encontrada" — sem isso, o template
+   * mostraria a mensagem de erro por um instante em toda navegação, já que `categoriaAtual()`
+   * fica `undefined` tanto antes da resposta chegar quanto quando a categoria não existe. */
+  readonly carregandoCategoria = signal(true);
+
   readonly categoriaAtual = toSignal(
     this.slugCategoria$.pipe(
-      switchMap((slug) => this.catalogoRepositorio.obterCategoriaPorSlug(slug))
+      tap(() => this.carregandoCategoria.set(true)),
+      switchMap((slug) => this.catalogoRepositorio.obterCategoriaPorSlug(slug)),
+      tap(() => this.carregandoCategoria.set(false))
     ),
     { initialValue: undefined }
   );

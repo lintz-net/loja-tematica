@@ -1,4 +1,4 @@
-# Sobre o projeto — Loja Temática (Nostálgika)
+# Sobre o projeto — Loja Temática (Vista Nostálgica)
 
 ## Propósito
 

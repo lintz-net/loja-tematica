@@ -6,8 +6,8 @@ const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 /** Sem domínio verificado no Resend, só dá pra enviar usando o remetente de teste deles
  * (onboarding@resend.dev) e apenas para o e-mail da própria conta Resend. Depois que o
  * domínio da loja for verificado lá, trocar via secret RESEND_FROM (ex.:
- * 'Nostálgika <pedidos@nostalgika.com.br>'), sem precisar reescrever a função. */
-const REMETENTE = Deno.env.get('RESEND_FROM') ?? 'Nostálgika <onboarding@resend.dev>';
+ * 'Vista Nostálgica <pedidos@vistanostalgica.com.br>'), sem precisar reescrever a função. */
+const REMETENTE = Deno.env.get('RESEND_FROM') ?? 'Vista Nostálgica <onboarding@resend.dev>';
 
 interface ItemPedidoEmail {
   produtoNome: string;
@@ -99,7 +99,7 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify({
         from: REMETENTE,
         to: dados.emailCliente,
-        subject: `Pedido ${dados.codigo} confirmado — Nostálgika`,
+        subject: `Pedido ${dados.codigo} confirmado — Vista Nostálgica`,
         html: montarHtml(dados),
       }),
     });

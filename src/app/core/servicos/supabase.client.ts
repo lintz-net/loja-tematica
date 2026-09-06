@@ -1,10 +1,11 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../../../environments/environment';
 
-/** Criado sob demanda (não no import do módulo) porque a inicialização do cliente Supabase
- * dispara o RealtimeClient, que exige um `WebSocket` global — indisponível durante o
- * prerender SSR (Node sem WebSocket nativo). Como nada aqui usa realtime, criar o cliente
- * só quando o serviço realmente for chamado evita esse import ser avaliado no build do servidor. */
+/** Cliente completo (com GoTrue/sessão de login), usado só por AuthService e pelas
+ * operações de admin — todas guardadas para rodar apenas no browser (nunca durante SSR),
+ * então o RealtimeClient interno (que trava em Node < 22 esperando WebSocket nativo) nunca
+ * chega a ser exercitado de verdade. Leitura/escrita pública (catálogo, banners, pedidos)
+ * usa REST puro em `supabase-rest.ts`, sem esse cliente. */
 let instancia: SupabaseClient | null = null;
 
 export function obterSupabaseClient(): SupabaseClient {

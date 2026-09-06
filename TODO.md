@@ -36,13 +36,45 @@ cliente ainda vê o link "Acompanhar pedido" na tela de sucesso).
 (`onboarding@resend.dev`), que só entrega pro e-mail da própria conta Resend cadastrada —
 funciona pra testar, mas não pra clientes reais. Pra isso, verificar um domínio de verdade
 no Resend (registros DNS) e configurar o secret `RESEND_FROM` com o remetente final (ex.:
-`Nostálgika <pedidos@nostalgika.com.br>`).
+`Vista Nostálgica <pedidos@vistanostalgica.com.br>`).
 
 Pendente pra depois:
 
 - Integração real com Correios/transportadora pra mostrar rastreio de verdade (fase 2) —
   só faz sentido depois que existir processo de geração de etiqueta/código de rastreio no
   envio.
+
+## ✅ Catálogo real (sem mock) — feito
+
+Categorias, produtos e banners saíram do mock em memória (`catalogo.mock-data.ts`) e agora
+vêm de tabelas reais no Supabase (`categorias`, `produtos`, `banners` — schema em
+`docs/supabase/migration-004-catalogo.sql`). `useMock: false` em todos os `environment*.ts`.
+
+- **Imagens continuam estáticas no repositório** (`public/imagens/produtos/<slug>/`, 256MB)
+  — decisão consciente por enquanto, sem custo extra e já funcionando via CDN. Migrar pra
+  Supabase Storage só faria sentido junto com uma tela de admin de produtos (não existe
+  ainda — ver abaixo).
+- **Sem tela de admin de produtos ainda** — pra adicionar/editar/remover produto hoje só via
+  SQL direto no Supabase (as policies de `produtos`/`categorias`/`banners` só liberam
+  `select`, nenhum insert/update/delete pra ninguém).
+- Os 128 produtos, 6 categorias e 3 banners do mock foram migrados de uma vez via
+  `scripts/gerar-seed-catalogo.ts` (rodar com `npx tsx scripts/gerar-seed-catalogo.ts`),
+  que gera `docs/supabase/seed-catalogo-gerado.sql` a partir do mock — útil de referência se
+  precisar reimportar ou comparar dados no futuro, mas não faz parte do fluxo normal (já
+  rodado uma vez).
+
+**Achado importante durante a migração — evitar no futuro**: o cliente completo
+`@supabase/supabase-js` (`createClient`) sempre inicializa um `RealtimeClient` internamente,
+mesmo sem usar canais/subscriptions, e esse cliente **trava indefinidamente** (não dá erro,
+só nunca resolve) em Node < 22 ao tentar sincronizar o token de auth via WebSocket. Por isso:
+- `catalogo-api.service.ts`, `banner-api.service.ts` e as operações públicas de
+  `pedido.service.ts` (criar pedido, consultar por código) usam
+  `supabase-rest.service.ts` — chamadas REST diretas à API do Supabase via `HttpClient`
+  (não `fetch` puro: o Zone.js não rastreia `fetch` nativo no Node, o que causaria a página
+  ser servida com dados vazios no SSR por uma corrida entre a serialização e a resposta).
+- O cliente completo (`supabase.client.ts`, com GoTrue) só é usado por `AuthService` e pelas
+  operações de admin (`listarTodos`/`atualizarStatus` em `pedido.service.ts`) — todas
+  restritas a rodar só no browser (nunca durante SSR), então nunca disparam o travamento.
 
 ## Pagamento (Pix e Cartão de crédito)
 
@@ -68,41 +100,55 @@ Continua valendo do planejamento original:
 
 ## ✅ SSR + Open Graph — feito
 
-Angular SSR (`@angular/ssr`) configurado, com 9 rotas estáticas pré-renderizadas e rotas
-dinâmicas (produto, categoria) renderizadas sob demanda no servidor. `SeoService`
-(`src/app/core/servicos/seo.service.ts`) gera título, `description` e tags `og:*`/
-`twitter:*` dinâmicas por página (home, categoria, produto) — preview de link no
-WhatsApp/Instagram/Facebook e SEO orgânico já funcionam.
+Angular SSR (`@angular/ssr`) configurado. `SeoService` (`src/app/core/servicos/seo.service.ts`)
+gera título, `description` e tags `og:*`/`twitter:*` dinâmicas por página (home, categoria,
+produto) — preview de link no WhatsApp/Instagram/Facebook e SEO orgânico já funcionam.
+
+**Mudança importante**: o pré-render em tempo de build (`RenderMode.Prerender`) foi
+**desativado pra todas as rotas** (`angular.json`: `"prerender": false`;
+`app.routes.server.ts`: tudo em `RenderMode.Server`, exceto `pedido/:codigo` e as rotas de
+`admin`, que são `RenderMode.Client`). Dois motivos:
+1. Os dados agora vêm de um backend real (Supabase) que muda com o tempo — pré-renderizar em
+   build deixaria a página presa nos dados do momento do deploy.
+2. O pré-render em build mostrou uma instabilidade não resolvida neste ambiente de
+   desenvolvimento: falhas intermitentes (`{}` sem mensagem), sempre em ~1 rota entre várias,
+   trocando de rota a cada tentativa, mesmo em páginas 100% estáticas sem dado nenhum — não
+   foi possível identificar a causa raiz (pode ser específica deste ambiente de build/sandbox;
+   vale reavaliar se o pré-render fizer falta por performance).
+
+Toda página agora é servida via SSR por requisição (validado localmente com Node — todas as
+rotas respondem 200 com HTML completo e tags corretas).
 
 **Pendente antes de ir pra produção**:
-- `environment.ts`/`environment.development.ts` têm `siteUrl: 'http://localhost:4300'`
-  (só pra dev local — `nostalgika.com.br` já existe registrado, mas hoje aponta pra outro
-  site, não pra esta app). `environment.prod.ts` já está com o domínio real
-  (`https://nostalgika.com.br`) — assim que a loja for publicada de verdade nesse domínio,
-  conferir que o build usado é o de produção (que já pega esse arquivo automaticamente).
+- Marca definida como **Vista Nostálgica** (nome anterior "Nostálgika" já trocado em toda a
+  loja: logo, textos, e-mails, `environment.prod.ts`, `angular.json`).
+- **Domínio adiado por enquanto** — `vistanostalgica.com.br` foi escolhido (disponível pra
+  registro) mas você decidiu deixar o registro/DNS pra depois, sem pressa. Quando for
+  registrar: `environment.prod.ts` já está pronto com `https://vistanostalgica.com.br` (não
+  precisa mexer em nada no código) — só falta registrar o domínio de verdade e apontar o
+  DNS pro Netlify (guia rápido: painel do Netlify → domínio do site → Domain management →
+  Add a domain, e configurar os registros que eles indicarem no lugar onde o domínio for
+  registrado).
 - A imagem padrão `og-padrao.jpg` referenciada em `environment.prod.ts`/`SeoService` é
   fictícia — subir uma imagem de preview de verdade antes de publicar.
 
-### ⚠️ Limitação conhecida: SSR das rotas dinâmicas não funciona no Netlify
+### ⚠️ Ação necessária antes do próximo deploy: reconferir a Edge Function no Netlify
 
-O site está publicado em `strong-centaur-0240eb.netlify.app` e funciona pra home, checkout,
-`/admin` e e-mail de confirmação. Mas a Edge Function do Angular (`angular-ssr`, via
-`@netlify/angular-runtime`) não está sendo invocada em produção pras rotas dinâmicas
-(`/produto/:slug`, `/categoria/:slug`) — mesmo com o build local confirmando que o handler
-funciona perfeitamente (testado direto via Node, gera HTML com as tags `og:*` corretas). Em
-produção, essas rotas caem no fallback estático do Netlify (servem a home genérica), então
-**o preview de link específico por produto/categoria não funciona nesse host hoje**.
+Antes desta mudança pro catálogo real, já tínhamos observado que a Edge Function do Angular
+(`angular-ssr`, via `@netlify/angular-runtime`) não estava sendo invocada em produção
+(`strong-centaur-0240eb.netlify.app`) pras rotas que não eram pré-renderizadas em build —
+só as rotas estáticas (servidas direto do CDN) funcionavam; produto/categoria caíam no
+fallback genérico do Netlify. Investigado sem sucesso na época: configurações de build
+corretas, função aparece implantada mas com 0 invocações mesmo em tempo real, "Clear cache
+and deploy" não resolveu.
 
-Investigado sem sucesso: configurações de build corretas (Runtime: Angular, publish
-directory certo), função aparece implantada na aba Edge Functions mas com 0 invocações
-mesmo em tempo real, "Clear cache and deploy" não resolveu. Parece bug/particularidade da
-plataforma Netlify nesse site específico (possivelmente por ter sido criado originalmente
-como site estático antes do SSR existir).
-
-Não bloqueia o funcionamento da loja — só a funcionalidade de preview de link dinâmico por
-página. Se for revisitar: considerar recriar o site do zero no Netlify (mesmo repo) ou abrir
-chamado no suporte deles descrevendo "Edge Function deployed but never invoked for
-non-prerendered routes".
+**Isso importa muito mais agora**: como o pré-render em build foi desativado por completo
+(seção acima) — toda rota, incluindo a home, agora depende de a Edge Function realmente
+rodar. Se aquele bug do Netlify continuar, o site pode não funcionar **em nenhuma rota**
+depois do próximo deploy (não testado ainda nesta configuração). Antes de fazer o próximo
+deploy: testar em produção assim que subir, e se a home não carregar dados reais, considerar
+recriar o site do zero no Netlify (mesmo repo) ou abrir chamado no suporte deles descrevendo
+"Edge Function deployed but never invoked".
 
 ## Marketing: tráfego pago e pixels de conversão
 

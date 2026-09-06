@@ -10,6 +10,36 @@
   }
 }
 
+.detalhe-produto-esqueleto__imagem {
+  display: block;
+  border-radius: var(--raio-padrao);
+  aspect-ratio: 1 / 1;
+}
+
+.detalhe-produto-esqueleto__info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 8px;
+}
+
+.detalhe-produto-esqueleto__linha {
+  display: block;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.detalhe-produto-esqueleto__linha--titulo {
+  height: 28px;
+  width: 85%;
+}
+
+.detalhe-produto-esqueleto__linha--preco {
+  height: 22px;
+  width: 30%;
+  margin-top: 8px;
+}
+
 .detalhe-produto__cabecalho {
   display: flex;
   align-items: center;

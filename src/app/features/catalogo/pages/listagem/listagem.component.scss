@@ -54,6 +54,42 @@
   opacity: 0.9;
 }
 
+.listagem-cabecalho-esqueleto {
+  padding: 36px 0;
+  background: var(--cor-fundo-alt);
+}
+
+.listagem-cabecalho-esqueleto__conteudo {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.listagem-cabecalho-esqueleto__icone {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.listagem-cabecalho-esqueleto__linhas {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.listagem-cabecalho-esqueleto__linha {
+  display: block;
+  height: 12px;
+  border-radius: 4px;
+}
+
+.listagem-cabecalho-esqueleto__linha--titulo {
+  height: 22px;
+  width: 40%;
+}
+
 .listagem-filtros {
   display: flex;
   flex-direction: column;

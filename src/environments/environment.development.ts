@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  useMock: true,
+  useMock: false,
   apiUrl: '/api',
   mockDelayMs: 400,
   supabaseUrl: 'https://tmrtyotlvrznavjorkay.supabase.co',

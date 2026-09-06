@@ -3,7 +3,7 @@ import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core
 import { Produto } from '../modelos/produto.model';
 import { CatalogoRepositorio } from './catalogo.repositorio';
 
-const CHAVE_ARMAZENAMENTO = 'nostalgika:vistos-recentemente';
+const CHAVE_ARMAZENAMENTO = 'vistanostalgica:vistos-recentemente';
 const LIMITE_VISTOS = 12;
 
 @Injectable({ providedIn: 'root' })

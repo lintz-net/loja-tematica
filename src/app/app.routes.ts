@@ -63,7 +63,7 @@ const PAGINA_COMO_COMPRAR: DadosPaginaInstitucional = {
 const PAGINA_QUEM_SOMOS: DadosPaginaInstitucional = {
   titulo: 'Quem somos',
   paragrafos: [
-    'A Nostálgika é uma vitrine para descobrir camisetas, bermudas e polos com estampas que remetem a games, cinema, música, futebol, carros e humor.',
+    'A Vista Nostálgica é uma vitrine para descobrir camisetas, bermudas e polos com estampas que remetem a games, cinema, música, futebol, carros e humor.',
     'Trabalhamos com fornecedores especializados em estampas DTF e emborrachada, com curadoria própria — cada peça é escolhida pensando em quem quer vestir uma lembrança, não só uma camiseta.',
   ],
   nota: 'Página de exemplo com conteúdo fictício, criada para validar a estrutura da loja.',
@@ -87,7 +87,7 @@ const PAGINA_TROCAS_DEVOLUCOES: DadosPaginaInstitucional = {
     {
       titulo: 'Onde trocar ou devolver?',
       paragrafos: [
-        'Pelo e-mail: envie uma mensagem para contato@nostalgika.com.br solicitando a troca ou devolução. Entraremos em contato o mais breve possível para orientá-lo sobre os próximos passos e o envio do produto.',
+        'Pelo e-mail: envie uma mensagem para contato@vistanostalgica.com.br solicitando a troca ou devolução. Entraremos em contato o mais breve possível para orientá-lo sobre os próximos passos e o envio do produto.',
       ],
     },
     {

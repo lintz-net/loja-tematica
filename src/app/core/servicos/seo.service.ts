@@ -10,7 +10,7 @@ export interface DadosSeo {
   tipo?: 'website' | 'product';
 }
 
-const TITULO_SITE = 'Nostálgika';
+const TITULO_SITE = 'Vista Nostálgica';
 const DESCRICAO_PADRAO =
   'Camisetas, bermudas e polos com estampas que remetem a games, cinema, música, futebol, carros e humor.';
 const IMAGEM_PADRAO = `${environment.siteUrl}/og-padrao.jpg`;

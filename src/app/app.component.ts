@@ -29,7 +29,7 @@ export class AppComponent {
 
   private exibirEasterEggConsole(): void {
     console.log(
-      '%c ✦ NOSTÁLGIKA ✦ %c\nCuriosidade que te trouxe até aqui? Bora fazer parte do time: contato@nostalgika.com.br',
+      '%c ✦ VISTA NOSTÁLGICA ✦ %c\nCuriosidade que te trouxe até aqui? Bora fazer parte do time: contato@vistanostalgica.com.br',
       'background: linear-gradient(135deg, #ffb545, #0c7d71); color: #17141a; font-weight: 800; padding: 8px 14px; border-radius: 4px; font-size: 14px;',
       'color: #5c5566; font-size: 12px;'
     );

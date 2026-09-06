@@ -1,16 +1,33 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { map, Observable } from 'rxjs';
 import { Banner } from '../modelos/banner.model';
 import { BannerRepositorio } from './banner.repositorio';
+import { SupabaseRestService } from './supabase-rest.service';
+
+interface LinhaBanner {
+  id: string;
+  imagem_url: string;
+  alt: string;
+  link: string | null;
+  ordem: number;
+}
+
+function linhaParaBanner(linha: LinhaBanner): Banner {
+  return {
+    id: linha.id,
+    imagemUrl: linha.imagem_url,
+    alt: linha.alt,
+    link: linha.link ?? undefined,
+  };
+}
 
 @Injectable()
 export class BannerApiService implements BannerRepositorio {
-  private readonly http = inject(HttpClient);
-  private readonly baseUrl = environment.apiUrl;
+  private readonly rest = inject(SupabaseRestService);
 
   obterBanners(): Observable<Banner[]> {
-    return this.http.get<Banner[]>(`${this.baseUrl}/banners`);
+    return this.rest
+      .select<LinhaBanner[]>('banners', '?select=*&order=ordem.asc')
+      .pipe(map((linhas) => linhas.map(linhaParaBanner)));
   }
 }

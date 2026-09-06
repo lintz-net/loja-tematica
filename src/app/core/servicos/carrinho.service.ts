@@ -10,7 +10,7 @@ interface ItemCarrinhoPersistido {
   quantidade: number;
 }
 
-const CHAVE_ARMAZENAMENTO = 'nostalgika:carrinho';
+const CHAVE_ARMAZENAMENTO = 'vistanostalgica:carrinho';
 
 @Injectable({ providedIn: 'root' })
 export class CarrinhoService {

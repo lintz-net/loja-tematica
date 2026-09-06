@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map, switchMap } from 'rxjs';
+import { map, switchMap, tap } from 'rxjs';
 import { CatalogoRepositorio } from '../../../../core/servicos/catalogo.repositorio';
 import { CarrinhoService } from '../../../../core/servicos/carrinho.service';
 import { FavoritosService } from '../../../../core/servicos/favoritos.service';
@@ -40,9 +40,16 @@ export class DetalheProdutoComponent {
     map((params) => params.get('slug') ?? '')
   );
 
+  /** Diferencia "ainda carregando" de "não encontrado" — sem isso, o template mostraria a
+   * mensagem de erro por um instante em toda navegação, já que `produto()` fica `undefined`
+   * tanto antes da resposta chegar quanto quando o produto de fato não existe. */
+  readonly carregando = signal(true);
+
   readonly produto = toSignal(
     this.slugProduto$.pipe(
-      switchMap((slug) => this.catalogoRepositorio.obterProdutoPorSlug(slug))
+      tap(() => this.carregando.set(true)),
+      switchMap((slug) => this.catalogoRepositorio.obterProdutoPorSlug(slug)),
+      tap(() => this.carregando.set(false))
     ),
     { initialValue: undefined }
   );

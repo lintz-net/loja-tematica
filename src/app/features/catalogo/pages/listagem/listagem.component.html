@@ -49,6 +49,25 @@
       <p class="listagem-vazio">Nenhum produto encontrado para "{{ termoBusca() }}".</p>
     }
   </section>
+} @else if (carregandoCategoria()) {
+  <section class="listagem-cabecalho-esqueleto">
+    <div class="container-pagina listagem-cabecalho-esqueleto__conteudo">
+      <span class="listagem-cabecalho-esqueleto__icone shimmer"></span>
+      <div class="listagem-cabecalho-esqueleto__linhas">
+        <span class="listagem-cabecalho-esqueleto__linha shimmer" style="width: 90px"></span>
+        <span class="listagem-cabecalho-esqueleto__linha listagem-cabecalho-esqueleto__linha--titulo shimmer"></span>
+        <span class="listagem-cabecalho-esqueleto__linha shimmer" style="width: 60%"></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="container-pagina">
+    <div class="listagem-grade">
+      @for (item of [1, 2, 3, 4, 5, 6, 7, 8]; track item) {
+        <app-cartao-produto-esqueleto />
+      }
+    </div>
+  </section>
 } @else {
   <div class="container-pagina">
     <p>Categoria não encontrada.</p>

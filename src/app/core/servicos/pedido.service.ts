@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
-import { from, Observable, tap } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { from, map, Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Pedido } from '../modelos/pedido.model';
+import { SupabaseRestService } from './supabase-rest.service';
 import { obterSupabaseClient } from './supabase.client';
 
 /** Linha da tabela `pedidos` no Supabase (snake_case, como no Postgres). */
@@ -44,11 +45,14 @@ function linhaParaPedido(linha: LinhaPedido): Pedido {
 
 @Injectable({ providedIn: 'root' })
 export class PedidoService {
-  /** Não encadeia `.select()` depois do insert: a role anon não tem permissão de SELECT
-   * na tabela (só admins autenticados têm, ver docs/supabase/migration-002...), e pedir
-   * pro PostgREST devolver a linha criada exige SELECT — sem isso o insert inteiro falha
-   * com 403. Como o cliente já sabe todos os valores que mandou, o Pedido é montado
-   * localmente a partir deles em vez de vir de volta do banco. */
+  private readonly rest = inject(SupabaseRestService);
+
+  /** Insert via REST (não pelo cliente `@supabase/supabase-js`, que sempre traz
+   * GoTrue+Realtime junto e trava em Node < 22 — ver supabase-rest.service.ts). Não pede
+   * `return=representation`: a role anon não tem permissão de SELECT na tabela (só admins
+   * autenticados têm, ver docs/supabase/migration-002...), e pedir pro PostgREST devolver a
+   * linha criada exige SELECT — sem isso o insert inteiro falha com 403. Como o cliente já
+   * sabe todos os valores que mandou, o Pedido é montado localmente a partir deles. */
   criarPedido(dados: Omit<Pedido, 'codigo' | 'criadoEm' | 'status'>): Observable<Pedido> {
     const codigo = gerarCodigoPedido();
     const criadoEm = new Date().toISOString();
@@ -66,58 +70,46 @@ export class PedidoService {
       valor_total: dados.valorTotal,
     };
 
-    const promessa = obterSupabaseClient()
-      .from('pedidos')
-      .insert(linha)
-      .then(({ error }) => {
-        if (error) throw error;
-        return { ...dados, codigo, criadoEm, status: 'recebido' as const };
-      });
-
-    return from(promessa).pipe(tap((pedido) => this.enviarEmailConfirmacao(pedido)));
+    return this.rest.insert('pedidos', linha).pipe(
+      map(() => ({ ...dados, codigo, criadoEm, status: 'recebido' as const })),
+      tap((pedido) => this.enviarEmailConfirmacao(pedido))
+    );
   }
 
-  /** Fire-and-forget: falha no envio do e-mail não pode impedir o checkout de concluir —
-   * o cliente já vê o link de acompanhamento na própria tela de sucesso.
-   * `functions.invoke` não rejeita a Promise em erro HTTP — ela sempre resolve, com o erro
-   * (se houver) no campo `error` do resultado — por isso o `.then` confere isso em vez de
-   * confiar só num `.catch`. */
+  /** Fire-and-forget via REST puro: falha no envio do e-mail não pode impedir o checkout de
+   * concluir — o cliente já vê o link de acompanhamento na própria tela de sucesso. */
   private enviarEmailConfirmacao(pedido: Pedido): void {
-    obterSupabaseClient()
-      .functions.invoke('enviar-email-pedido', {
-        body: {
-          codigo: pedido.codigo,
-          emailCliente: pedido.emailCliente,
-          nomeCliente: pedido.nomeCliente,
-          itens: pedido.itens,
-          valorTotal: pedido.valorTotal,
-          urlAcompanhamento: `${environment.siteUrl}/pedido/${pedido.codigo}`,
-        },
-      })
-      .then(({ error }) => {
-        if (error) console.error('Falha ao enviar e-mail de confirmação do pedido:', error);
-      })
-      .catch((erro) => console.error('Falha ao enviar e-mail de confirmação do pedido:', erro));
+    fetch(`${environment.supabaseUrl}/functions/v1/enviar-email-pedido`, {
+      method: 'POST',
+      headers: {
+        apikey: environment.supabaseKey,
+        Authorization: `Bearer ${environment.supabaseKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        codigo: pedido.codigo,
+        emailCliente: pedido.emailCliente,
+        nomeCliente: pedido.nomeCliente,
+        itens: pedido.itens,
+        valorTotal: pedido.valorTotal,
+        urlAcompanhamento: `${environment.siteUrl}/pedido/${pedido.codigo}`,
+      }),
+    }).catch((erro) => console.error('Falha ao enviar e-mail de confirmação do pedido:', erro));
   }
 
-  /** Usa a função `obter_pedido_por_codigo` (RPC) em vez de `.from('pedidos').select()`
-   * direto — a policy de select da tabela é restrita a admins autenticados, então o
-   * rastreio público por código passa por essa função (SECURITY DEFINER) que só devolve o
-   * pedido pedido, sem abrir leitura da tabela inteira pra quem tem a chave anônima. */
+  /** Usa a função `obter_pedido_por_codigo` (RPC) em vez de select direto na tabela — a
+   * policy de select é restrita a admins autenticados, então o rastreio público por código
+   * passa por essa função (SECURITY DEFINER) que só devolve o pedido pedido, sem abrir
+   * leitura da tabela inteira pra quem tem a chave anônima. */
   obterPorCodigo(codigo: string): Observable<Pedido | null> {
-    const promessa = obterSupabaseClient()
-      .rpc('obter_pedido_por_codigo', { p_codigo: codigo })
-      .then(({ data, error }) => {
-        if (error) throw error;
-        const linhas = data as LinhaPedido[];
-        return linhas.length > 0 ? linhaParaPedido(linhas[0]) : null;
-      });
-
-    return from(promessa);
+    return this.rest
+      .rpc<LinhaPedido[]>('obter_pedido_por_codigo', { p_codigo: codigo })
+      .pipe(map((linhas) => (linhas.length > 0 ? linhaParaPedido(linhas[0]) : null)));
   }
 
-  /** Só funciona para um usuário autenticado (admin) — a policy de select da tabela exige
-   * role 'authenticated'. */
+  /** Usa o cliente completo (com sessão de login) — só chamado de `/admin/pedidos`, que só
+   * roda no browser (nunca durante SSR), então não sofre do travamento do Realtime em Node.
+   * A policy de select da tabela exige role 'authenticated', obtida da sessão logada. */
   listarTodos(): Observable<Pedido[]> {
     const promessa = obterSupabaseClient()
       .from('pedidos')
@@ -131,8 +123,7 @@ export class PedidoService {
     return from(promessa);
   }
 
-  /** Só funciona para um usuário autenticado (admin) — a policy de update exige role
-   * 'authenticated'. */
+  /** Mesma observação de `listarTodos` — só roda no browser, autenticado. */
   atualizarStatus(codigo: string, status: Pedido['status']): Observable<Pedido> {
     const promessa = obterSupabaseClient()
       .from('pedidos')
