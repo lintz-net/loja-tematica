@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { from, Observable } from 'rxjs';
+import { from, map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { obterSupabaseClient } from './supabase.client';
+import { SupabaseRestService } from './supabase-rest.service';
 
 export type StatusEnvio =
   | 'aguardando_compra'
@@ -50,6 +51,42 @@ function linhaParaEnvio(linha: LinhaEnvio): Envio {
  * autenticado (mesma observação de PedidoService.listarTodos). */
 @Injectable({ providedIn: 'root' })
 export class EnvioService {
+  private readonly rest = inject(SupabaseRestService);
+
+  /** Rastreio público por código de pedido — usa a função `obter_envio_por_codigo_pedido`
+   * (RPC, SECURITY DEFINER) em vez de select direto: a policy de select da tabela é restrita
+   * a admin autenticado, então quem só tem a chave anônima passa por essa função, que devolve
+   * apenas o envio do pedido pedido. Funciona em SSR (REST puro, sem o cliente completo). */
+  obterPorCodigoPedido(codigoPedido: string): Observable<Envio | null> {
+    return this.rest
+      .rpc<LinhaEnvio[]>('obter_envio_por_codigo_pedido', { p_codigo_pedido: codigoPedido })
+      .pipe(map((linhas) => (linhas.length > 0 ? linhaParaEnvio(linhas[0]) : null)));
+  }
+
+  /** Escuta mudanças no envio de um pedido via Supabase Realtime — só deve ser chamado no
+   * browser (nunca durante SSR): o cliente completo sempre inicializa um RealtimeClient, que
+   * trava indefinidamente em Node < 22 esperando WebSocket nativo. Devolve uma função pra
+   * cancelar a inscrição. */
+  escutarMudancas(codigoPedido: string, aoMudar: (envio: Envio) => void): () => void {
+    const canal = obterSupabaseClient()
+      .channel(`envio-${codigoPedido}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'envios',
+          filter: `codigo_pedido=eq.${codigoPedido}`,
+        },
+        (payload) => aoMudar(linhaParaEnvio(payload.new as LinhaEnvio))
+      )
+      .subscribe();
+
+    return () => {
+      obterSupabaseClient().removeChannel(canal);
+    };
+  }
+
   /** Um envio por pedido, indexado pelo código — usado pra cruzar com a lista de pedidos. */
   listarTodos(): Observable<Map<string, Envio>> {
     const promessa = obterSupabaseClient()

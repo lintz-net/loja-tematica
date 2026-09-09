@@ -86,12 +86,46 @@ Melhor Envio (`access_token`, `refresh_token`).
   oficial + type-check + build limpo) — próximo passo natural é o admin clicar em "Comprar
   etiqueta" num pedido de teste e conferir o resultado.
 
-### Próximas etapas (não iniciadas)
+### ✅ Etapa 3 — Webhook + rastreio — feito
 
-1. **Webhook + rastreio** — Edge Function receptora dos eventos `order.*`, atualização da
-   tabela `envios` (Realtime já habilitado nela), Edge Function de polling de fallback
-   (`/api/v2/me/shipment/tracking`, cache de 1h do lado deles), e a página `/pedido/:codigo`
-   passa a mostrar o status do envio em tempo real via Supabase Realtime.
+- `supabase/functions/melhor-envio-webhook/index.ts`: recebe os eventos `order.*`, valida a
+  assinatura `x-me-signature` (HMAC-SHA256 com `MELHOR_ENVIO_CLIENT_SECRET`), loga o payload
+  bruto em `eventos_webhook_melhor_envio` e atualiza `status_envio`/`codigo_rastreio` em
+  `envios` (casado por `id_melhor_envio`). Deployada com `--no-verify-jwt` (chamada externa,
+  sem header de auth do Supabase).
+- `supabase/functions/melhor-envio-rastrear-pendentes/index.ts`: fallback de polling —
+  consulta `/api/v2/me/shipment/tracking` pra todo envio ainda não finalizado
+  (`entregue`/`nao_entregue`/`cancelado`) e aplica a mesma atualização. Pensada pra rodar via
+  Supabase Cron (**ainda não agendado**, mesma pendência do `melhor-envio-refresh-token`) —
+  não adianta chamar com mais frequência que 1h por causa do cache da rota.
+- `EnvioService` ganhou `obterPorCodigoPedido` (RPC pública, funciona em SSR) e
+  `escutarMudancas` (Realtime, só browser — guardado com `isPlatformBrowser`, mesmo padrão do
+  `AuthService`, pra não travar o SSR com o `RealtimeClient` do cliente completo).
+- `/pedido/:codigo` (`pedido.component.ts/html/scss`) mostra uma seção "Envio": timeline
+  (criado → liberado → gerado → postado → entregue) pros status normais, aviso à parte pra
+  pausado/suspenso/cancelado/não-entregue, e o código de rastreio quando disponível —
+  atualiza sozinha quando o status muda, sem precisar recarregar a página.
+
+**Pendente antes de produção**:
+- **Cadastrar o webhook no painel do Melhor Envio** (Integrações → Área Dev → seu app → Novo
+  Webhook) apontando pra
+  `https://<projeto>.supabase.co/functions/v1/melhor-envio-webhook` — sem isso, nenhum evento
+  chega, e o rastreio depende só do polling de fallback (que ainda nem está agendado).
+- **Agendar o Cron do `melhor-envio-rastrear-pendentes`** (mesma pendência do
+  `melhor-envio-refresh-token` — nenhum dos dois crons foi configurado no Supabase ainda).
+- Eventos como `order.received` (sem status equivalente no nosso enum `status_envio`) só ficam
+  logados em `eventos_webhook_melhor_envio`, não atualizam `envios` — revisar se faz sentido
+  mapear pra algum status quando isso for observado de verdade em produção.
+
+### Pendências gerais da integração (deixadas como TODO, não bloqueiam)
+
+- **Testar a compra de etiqueta de verdade contra o sandbox** — implementada e revisada via
+  documentação oficial + type-check + build limpo, mas nunca clicada de fato. Próximo passo
+  natural: gerar um pedido de teste no checkout, escolher frete, e clicar em "Comprar
+  etiqueta" em `/admin/pedidos`, conferindo se o carrinho/checkout/geração/impressão da Melhor
+  Envio funcionam ponta a ponta e se o `envios.status_envio` fica `gerado` corretamente.
+- Testar o webhook de verdade (cadastrar no painel, gerar uma etiqueta real e conferir se o
+  evento chega e atualiza a tabela) — também não testado ainda, só revisado via documentação.
 
 ## ✅ Acompanhamento de pedido — feito
 

@@ -31,6 +31,38 @@
       }
     </ol>
 
+    @if (envio(); as envio) {
+      <div class="pedido__secao">
+        <h2>Envio</h2>
+        @if (
+          envio.statusEnvio === 'aguardando_compra' || envio.statusEnvio === 'pendente_etiqueta'
+        ) {
+          <p>{{ rotulosStatusEnvio[envio.statusEnvio] }}</p>
+        } @else if (
+          envio.statusEnvio === 'pausado' ||
+          envio.statusEnvio === 'suspenso' ||
+          envio.statusEnvio === 'cancelado' ||
+          envio.statusEnvio === 'nao_entregue'
+        ) {
+          <p class="pedido__envio-aviso">{{ rotulosStatusEnvio[envio.statusEnvio] }}</p>
+        } @else {
+          <ol class="pedido__status">
+            @for (etapa of etapasEnvio; track etapa) {
+              <li
+                [class.concluido]="indiceEtapaEnvio(etapa) <= indiceEtapaEnvio(envio.statusEnvio)"
+                [class.atual]="etapa === envio.statusEnvio"
+              >
+                {{ rotulosStatusEnvio[etapa] }}
+              </li>
+            }
+          </ol>
+        }
+        @if (envio.codigoRastreio) {
+          <p>Código de rastreio: <strong>{{ envio.codigoRastreio }}</strong></p>
+        }
+      </div>
+    }
+
     <div class="pedido__secao">
       <h2>Itens</h2>
       <ul class="pedido__itens">
