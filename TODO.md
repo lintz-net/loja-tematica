@@ -45,11 +45,13 @@ Melhor Envio (`access_token`, `refresh_token`).
   teste deles, não bug nosso; Correios em particular não retornou nenhuma cotação nos testes,
   mesmo aparecendo como "disponível" na conta — revisitar em produção).
 
+**✅ Cron do `melhor-envio-refresh-token` agendado** — `docs/supabase/migration-009-agendar-crons.sql`
+habilita `pg_cron`/`pg_net` e agenda o job `melhor-envio-refresh-token` (todo dia às 3h UTC,
+sobra de margem pra um token que dura 30 dias). Testado disparando a chamada manualmente via
+`net.http_post` e conferindo a resposta em `net._http_response`: `status_code 200`,
+`{"ok":true}`.
+
 **Pendente antes de produção**:
-- **Agendar o Cron do `melhor-envio-refresh-token`** — hoje só existe a function, não está
-  rodando periodicamente ainda. Sem isso, o token para de renovar sozinho se nenhuma outra
-  function for chamada por muito tempo (o `chamarMelhorEnvio`/`obterTokenValido` também
-  renova sob demanda, então na prática só afeta uso muito esporádico).
 - Peso/dimensões dos 128 produtos migrados do mock estão em branco (colunas novas) — a
   cotação usa um valor padrão genérico (0,3kg, 20×5×25cm) até o admin preencher os reais.
 
@@ -131,9 +133,12 @@ apontando pra `melhor-envio-webhook`). Achamos e corrigimos dois bugs reais dura
   `order.created`/`order.released`/`order.ready-to-print` → `envios.status_envio` foi
   atualizado sozinho pra `liberado`, casado por `id_melhor_envio`.
 
+**✅ Cron do `melhor-envio-rastrear-pendentes` agendado** — mesma migration acima, job de hora
+em hora (`0 * * * *`, o máximo que faz sentido com o cache de 1h da rota de tracking).
+Testado disparando manualmente: achou os 2 envios de teste pendentes e atualizou os dois
+(`{"ok":true,"verificados":2,"atualizados":2}`).
+
 **Pendente antes de produção**:
-- **Agendar o Cron do `melhor-envio-rastrear-pendentes`** (mesma pendência do
-  `melhor-envio-refresh-token` — nenhum dos dois crons foi configurado no Supabase ainda).
 - Eventos como `order.received` (sem status equivalente no nosso enum `status_envio`) só ficam
   logados em `eventos_webhook_melhor_envio`, não atualizam `envios` — revisar se faz sentido
   mapear pra algum status quando isso for observado de verdade em produção.
