@@ -66,6 +66,15 @@
               [value]="telefone()"
               (input)="atualizarTelefone($any($event.target).value)"
             />
+            <input
+              type="text"
+              placeholder="CPF ou CNPJ"
+              [value]="documento()"
+              (input)="atualizarDocumento($any($event.target).value)"
+            />
+            <p class="checkout__ajuda checkout__ajuda--pequena">
+              Necessário pra emissão da etiqueta de envio.
+            </p>
           }
           @case ('endereco') {
             <h3>Endereço de entrega</h3>
@@ -239,7 +248,7 @@
                   Editar
                 </button>
               </div>
-              <p>{{ nome() }} · {{ email() }} · {{ telefone() }}</p>
+              <p>{{ nome() }} · {{ email() }} · {{ telefone() }} · {{ documento() }}</p>
             </div>
 
             <div class="checkout__revisao-bloco">

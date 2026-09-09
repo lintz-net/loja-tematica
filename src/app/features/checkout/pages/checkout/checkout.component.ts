@@ -53,11 +53,15 @@ export class CheckoutComponent {
   readonly nome = signal('');
   readonly email = signal('');
   readonly telefone = signal('');
+  /** CPF ou CNPJ — exigido pelo Melhor Envio como documento do destinatário na compra da
+   * etiqueta (fora daqui, não é usado pra nada no checkout em si). */
+  readonly documento = signal('');
   readonly contatoValido = computed(
     () =>
       this.nome().trim().length > 1 &&
       /\S+@\S+\.\S+/.test(this.email()) &&
-      this.telefone().replace(/\D/g, '').length >= 8
+      this.telefone().replace(/\D/g, '').length >= 8 &&
+      [11, 14].includes(this.documento().replace(/\D/g, '').length)
   );
 
   // Passo 5 — endereço de entrega
@@ -143,6 +147,10 @@ export class CheckoutComponent {
 
   atualizarTelefone(valor: string): void {
     this.telefone.set(valor);
+  }
+
+  atualizarDocumento(valor: string): void {
+    this.documento.set(valor);
   }
 
   atualizarEndereco(valor: string): void {
@@ -302,6 +310,7 @@ export class CheckoutComponent {
         nomeCliente: this.nome(),
         emailCliente: this.email(),
         telefoneCliente: this.telefone(),
+        documentoCliente: this.documento(),
         endereco: {
           endereco: this.endereco(),
           numero: this.numero(),

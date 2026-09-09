@@ -140,16 +140,23 @@ apontando pra `melhor-envio-webhook`). Achamos e corrigimos dois bugs reais dura
 - **Registrar o webhook de novo no app de produção** quando migrar de sandbox pra produção —
   o cadastro é por aplicativo/ambiente, não é automático.
 
+### ✅ CPF/CNPJ do cliente coletado no checkout — feito
+
+Fechou a dívida técnica: o checkout agora pede CPF/CNPJ na etapa de contato (validação básica
+de 11 ou 14 dígitos), guardado em `pedidos.documento_cliente`
+(`docs/supabase/migration-008-documento-cliente.sql`) e usado automaticamente pela
+`melhor-envio-comprar-etiqueta` como documento do destinatário. O prompt manual no admin
+(`window.prompt`) só aparece pra pedidos antigos, de antes dessa coluna existir, como
+fallback — testado com um pedido novo já com o CPF preenchido e a compra funcionou sem pedir
+nada na tela.
+
 ### Pendências gerais da integração (deixadas como TODO, não bloqueiam)
 
-- **Apagar os pedidos de teste** (`VT-TESTEME2`, `VT-TESTEME3`, `VT-TESTEME4` — criados direto
-  via insert REST pra testar compra de etiqueta e webhook, sem passar pelo checkout) pelo SQL
-  Editor do Supabase: `delete from pedidos where codigo in ('VT-TESTEME2','VT-TESTEME3','VT-TESTEME4');`
+- **Apagar os pedidos de teste** (`VT-TESTEME2`, `VT-TESTEME3`, `VT-TESTEME4`, `VT-TESTEDOC` —
+  criados direto via insert REST pra testar compra de etiqueta/webhook/documento, sem passar
+  pelo checkout) pelo SQL Editor do Supabase:
+  `delete from pedidos where codigo in ('VT-TESTEME2','VT-TESTEME3','VT-TESTEME4','VT-TESTEDOC');`
   (e os `envios`/`eventos_webhook_melhor_envio` associados, se não tiver cascade).
-- **Coletar CPF/CNPJ do cliente no checkout** — hoje é pedido manualmente via prompt no admin
-  na hora de comprar a etiqueta (ver acima); o ideal é vir do checkout, sem esse passo manual.
-- Testar o webhook de verdade (cadastrar no painel, gerar uma etiqueta real e conferir se o
-  evento chega e atualiza a tabela) — também não testado ainda, só revisado via documentação.
 
 ## ✅ Acompanhamento de pedido — feito
 
@@ -345,9 +352,8 @@ Confirmado em produção (`strong-centaur-0240eb.netlify.app`): home com os 128 
 - **`/conta`** mostra um usuário fake fixo ("Convidado Fã de Tudo"), sem cadastro/login real
   de cliente — diferente do login de admin (`/admin/login`), que já é real. Implementar
   requer decidir o modelo (cadastro completo vs. só via Supabase Auth) — não iniciado.
-- **Frete no checkout** — as opções (`OPCOES_FRETE` em `checkout.component.ts`) são valores
-  fixos no código, não vêm de uma calculadora de frete real (Correios/transportadora). Junto
-  seguiria a integração de rastreio real já anotada na seção de acompanhamento de pedido.
+- ~~Frete no checkout~~ — **feito**, ver seção "Integração com Melhor Envio" no topo deste
+  arquivo (cotação real, compra de etiqueta e rastreio via webhook).
 
 ## Marketing: tráfego pago e pixels de conversão
 

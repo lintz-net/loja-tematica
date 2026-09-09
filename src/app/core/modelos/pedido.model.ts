@@ -26,6 +26,9 @@ export interface Pedido {
   nomeCliente: string;
   emailCliente: string;
   telefoneCliente: string;
+  /** CPF ou CNPJ do cliente — exigido pelo Melhor Envio como documento do destinatário na
+   * compra da etiqueta. Ausente em pedidos de antes dessa coleta existir no checkout. */
+  documentoCliente?: string;
   endereco: EnderecoPedido;
   itens: ItemPedido[];
   formaPagamento: 'cartao' | 'pix';

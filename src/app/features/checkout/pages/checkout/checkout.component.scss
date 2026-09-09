@@ -105,6 +105,11 @@
   color: var(--cor-texto-fraco);
 }
 
+.checkout__ajuda--pequena {
+  margin-top: -12px;
+  font-size: 0.78rem;
+}
+
 .checkout__formulario input {
   width: 100%;
   background: var(--cor-fundo);

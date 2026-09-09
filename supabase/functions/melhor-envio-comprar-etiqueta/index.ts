@@ -40,6 +40,7 @@ interface LinhaPedido {
   nome_cliente: string;
   email_cliente: string;
   telefone_cliente: string;
+  documento_cliente: string | null;
   endereco: EnderecoPedido;
   itens: ItemPedido[];
   valor_frete: number;
@@ -116,7 +117,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const pedidos = await restSupabase<LinhaPedido[]>(
-      `pedidos?codigo=eq.${codigoPedido}&select=codigo,nome_cliente,email_cliente,telefone_cliente,endereco,itens,valor_frete,frete_servico_id`
+      `pedidos?codigo=eq.${codigoPedido}&select=codigo,nome_cliente,email_cliente,telefone_cliente,documento_cliente,endereco,itens,valor_frete,frete_servico_id`
     );
     const pedido = pedidos[0];
     if (!pedido) {
@@ -197,7 +198,7 @@ Deno.serve(async (req: Request) => {
         name: pedido.nome_cliente,
         phone: pedido.telefone_cliente,
         email: pedido.email_cliente,
-        document: (documentoDestinatario ?? '').replace(/\D/g, ''),
+        document: (documentoDestinatario ?? pedido.documento_cliente ?? '').replace(/\D/g, ''),
         address: pedido.endereco.endereco,
         number: pedido.endereco.numero,
         district: pedido.endereco.bairro,

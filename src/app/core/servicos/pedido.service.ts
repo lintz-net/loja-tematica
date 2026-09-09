@@ -13,6 +13,7 @@ interface LinhaPedido {
   nome_cliente: string;
   email_cliente: string;
   telefone_cliente: string;
+  documento_cliente: string | null;
   endereco: Pedido['endereco'];
   itens: Pedido['itens'];
   forma_pagamento: Pedido['formaPagamento'];
@@ -38,6 +39,7 @@ function linhaParaPedido(linha: LinhaPedido): Pedido {
     nomeCliente: linha.nome_cliente,
     emailCliente: linha.email_cliente,
     telefoneCliente: linha.telefone_cliente,
+    documentoCliente: linha.documento_cliente ?? undefined,
     endereco: linha.endereco,
     itens: linha.itens,
     formaPagamento: linha.forma_pagamento,
@@ -70,6 +72,7 @@ export class PedidoService {
       nome_cliente: dados.nomeCliente,
       email_cliente: dados.emailCliente,
       telefone_cliente: dados.telefoneCliente,
+      documento_cliente: dados.documentoCliente ?? null,
       endereco: dados.endereco,
       itens: dados.itens,
       forma_pagamento: dados.formaPagamento,
