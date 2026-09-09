@@ -38,6 +38,54 @@
         />
       </label>
 
+      <fieldset class="admin-produto-form__dimensoes">
+        <legend>Peso e dimensões (unidade) — usados na cotação de frete</legend>
+        <label>
+          Peso (kg)
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="ex: 0.3"
+            [value]="pesoKg()"
+            (input)="atualizarPesoKg($any($event.target).value)"
+          />
+        </label>
+        <label>
+          Altura (cm)
+          <input
+            type="number"
+            step="1"
+            min="1"
+            placeholder="ex: 5"
+            [value]="alturaCm()"
+            (input)="atualizarAlturaCm($any($event.target).value)"
+          />
+        </label>
+        <label>
+          Largura (cm)
+          <input
+            type="number"
+            step="1"
+            min="1"
+            placeholder="ex: 20"
+            [value]="larguraCm()"
+            (input)="atualizarLarguraCm($any($event.target).value)"
+          />
+        </label>
+        <label>
+          Comprimento (cm)
+          <input
+            type="number"
+            step="1"
+            min="1"
+            placeholder="ex: 25"
+            [value]="comprimentoCm()"
+            (input)="atualizarComprimentoCm($any($event.target).value)"
+          />
+        </label>
+      </fieldset>
+
       <fieldset class="admin-produto-form__categorias">
         <legend>Categorias</legend>
         @for (categoria of categoriasDisponiveis(); track categoria.id) {

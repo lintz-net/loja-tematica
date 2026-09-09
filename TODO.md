@@ -1,5 +1,98 @@
 # TODO
 
+## 🚧 Integração com Melhor Envio (frete/etiqueta/rastreio) — em andamento
+
+Integração completa planejada em etapas (cotação → compra de etiqueta → rastreio). Convenção:
+nomes de tabela/coluna/função em português, exceto termos técnicos da própria API do
+Melhor Envio (`access_token`, `refresh_token`).
+
+**Decisões tomadas:**
+- **Ambiente**: Sandbox primeiro (`AMBIENTE_MELHOR_ENVIO` não setado = sandbox por padrão).
+- **Gatilho da compra de etiqueta**: como não existe pagamento real funcionando ainda
+  (Mercado Pago bloqueado), a compra será **manual pelo admin** por enquanto — vira
+  automática (logo após confirmação de pagamento) quando o pagamento real existir.
+- **Documento fiscal do envio (MVP)**: declaração de conteúdo (DC-e), não nota fiscal. Nota
+  de risco (não é aconselhamento jurídico): DC-e é oficialmente pra envios sem fins
+  comerciais — usar pra venda é solução temporária, fora das regras do Melhor Envio; revisar
+  com contador antes de operar assim por muito tempo. NF-e automática e logística reversa
+  ficam fora de escopo por agora.
+- **Remetente**: Izac Lins, CPF 03621656456, Rua Almirante Brasil 99, Mooca, São Paulo-SP,
+  CEP 03164-120 — guardado como secrets de Edge Function (`REMETENTE_*`), não como tabela.
+
+### ✅ Etapa 1 — Schema, OAuth e cotação de frete — feito
+
+- `docs/supabase/migration-006-melhor-envio.sql`: colunas `peso_kg`/`altura_cm`/`largura_cm`/
+  `comprimento_cm` em `produtos`; tabelas `tokens_melhor_envio` (RLS sem nenhuma policy — só
+  a `service_role` das Edge Functions acessa), `envios` (um por pedido, com
+  `obter_envio_por_codigo_pedido` RPC pro rastreio público, e Realtime habilitado pra
+  atualização automática na página de acompanhamento) e `eventos_webhook_melhor_envio` (log
+  bruto dos webhooks, só admin lê).
+- `docs/supabase/migration-007-frete-escolhido.sql`: colunas `frete_servico_id`/
+  `frete_transportadora`/`frete_servico_nome`/`frete_prazo_dias` em `pedidos` — guarda qual
+  serviço foi escolhido no checkout, necessário pra comprar a etiqueta depois.
+- Edge Functions (`supabase/functions/`): `_shared/melhor-envio.ts` (helper de token
+  com renovação automática via refresh_token, margem de 1 dia antes de expirar);
+  `melhor-envio-autorizar` (redireciona pro fluxo OAuth — acessado uma vez pelo admin);
+  `melhor-envio-callback` (troca `code` por tokens, salva no banco — Redirect URI cadastrada
+  no app do Melhor Envio); `melhor-envio-refresh-token` (pensada pra Cron periódico, ainda
+  **não agendada** — ver pendência abaixo); `melhor-envio-cotar` (cotação real, chamada pelo
+  checkout).
+- App criado no Melhor Envio Sandbox (Client ID `11826`), loja autorizada via OAuth com
+  sucesso, token salvo e renovando.
+- Checkout (`checkout.component.ts` + novo `frete.service.ts`) usa cotação real da Melhor
+  Envio em vez das opções fixas antigas — testado com sucesso pra rotas interestaduais
+  (algumas combinações de CEP no sandbox não retornam nenhuma opção — limitação dos dados de
+  teste deles, não bug nosso; Correios em particular não retornou nenhuma cotação nos testes,
+  mesmo aparecendo como "disponível" na conta — revisitar em produção).
+
+**Pendente antes de produção**:
+- **Agendar o Cron do `melhor-envio-refresh-token`** — hoje só existe a function, não está
+  rodando periodicamente ainda. Sem isso, o token para de renovar sozinho se nenhuma outra
+  function for chamada por muito tempo (o `chamarMelhorEnvio`/`obterTokenValido` também
+  renova sob demanda, então na prática só afeta uso muito esporádico).
+- Peso/dimensões dos 128 produtos migrados do mock estão em branco (colunas novas) — a
+  cotação usa um valor padrão genérico (0,3kg, 20×5×25cm) até o admin preencher os reais.
+
+### ✅ Etapa 2 — Compra de etiqueta — feito
+
+- `supabase/functions/melhor-envio-comprar-etiqueta/index.ts`: recebe `codigoPedido`, busca o
+  pedido e monta o pacote (carrinho → checkout/pagamento pela carteira → gerar etiqueta →
+  imprimir), usando `non_commercial: true` (DC-e) em vez de nota fiscal, com
+  `insurance_value` = soma dos `precoUnitario × quantidade` dos itens. Peso/dimensões vêm de
+  `produtos` (fallback genérico se não preenchidos, mesma lógica da cotação).
+  - Checa saldo da carteira (`GET /api/v2/me/balance`) antes de comprar, mas de forma
+    *best-effort*: se o formato da resposta mudar/erro, segue e deixa o checkout real ser a
+    fonte de verdade sobre saldo insuficiente.
+  - Qualquer falha em qualquer etapa (carrinho/checkout/gerar) marca o envio como
+    `pendente_etiqueta` com o erro salvo em `erro_compra_etiqueta`, **sem** bloquear ou
+    cancelar o pedido do cliente. Sucesso grava `id_melhor_envio`, `url_etiqueta` e status
+    `gerado`.
+  - `_shared/melhor-envio.ts` ganhou `restSupabase` exportado (antes era interno) pra ser
+    reaproveitado por essa function.
+- `src/app/core/servicos/envio.service.ts` (novo): lê a tabela `envios` (autenticado, mesmo
+  padrão de `PedidoService.listarTodos`) e chama a Edge Function acima.
+- `/admin/pedidos` (`admin-pedidos.component.ts/html`): nova coluna "Etiqueta" mostrando o
+  status do envio (rótulos em português), link "Imprimir" quando há `url_etiqueta`, e botão
+  "Comprar etiqueta" — habilitado quando o pedido tem frete escolhido e o envio ainda não foi
+  comprado com sucesso (permite tentar de novo em caso de `pendente_etiqueta`).
+
+**Limitações conhecidas / dívida técnica**:
+- O checkout não coleta CPF/CNPJ do cliente — o campo `document` do destinatário (`to`) vai
+  vazio na chamada `/api/v2/me/cart`. Pode ser exigido pelo Melhor Envio em produção (não
+  testado ainda, só sandbox); se bloquear, a compra cai em `pendente_etiqueta` com o erro
+  visível no admin, sem quebrar o pedido — mas o ideal é adicionar o campo CPF ao checkout
+  antes de operar em produção.
+- Não testado ainda contra o ambiente sandbox de verdade (só revisado via documentação
+  oficial + type-check + build limpo) — próximo passo natural é o admin clicar em "Comprar
+  etiqueta" num pedido de teste e conferir o resultado.
+
+### Próximas etapas (não iniciadas)
+
+1. **Webhook + rastreio** — Edge Function receptora dos eventos `order.*`, atualização da
+   tabela `envios` (Realtime já habilitado nela), Edge Function de polling de fallback
+   (`/api/v2/me/shipment/tracking`, cache de 1h do lado deles), e a página `/pedido/:codigo`
+   passa a mostrar o status do envio em tempo real via Supabase Realtime.
+
 ## ✅ Acompanhamento de pedido — feito
 
 Implementado com Supabase (Postgres): checkout grava o pedido de verdade (`PedidoService` +

@@ -51,6 +51,16 @@ legend {
   padding: 0 6px;
 }
 
+.admin-produto-form__dimensoes {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+
+  label {
+    font-size: 0.85rem;
+  }
+}
+
 .admin-produto-form__categorias,
 .admin-produto-form__tamanhos,
 .admin-produto-form__cores {

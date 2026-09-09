@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CarrinhoService } from '../../../../core/servicos/carrinho.service';
 import { PedidoService } from '../../../../core/servicos/pedido.service';
+import { FreteService, OpcaoFrete } from '../../../../core/servicos/frete.service';
 import { ItemPedido } from '../../../../core/modelos/pedido.model';
 import { imagemDaVariante } from '../../../../core/utilitarios/imagem-produto.util';
 
@@ -12,25 +13,12 @@ interface DefinicaoEtapa {
   rotulo: string;
 }
 
-interface OpcaoFrete {
-  id: string;
-  nome: string;
-  prazo: string;
-  preco: number;
-}
-
 const ETAPAS: DefinicaoEtapa[] = [
   { id: 'contato', rotulo: 'Contato' },
   { id: 'endereco', rotulo: 'Endereço' },
   { id: 'frete', rotulo: 'Frete' },
   { id: 'pagamento', rotulo: 'Pagamento' },
   { id: 'revisao', rotulo: 'Revisão' },
-];
-
-const OPCOES_FRETE: OpcaoFrete[] = [
-  { id: 'economico', nome: 'Econômico', prazo: '7 a 10 dias úteis', preco: 14.9 },
-  { id: 'padrao', nome: 'Padrão', prazo: '4 a 6 dias úteis', preco: 24.9 },
-  { id: 'expresso', nome: 'Expresso', prazo: '1 a 2 dias úteis', preco: 39.9 },
 ];
 
 const MAX_PARCELAS = 6;
@@ -48,13 +36,13 @@ const BANDEIRAS_ACEITAS = ['Visa', 'Mastercard', 'Elo', 'Amex', 'Hipercard', 'Di
 export class CheckoutComponent {
   private readonly carrinhoService = inject(CarrinhoService);
   private readonly pedidoService = inject(PedidoService);
+  private readonly freteService = inject(FreteService);
   private readonly router = inject(Router);
 
   readonly itens = this.carrinhoService.itensCarrinho;
   readonly subtotal = this.carrinhoService.valorTotal;
 
   readonly etapas = ETAPAS;
-  readonly opcoesFrete = OPCOES_FRETE;
 
   readonly etapaAtual = signal<EtapaCheckout>('contato');
   readonly indiceEtapaAtual = computed(() =>
@@ -85,10 +73,14 @@ export class CheckoutComponent {
     )
   );
 
-  // Passo 6 — frete
+  // Passo 6 — frete: cotação real via Melhor Envio (Edge Function `melhor-envio-cotar`),
+  // disparada ao avançar do endereço pro frete — nunca chamamos a API deles direto daqui.
+  readonly opcoesFrete = signal<OpcaoFrete[]>([]);
+  readonly carregandoFrete = signal(false);
+  readonly erroFrete = signal<string | null>(null);
   readonly freteSelecionadoId = signal<string | null>(null);
   readonly freteSelecionado = computed(
-    () => this.opcoesFrete.find((opcao) => opcao.id === this.freteSelecionadoId()) ?? null
+    () => this.opcoesFrete().find((opcao) => opcao.id === this.freteSelecionadoId()) ?? null
   );
 
   // Passo 7 — pagamento (integração real de cobrança fica pra depois — hoje é só simulação visual)
@@ -238,9 +230,41 @@ export class CheckoutComponent {
     if (!this.podeAvancar()) return;
     const proximoIndice = this.indiceEtapaAtual() + 1;
     if (proximoIndice < this.etapas.length) {
-      this.etapaAtual.set(this.etapas[proximoIndice].id);
+      const proximaEtapa = this.etapas[proximoIndice].id;
+      this.etapaAtual.set(proximaEtapa);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (proximaEtapa === 'frete') {
+        this.cotarFrete();
+      }
     }
+  }
+
+  /** Cotação real de frete — busca as opções assim que o cliente chega na etapa de frete,
+   * usando o CEP já informado e os itens do carrinho (peso/dimensões vêm do produto). */
+  cotarFrete(): void {
+    this.carregandoFrete.set(true);
+    this.erroFrete.set(null);
+    this.freteSelecionadoId.set(null);
+    this.opcoesFrete.set([]);
+
+    const itensParaCotacao = this.itens().map((item) => ({
+      produtoId: item.produto.id,
+      quantidade: item.quantidade,
+    }));
+
+    this.freteService.cotar(this.cep(), itensParaCotacao).subscribe({
+      next: (opcoes) => {
+        this.opcoesFrete.set(opcoes);
+        this.carregandoFrete.set(false);
+        if (opcoes.length === 0) {
+          this.erroFrete.set('Nenhuma opção de frete disponível para esse endereço.');
+        }
+      },
+      error: () => {
+        this.carregandoFrete.set(false);
+        this.erroFrete.set('Não foi possível calcular o frete. Tente novamente.');
+      },
+    });
   }
 
   voltar(): void {
@@ -291,6 +315,10 @@ export class CheckoutComponent {
         parcelas: this.formaPagamento() === 'cartao' ? this.parcelas() : 1,
         valorFrete: this.valorFrete(),
         valorTotal: this.valorTotal(),
+        freteServicoId: this.freteSelecionado()?.id,
+        freteTransportadora: this.freteSelecionado()?.transportadora,
+        freteServicoNome: this.freteSelecionado()?.servico,
+        fretePrazoDias: this.freteSelecionado()?.prazoDias,
       })
       .subscribe({
         next: (pedido) => {

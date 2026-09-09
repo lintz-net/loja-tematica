@@ -25,6 +25,8 @@
             <th>Cliente</th>
             <th>Total</th>
             <th>Pagamento</th>
+            <th>Frete</th>
+            <th>Etiqueta</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -40,6 +42,45 @@
               </td>
               <td>{{ pedido.valorTotal | currency: 'BRL' }}</td>
               <td>{{ pedido.formaPagamento === 'pix' ? 'Pix' : 'Cartão' }}</td>
+              <td>
+                @if (pedido.freteTransportadora) {
+                  {{ pedido.freteTransportadora }} · {{ pedido.freteServicoNome }}
+                } @else {
+                  <span class="admin-pedidos__detalhe">—</span>
+                }
+              </td>
+              <td>
+                @if (envioDoPedido(pedido.codigo); as envio) {
+                  <span>{{ rotulosStatusEnvio[envio.statusEnvio] }}</span>
+                  @if (envio.statusEnvio === 'pendente_etiqueta' && envio.erroCompraEtiqueta) {
+                    <br />
+                    <span class="admin-pedidos__detalhe" [title]="envio.erroCompraEtiqueta"
+                      >Ver erro</span
+                    >
+                  }
+                  @if (envio.urlEtiqueta) {
+                    <br />
+                    <a [href]="envio.urlEtiqueta" target="_blank" rel="noopener">Imprimir</a>
+                  }
+                } @else {
+                  <span class="admin-pedidos__detalhe">—</span>
+                }
+                @if (podeComprarEtiqueta(pedido)) {
+                  <br />
+                  <button
+                    type="button"
+                    class="botao-secundario"
+                    [disabled]="codigoComprandoEtiqueta() === pedido.codigo"
+                    (click)="comprarEtiqueta(pedido.codigo)"
+                  >
+                    {{
+                      codigoComprandoEtiqueta() === pedido.codigo
+                        ? 'Comprando…'
+                        : 'Comprar etiqueta'
+                    }}
+                  </button>
+                }
+              </td>
               <td>
                 <select
                   [value]="pedido.status"

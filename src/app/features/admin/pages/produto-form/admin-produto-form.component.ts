@@ -60,6 +60,13 @@ export class AdminProdutoFormComponent {
   readonly categoriasSelecionadas = signal<Set<SlugCategoria>>(new Set());
   readonly imagens = signal<string[]>([]);
 
+  /** Peso/dimensões de uma unidade do produto — usados na cotação de frete (Melhor Envio).
+   * Sem isso preenchido, a cotação usa um valor padrão genérico, menos preciso. */
+  readonly pesoKg = signal<number | null>(null);
+  readonly alturaCm = signal<number | null>(null);
+  readonly larguraCm = signal<number | null>(null);
+  readonly comprimentoCm = signal<number | null>(null);
+
   /** Tamanhos/cores marcados nos checkboxes — usados só pra gerar a matriz de variantes,
    * não são salvos diretamente. */
   readonly tamanhosMarcados = signal<Set<string>>(new Set());
@@ -103,6 +110,10 @@ export class AdminProdutoFormComponent {
     this.precoBase.set(produto.precoBase);
     this.categoriasSelecionadas.set(new Set(produto.categorias));
     this.imagens.set(produto.imagens);
+    this.pesoKg.set(produto.pesoKg ?? null);
+    this.alturaCm.set(produto.alturaCm ?? null);
+    this.larguraCm.set(produto.larguraCm ?? null);
+    this.comprimentoCm.set(produto.comprimentoCm ?? null);
 
     const variantesExistentes = produto.variantes.map((v) => ({
       id: v.id,
@@ -135,6 +146,22 @@ export class AdminProdutoFormComponent {
 
   atualizarPrecoBase(valor: string): void {
     this.precoBase.set(Number(valor) || 0);
+  }
+
+  atualizarPesoKg(valor: string): void {
+    this.pesoKg.set(valor ? Number(valor) : null);
+  }
+
+  atualizarAlturaCm(valor: string): void {
+    this.alturaCm.set(valor ? Number(valor) : null);
+  }
+
+  atualizarLarguraCm(valor: string): void {
+    this.larguraCm.set(valor ? Number(valor) : null);
+  }
+
+  atualizarComprimentoCm(valor: string): void {
+    this.comprimentoCm.set(valor ? Number(valor) : null);
   }
 
   alternarCategoria(slug: SlugCategoria, marcado: boolean): void {
@@ -291,6 +318,10 @@ export class AdminProdutoFormComponent {
       imagens: this.imagens(),
       imagensPorCor:
         Object.keys(imagensPorCorPreenchido).length > 0 ? imagensPorCorPreenchido : undefined,
+      pesoKg: this.pesoKg() ?? undefined,
+      alturaCm: this.alturaCm() ?? undefined,
+      larguraCm: this.larguraCm() ?? undefined,
+      comprimentoCm: this.comprimentoCm() ?? undefined,
       variantes: this.variantes().map(
         (v): VarianteProduto => ({
           id: v.id,

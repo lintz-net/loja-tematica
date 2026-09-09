@@ -33,5 +33,11 @@ export interface Produto {
   imagensPorCor?: Record<string, string[]>;
   /** Tabela de medidas para o modal "Guia de medidas". Quando ausente, usa-se uma tabela genérica. */
   guiaMedidas?: FaixaMedida[];
+  /** Peso/dimensões de uma unidade — usados na cotação de frete (Melhor Envio). Quando
+   * ausentes, a cotação usa um valor padrão genérico (menos preciso). */
+  pesoKg?: number;
+  alturaCm?: number;
+  larguraCm?: number;
+  comprimentoCm?: number;
   variantes: VarianteProduto[];
 }

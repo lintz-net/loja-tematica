@@ -19,6 +19,10 @@ interface LinhaPedido {
   parcelas: number;
   valor_frete: number;
   valor_total: number;
+  frete_servico_id: string | null;
+  frete_transportadora: string | null;
+  frete_servico_nome: string | null;
+  frete_prazo_dias: number | null;
 }
 
 function gerarCodigoPedido(): string {
@@ -40,6 +44,10 @@ function linhaParaPedido(linha: LinhaPedido): Pedido {
     parcelas: linha.parcelas,
     valorFrete: linha.valor_frete,
     valorTotal: linha.valor_total,
+    freteServicoId: linha.frete_servico_id ?? undefined,
+    freteTransportadora: linha.frete_transportadora ?? undefined,
+    freteServicoNome: linha.frete_servico_nome ?? undefined,
+    fretePrazoDias: linha.frete_prazo_dias ?? undefined,
   };
 }
 
@@ -68,6 +76,10 @@ export class PedidoService {
       parcelas: dados.parcelas,
       valor_frete: dados.valorFrete,
       valor_total: dados.valorTotal,
+      frete_servico_id: dados.freteServicoId ?? null,
+      frete_transportadora: dados.freteTransportadora ?? null,
+      frete_servico_nome: dados.freteServicoNome ?? null,
+      frete_prazo_dias: dados.fretePrazoDias ?? null,
     };
 
     return this.rest.insert('pedidos', linha).pipe(

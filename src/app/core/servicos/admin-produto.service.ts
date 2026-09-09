@@ -17,6 +17,10 @@ interface LinhaProduto {
   imagens: string[];
   imagens_por_cor: Record<string, string[]> | null;
   guia_medidas: FaixaMedida[] | null;
+  peso_kg: number | null;
+  altura_cm: number | null;
+  largura_cm: number | null;
+  comprimento_cm: number | null;
   variantes: VarianteProduto[];
 }
 
@@ -31,6 +35,10 @@ function linhaParaProduto(linha: LinhaProduto): Produto {
     imagens: linha.imagens,
     imagensPorCor: linha.imagens_por_cor ?? undefined,
     guiaMedidas: linha.guia_medidas ?? undefined,
+    pesoKg: linha.peso_kg ?? undefined,
+    alturaCm: linha.altura_cm ?? undefined,
+    larguraCm: linha.largura_cm ?? undefined,
+    comprimentoCm: linha.comprimento_cm ?? undefined,
     variantes: linha.variantes,
   };
 }
@@ -46,6 +54,10 @@ function produtoParaLinha(produto: Produto): LinhaProduto {
     imagens: produto.imagens,
     imagens_por_cor: produto.imagensPorCor ?? null,
     guia_medidas: produto.guiaMedidas ?? null,
+    peso_kg: produto.pesoKg ?? null,
+    altura_cm: produto.alturaCm ?? null,
+    largura_cm: produto.larguraCm ?? null,
+    comprimento_cm: produto.comprimentoCm ?? null,
     variantes: produto.variantes,
   };
 }

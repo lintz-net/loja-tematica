@@ -32,4 +32,10 @@ export interface Pedido {
   parcelas: number;
   valorFrete: number;
   valorTotal: number;
+  /** Serviço de frete escolhido no checkout (Melhor Envio) — usado depois pra comprar a
+   * etiqueta. Ausente em pedidos antigos, de antes dessa integração existir. */
+  freteServicoId?: string;
+  freteTransportadora?: string;
+  freteServicoNome?: string;
+  fretePrazoDias?: number;
 }
