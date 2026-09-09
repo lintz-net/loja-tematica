@@ -111,24 +111,41 @@ sandbox) gravados certinho. Dois problemas encontrados e corrigidos durante o te
   pausado/suspenso/cancelado/não-entregue, e o código de rastreio quando disponível —
   atualiza sozinha quando o status muda, sem precisar recarregar a página.
 
+**✅ Testado contra o sandbox de verdade** (webhook cadastrado no painel do Melhor Envio,
+apontando pra `melhor-envio-webhook`). Achamos e corrigimos dois bugs reais durante o teste:
+- **Cadastro do webhook falhava (E-WBH-0002, status inválido 401)** — o Melhor Envio manda uma
+  requisição de teste na hora de cadastrar a URL, sem assinatura válida, e exige um 2xx pra
+  aceitar. A function respondia 401 pra qualquer assinatura inválida, quebrando o cadastro.
+  Corrigido: agora sempre responde 200 (`respostaOk()`), mesmo quando ignora a requisição por
+  não conseguir validar a assinatura — só processa/grava algo quando a assinatura bate.
+- **Todos os eventos reais chegavam mas eram descartados como "assinatura inválida"** — a
+  causa raiz: o Melhor Envio manda a assinatura em **base64** no header `x-me-signature`
+  (ex.: `5J1YvIYjFcdbPFoOLPus0n/D51rpSR2C1sjVciohrEY=`), e o código comparava com hexadecimal.
+  Corrigido em `assinaturaValida()` (`melhor-envio-webhook/index.ts`). Confirmado com um log
+  temporário de debug (já removido) que capturou as chamadas reais chegando com assinatura
+  válida assim que corrigido.
+- Também descoberto um evento não documentado junto dos outros: **`order.ready-to-print`**
+  (aparece no sandbox entre `released` e `generated`) — mapeado pra `liberado` em
+  `melhor-envio-webhook` e `melhor-envio-rastrear-pendentes`.
+- Confirmado ponta a ponta: pedido de teste gerou etiqueta → webhook recebeu
+  `order.created`/`order.released`/`order.ready-to-print` → `envios.status_envio` foi
+  atualizado sozinho pra `liberado`, casado por `id_melhor_envio`.
+
 **Pendente antes de produção**:
-- **Cadastrar o webhook no painel do Melhor Envio** (Integrações → Área Dev → seu app → Novo
-  Webhook) apontando pra
-  `https://<projeto>.supabase.co/functions/v1/melhor-envio-webhook` — sem isso, nenhum evento
-  chega, e o rastreio depende só do polling de fallback (que ainda nem está agendado).
 - **Agendar o Cron do `melhor-envio-rastrear-pendentes`** (mesma pendência do
   `melhor-envio-refresh-token` — nenhum dos dois crons foi configurado no Supabase ainda).
 - Eventos como `order.received` (sem status equivalente no nosso enum `status_envio`) só ficam
   logados em `eventos_webhook_melhor_envio`, não atualizam `envios` — revisar se faz sentido
   mapear pra algum status quando isso for observado de verdade em produção.
+- **Registrar o webhook de novo no app de produção** quando migrar de sandbox pra produção —
+  o cadastro é por aplicativo/ambiente, não é automático.
 
 ### Pendências gerais da integração (deixadas como TODO, não bloqueiam)
 
-- **Apagar o pedido de teste `VT-TESTEME`** (criado direto via insert REST pra testar a compra
-  de etiqueta, sem passar pelo checkout) — não tem policy de delete pra `anon`/`authenticated`
-  na tabela `pedidos`, então precisa ser removido pelo SQL Editor do Supabase
-  (`delete from pedidos where codigo = 'VT-TESTEME';`, o que também remove o `envios`
-  associado via `on delete cascade` se existir, ou apague os dois manualmente).
+- **Apagar os pedidos de teste** (`VT-TESTEME2`, `VT-TESTEME3`, `VT-TESTEME4` — criados direto
+  via insert REST pra testar compra de etiqueta e webhook, sem passar pelo checkout) pelo SQL
+  Editor do Supabase: `delete from pedidos where codigo in ('VT-TESTEME2','VT-TESTEME3','VT-TESTEME4');`
+  (e os `envios`/`eventos_webhook_melhor_envio` associados, se não tiver cascade).
 - **Coletar CPF/CNPJ do cliente no checkout** — hoje é pedido manualmente via prompt no admin
   na hora de comprar a etiqueta (ver acima); o ideal é vir do checkout, sem esse passo manual.
 - Testar o webhook de verdade (cadastrar no painel, gerar uma etiqueta real e conferir se o

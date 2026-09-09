@@ -14,6 +14,7 @@ const SUFIXO_PARA_STATUS_ENVIO: Record<string, string> = {
   created: 'criado',
   pending: 'pendente',
   released: 'liberado',
+  'ready-to-print': 'liberado', // visto no sandbox, não documentado oficialmente junto dos outros
   generated: 'gerado',
   posted: 'postado',
   delivered: 'entregue',
@@ -47,11 +48,12 @@ async function assinaturaValida(corpoBruto: string, assinaturaRecebida: string |
     chave,
     new TextEncoder().encode(corpoBruto)
   );
-  const assinaturaHex = Array.from(new Uint8Array(assinaturaCalculada))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+  // O Melhor Envio manda a assinatura em base64 (não hex) no header x-me-signature.
+  const assinaturaBase64 = btoa(
+    String.fromCharCode(...new Uint8Array(assinaturaCalculada))
+  );
 
-  return assinaturaHex === assinaturaRecebida;
+  return assinaturaBase64 === assinaturaRecebida;
 }
 
 const respostaOk = () =>

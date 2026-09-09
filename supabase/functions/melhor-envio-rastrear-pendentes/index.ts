@@ -11,6 +11,7 @@ const STATUS_TRACKING_PARA_STATUS_ENVIO: Record<string, string> = {
   created: 'criado',
   pending: 'pendente',
   released: 'liberado',
+  'ready-to-print': 'liberado', // visto no sandbox, não documentado oficialmente junto dos outros
   generated: 'gerado',
   posted: 'postado',
   delivered: 'entregue',
