@@ -120,6 +120,18 @@ legend {
   margin: 8px 0 0;
 }
 
+.admin-produto-form__linha-medida {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 8px;
+  margin-bottom: 10px;
+  align-items: center;
+
+  input {
+    font-weight: 400;
+  }
+}
+
 .admin-produto-form__linha-variante {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;

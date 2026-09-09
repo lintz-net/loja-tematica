@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CatalogoRepositorio } from '../../../../core/servicos/catalogo.repositorio';
 import { AdminProdutoService } from '../../../../core/servicos/admin-produto.service';
 import { Categoria, SlugCategoria } from '../../../../core/modelos/categoria.model';
-import { Produto, VarianteProduto } from '../../../../core/modelos/produto.model';
+import { FaixaMedida, Produto, VarianteProduto } from '../../../../core/modelos/produto.model';
 import { CORES_CONHECIDAS, corParaEstiloSwatch } from '../../../../core/utilitarios/cor.util';
 
 const TAMANHOS_PADRAO = ['P', 'M', 'G', 'GG', 'Único'];
@@ -74,6 +74,10 @@ export class AdminProdutoFormComponent {
 
   readonly variantes = signal<LinhaVariante[]>([]);
 
+  /** Tabela de medidas do modal "Guia de medidas" na página do produto — opcional; sem
+   * nenhuma linha aqui, o cliente vê uma tabela genérica padrão. */
+  readonly guiaMedidas = signal<FaixaMedida[]>([]);
+
   /** Mapa cor → fotos específicas daquela cor (opcional) — quando preenchido pra uma cor, a
    * galeria do produto pula pra essas fotos ao selecioná-la em vez de mostrar todas. */
   readonly imagensPorCor = signal<Record<string, string[]>>({});
@@ -126,6 +130,7 @@ export class AdminProdutoFormComponent {
     this.tamanhosMarcados.set(new Set(variantesExistentes.map((v) => v.tamanho)));
     this.coresMarcadas.set(new Set(variantesExistentes.map((v) => v.cor)));
     this.imagensPorCor.set(produto.imagensPorCor ?? {});
+    this.guiaMedidas.set(produto.guiaMedidas ?? []);
   }
 
   atualizarNome(valor: string): void {
@@ -288,6 +293,28 @@ export class AdminProdutoFormComponent {
     );
   }
 
+  adicionarFaixaMedida(): void {
+    this.guiaMedidas.update((atual) => [...atual, { tamanho: '', larguraCm: 0, comprimentoCm: 0 }]);
+  }
+
+  removerFaixaMedida(indice: number): void {
+    this.guiaMedidas.update((atual) => atual.filter((_, i) => i !== indice));
+  }
+
+  atualizarFaixaMedida(
+    indice: number,
+    campo: keyof FaixaMedida,
+    valor: string
+  ): void {
+    this.guiaMedidas.update((atual) =>
+      atual.map((faixa, i) => {
+        if (i !== indice) return faixa;
+        if (campo === 'tamanho') return { ...faixa, tamanho: valor };
+        return { ...faixa, [campo]: Number(valor) || 0 };
+      })
+    );
+  }
+
   podeSalvar(): boolean {
     return (
       this.nome().trim().length > 0 &&
@@ -318,6 +345,7 @@ export class AdminProdutoFormComponent {
       imagens: this.imagens(),
       imagensPorCor:
         Object.keys(imagensPorCorPreenchido).length > 0 ? imagensPorCorPreenchido : undefined,
+      guiaMedidas: this.guiaMedidas().length > 0 ? this.guiaMedidas() : undefined,
       pesoKg: this.pesoKg() ?? undefined,
       alturaCm: this.alturaCm() ?? undefined,
       larguraCm: this.larguraCm() ?? undefined,

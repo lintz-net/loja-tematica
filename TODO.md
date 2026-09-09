@@ -155,13 +155,9 @@ de 11 ou 14 dígitos), guardado em `pedidos.documento_cliente`
 fallback — testado com um pedido novo já com o CPF preenchido e a compra funcionou sem pedir
 nada na tela.
 
-### Pendências gerais da integração (deixadas como TODO, não bloqueiam)
-
-- **Apagar os pedidos de teste** (`VT-TESTEME2`, `VT-TESTEME3`, `VT-TESTEME4`, `VT-TESTEDOC` —
-  criados direto via insert REST pra testar compra de etiqueta/webhook/documento, sem passar
-  pelo checkout) pelo SQL Editor do Supabase:
-  `delete from pedidos where codigo in ('VT-TESTEME2','VT-TESTEME3','VT-TESTEME4','VT-TESTEDOC');`
-  (e os `envios`/`eventos_webhook_melhor_envio` associados, se não tiver cascade).
+Pedidos de teste (`VT-TESTEME`, `VT-TESTEME2/3/4`, `VT-TESTEDOC` — criados direto via insert
+REST pra testar compra de etiqueta/webhook/documento, sem passar pelo checkout) já foram
+apagados (`envios` e `pedidos`), via `supabase db query --linked`.
 
 ## ✅ Acompanhamento de pedido — feito
 
@@ -263,7 +259,10 @@ quer revisitar depois (telas ainda simples):
   cadastrados/editados pelo admin daqui pra frente — os 127 produtos antigos sem esse
   de-para (só a Camiseta Donkey Kong tinha, curada manualmente antes do admin existir)
   precisam ser editados um a um se quiser adicionar isso a eles.
-- `guiaMedidas` (tabela de medidas) ainda não tem UI — só dá pra editar via SQL direto.
+- ✅ `guiaMedidas` (tabela de medidas) já tem UI — fieldset "Guia de medidas (opcional)" no
+  formulário, com linhas tamanho/largura/comprimento (adicionar/remover), salvo como o mesmo
+  array `FaixaMedida[]` que o modal "Guia de medidas" da página do produto já lia. Sem
+  nenhuma linha preenchida, continua caindo na tabela genérica padrão de antes.
 - Sem confirmação de "descartar alterações" ao sair do formulário sem salvar.
 - Geral: refinar UX/visual das telas (o próprio usuário achou "bem simples").
 
