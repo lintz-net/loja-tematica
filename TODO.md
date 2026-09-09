@@ -102,9 +102,9 @@ sandbox) gravados certinho. Dois problemas encontrados e corrigidos durante o te
   sem header de auth do Supabase).
 - `supabase/functions/melhor-envio-rastrear-pendentes/index.ts`: fallback de polling —
   consulta `/api/v2/me/shipment/tracking` pra todo envio ainda não finalizado
-  (`entregue`/`nao_entregue`/`cancelado`) e aplica a mesma atualização. Pensada pra rodar via
-  Supabase Cron (**ainda não agendado**, mesma pendência do `melhor-envio-refresh-token`) —
-  não adianta chamar com mais frequência que 1h por causa do cache da rota.
+  (`entregue`/`nao_entregue`/`cancelado`) e aplica a mesma atualização. Roda via Supabase Cron
+  de hora em hora (ver abaixo) — não adianta chamar com mais frequência por causa do cache da
+  rota.
 - `EnvioService` ganhou `obterPorCodigoPedido` (RPC pública, funciona em SSR) e
   `escutarMudancas` (Realtime, só browser — guardado com `isPlatformBrowser`, mesmo padrão do
   `AuthService`, pra não travar o SSR com o `RealtimeClient` do cliente completo).
