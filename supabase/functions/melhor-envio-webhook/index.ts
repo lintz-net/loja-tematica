@@ -54,20 +54,35 @@ async function assinaturaValida(corpoBruto: string, assinaturaRecebida: string |
   return assinaturaHex === assinaturaRecebida;
 }
 
+const respostaOk = () =>
+  new Response(JSON.stringify({ ok: true }), {
+    headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
+  });
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders() });
-  if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405, headers: corsHeaders() });
-  }
+
+  // O cadastro do webhook no painel do Melhor Envio manda uma requisição de teste (sem
+  // assinatura válida, possivelmente até GET) e exige um status 2xx pra aceitar a URL —
+  // por isso sempre respondemos 200 aqui, mesmo quando ignoramos a requisição por não
+  // conseguir validar a assinatura. Nunca processamos/gravamos nada sem assinatura batendo.
+  if (req.method !== 'POST') return respostaOk();
 
   const corpoBruto = await req.text();
 
   const assinatura = req.headers.get('x-me-signature');
   if (!(await assinaturaValida(corpoBruto, assinatura))) {
-    return new Response('Assinatura inválida.', { status: 401, headers: corsHeaders() });
+    return respostaOk();
   }
 
-  const { event: evento, data } = JSON.parse(corpoBruto) as PayloadWebhook;
+  let payload: PayloadWebhook;
+  try {
+    payload = JSON.parse(corpoBruto) as PayloadWebhook;
+  } catch {
+    return respostaOk();
+  }
+  const { event: evento, data } = payload;
+  if (!evento) return respostaOk();
 
   await restSupabase('eventos_webhook_melhor_envio', {
     method: 'POST',
@@ -96,7 +111,5 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  return new Response(JSON.stringify({ ok: true }), {
-    headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
-  });
+  return respostaOk();
 });
