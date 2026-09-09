@@ -94,10 +94,17 @@ export class AdminPedidosComponent {
     return !envio || envio.statusEnvio === 'aguardando_compra' || envio.statusEnvio === 'pendente_etiqueta';
   }
 
+  /** Pede o CPF/CNPJ do destinatário via prompt — o checkout ainda não coleta esse dado
+   * (dívida técnica registrada no TODO.md), e o Melhor Envio exige pra gerar a etiqueta. */
   async comprarEtiqueta(codigo: string): Promise<void> {
+    const documento = window.prompt(
+      'CPF ou CNPJ do destinatário (exigido pelo Melhor Envio):'
+    );
+    if (documento === null) return;
+
     this.codigoComprandoEtiqueta.set(codigo);
     this.erro.set(null);
-    const resultado = await this.envioService.comprarEtiqueta(codigo);
+    const resultado = await this.envioService.comprarEtiqueta(codigo, documento);
     this.codigoComprandoEtiqueta.set(null);
     if (!resultado.ok) {
       this.erro.set(`Falha ao comprar etiqueta do pedido ${codigo}: ${resultado.error}`);

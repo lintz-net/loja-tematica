@@ -101,7 +101,13 @@ Deno.serve(async (req: Request) => {
   let idEnvio: string | null = null;
 
   try {
-    const { codigoPedido } = (await req.json()) as { codigoPedido: string };
+    // documentoDestinatario é opcional: o checkout hoje não coleta CPF do cliente (dívida
+    // técnica registrada no TODO.md), então o admin pode informar manualmente na hora de
+    // comprar a etiqueta quando o Melhor Envio exigir.
+    const { codigoPedido, documentoDestinatario } = (await req.json()) as {
+      codigoPedido: string;
+      documentoDestinatario?: string;
+    };
     if (!codigoPedido) {
       return new Response(JSON.stringify({ error: 'codigoPedido é obrigatório.' }), {
         status: 400,
@@ -191,6 +197,7 @@ Deno.serve(async (req: Request) => {
         name: pedido.nome_cliente,
         phone: pedido.telefone_cliente,
         email: pedido.email_cliente,
+        document: (documentoDestinatario ?? '').replace(/\D/g, ''),
         address: pedido.endereco.endereco,
         number: pedido.endereco.numero,
         district: pedido.endereco.bairro,

@@ -103,7 +103,10 @@ export class EnvioService {
 
   /** Dispara a compra da etiqueta via Edge Function `melhor-envio-comprar-etiqueta` — o
    * Angular nunca fala com a API do Melhor Envio diretamente. */
-  async comprarEtiqueta(codigoPedido: string): Promise<{ ok: boolean; error?: string }> {
+  async comprarEtiqueta(
+    codigoPedido: string,
+    documentoDestinatario?: string
+  ): Promise<{ ok: boolean; error?: string }> {
     const resposta = await fetch(
       `${environment.supabaseUrl}/functions/v1/melhor-envio-comprar-etiqueta`,
       {
@@ -113,7 +116,7 @@ export class EnvioService {
           Authorization: `Bearer ${environment.supabaseKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ codigoPedido }),
+        body: JSON.stringify({ codigoPedido, documentoDestinatario }),
       }
     );
     const dados = await resposta.json().catch(() => ({}));

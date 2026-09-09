@@ -76,15 +76,20 @@ Melhor Envio (`access_token`, `refresh_token`).
   "Comprar etiqueta" — habilitado quando o pedido tem frete escolhido e o envio ainda não foi
   comprado com sucesso (permite tentar de novo em caso de `pendente_etiqueta`).
 
-**Limitações conhecidas / dívida técnica**:
-- O checkout não coleta CPF/CNPJ do cliente — o campo `document` do destinatário (`to`) vai
-  vazio na chamada `/api/v2/me/cart`. Pode ser exigido pelo Melhor Envio em produção (não
-  testado ainda, só sandbox); se bloquear, a compra cai em `pendente_etiqueta` com o erro
-  visível no admin, sem quebrar o pedido — mas o ideal é adicionar o campo CPF ao checkout
-  antes de operar em produção.
-- Não testado ainda contra o ambiente sandbox de verdade (só revisado via documentação
-  oficial + type-check + build limpo) — próximo passo natural é o admin clicar em "Comprar
-  etiqueta" num pedido de teste e conferir o resultado.
+**✅ Testado contra o sandbox de verdade** (pedido de teste `VT-TESTEME`, criado via insert
+direto pra não depender de pagamento real): compra completa funcionou ponta a ponta —
+`status_envio` foi pra `gerado`, `id_melhor_envio` e `url_etiqueta` (link de impressão real do
+sandbox) gravados certinho. Dois problemas encontrados e corrigidos durante o teste:
+- **Faltava o escopo OAuth `cart-write`** (só tínhamos os `shipping-*`) — `/api/v2/me/cart`
+  devolvia "This action is unauthorized". Corrigido em `melhor-envio-autorizar/index.ts`
+  (adicionado `cart-read`/`cart-write` à lista de escopos) — **loja precisou ser reautorizada**
+  (reautorizada com sucesso).
+- **CPF/CNPJ do destinatário é obrigatório** pro Melhor Envio gerar a etiqueta, e o checkout
+  não coleta esse dado do cliente. Em vez de redesenhar o checkout agora, o botão "Comprar
+  etiqueta" em `/admin/pedidos` pede o documento via `window.prompt` na hora da compra
+  (`comprarEtiqueta(codigo, documentoDestinatario)` na Edge Function e no `EnvioService`).
+  **Dívida técnica**: o ideal continua sendo coletar CPF/CNPJ no checkout — o prompt manual é
+  uma solução de curto prazo enquanto isso não existe.
 
 ### ✅ Etapa 3 — Webhook + rastreio — feito
 
@@ -119,11 +124,13 @@ Melhor Envio (`access_token`, `refresh_token`).
 
 ### Pendências gerais da integração (deixadas como TODO, não bloqueiam)
 
-- **Testar a compra de etiqueta de verdade contra o sandbox** — implementada e revisada via
-  documentação oficial + type-check + build limpo, mas nunca clicada de fato. Próximo passo
-  natural: gerar um pedido de teste no checkout, escolher frete, e clicar em "Comprar
-  etiqueta" em `/admin/pedidos`, conferindo se o carrinho/checkout/geração/impressão da Melhor
-  Envio funcionam ponta a ponta e se o `envios.status_envio` fica `gerado` corretamente.
+- **Apagar o pedido de teste `VT-TESTEME`** (criado direto via insert REST pra testar a compra
+  de etiqueta, sem passar pelo checkout) — não tem policy de delete pra `anon`/`authenticated`
+  na tabela `pedidos`, então precisa ser removido pelo SQL Editor do Supabase
+  (`delete from pedidos where codigo = 'VT-TESTEME';`, o que também remove o `envios`
+  associado via `on delete cascade` se existir, ou apague os dois manualmente).
+- **Coletar CPF/CNPJ do cliente no checkout** — hoje é pedido manualmente via prompt no admin
+  na hora de comprar a etiqueta (ver acima); o ideal é vir do checkout, sem esse passo manual.
 - Testar o webhook de verdade (cadastrar no painel, gerar uma etiqueta real e conferir se o
   evento chega e atualiza a tabela) — também não testado ainda, só revisado via documentação.
 

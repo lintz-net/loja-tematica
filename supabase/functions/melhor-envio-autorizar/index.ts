@@ -13,6 +13,8 @@ Deno.serve((req: Request) => {
   }
 
   const escopos = [
+    'cart-read',
+    'cart-write',
     'shipping-calculate',
     'shipping-checkout',
     'shipping-generate',
