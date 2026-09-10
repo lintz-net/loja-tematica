@@ -6,6 +6,7 @@ import { FreteService, OpcaoFrete } from '../../../../core/servicos/frete.servic
 import { ItemPedido } from '../../../../core/modelos/pedido.model';
 import { imagemDaVariante } from '../../../../core/utilitarios/imagem-produto.util';
 import { LOGOS_CARTAO } from '../../../../shared/dados/logos-pagamento';
+import { obterLogoTransportadora } from '../../../../shared/dados/logos-transportadora';
 
 type EtapaCheckout = 'contato' | 'endereco' | 'frete' | 'pagamento' | 'revisao';
 
@@ -88,6 +89,10 @@ export class CheckoutComponent {
   // Passo 7 — pagamento (integração real de cobrança fica pra depois — hoje é só simulação visual)
   readonly formaPagamento = signal<'cartao' | 'pix'>('pix');
   readonly bandeirasAceitas = LOGOS_CARTAO;
+
+  /** Nome da transportadora vem dinâmico da cotação do Melhor Envio — sem logo salvo pra
+   * ela, a opção continua mostrando só o nome em texto (ver obterLogoTransportadora). */
+  readonly obterLogoTransportadora = obterLogoTransportadora;
 
   readonly numeroCartao = signal('');
   readonly nomeCartao = signal('');

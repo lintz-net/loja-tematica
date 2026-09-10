@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { LOGOS_PAGAMENTO } from '../../dados/logos-pagamento';
+import { LOGOS_TRANSPORTADORA } from '../../dados/logos-transportadora';
 
 @Component({
   selector: 'app-rodape',
@@ -17,14 +18,7 @@ export class RodapeComponent {
 
   readonly logosPagamento = LOGOS_PAGAMENTO;
 
-  readonly logosEnvio = [
-    { alt: 'Correios', arquivo: 'correios.webp' },
-    { alt: 'Jadlog', arquivo: 'jadlog.webp' },
-    { alt: 'Loggi', arquivo: 'loggi.webp' },
-    { alt: 'Buslog', arquivo: 'buslog.webp' },
-    { alt: 'J&T Express', arquivo: 'jt-express.webp' },
-    { alt: 'LATAM Cargo', arquivo: 'latam.webp' },
-  ];
+  readonly logosEnvio = LOGOS_TRANSPORTADORA;
 
   atualizarEmailNewsletter(valor: string): void {
     this.emailNewsletter.set(valor);

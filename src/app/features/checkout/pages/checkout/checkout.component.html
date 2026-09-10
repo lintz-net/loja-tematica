@@ -140,6 +140,14 @@
                     [class.selecionado]="freteSelecionadoId() === opcao.id"
                     (click)="selecionarFrete(opcao.id)"
                   >
+                    @if (obterLogoTransportadora(opcao.transportadora); as logo) {
+                      <img
+                        [src]="'/imagens/envio/' + logo.arquivo"
+                        [alt]="logo.alt"
+                        class="checkout__opcao-frete-logo"
+                        (error)="$any($event.target).style.display = 'none'"
+                      />
+                    }
                     <span class="checkout__opcao-frete-nome">{{ opcao.nome }}</span>
                     <span class="checkout__opcao-frete-prazo">{{ opcao.prazo }}</span>
                     <span class="checkout__opcao-frete-preco">R$ {{ opcao.preco.toFixed(2) }}</span>

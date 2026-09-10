@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Pedido, StatusPedido } from '../../../../core/modelos/pedido.model';
 import { PedidoService } from '../../../../core/servicos/pedido.service';
 import { Envio, EnvioService, StatusEnvio } from '../../../../core/servicos/envio.service';
+import { obterLogoTransportadora } from '../../../../shared/dados/logos-transportadora';
 
 const ETAPAS_STATUS: StatusPedido[] = ['recebido', 'confirmado', 'enviado', 'entregue'];
 
@@ -53,6 +54,7 @@ export class PedidoComponent {
   readonly rotulosStatus = ROTULOS_STATUS;
   readonly etapasEnvio = ETAPAS_ENVIO;
   readonly rotulosStatusEnvio = ROTULOS_STATUS_ENVIO;
+  readonly obterLogoTransportadora = obterLogoTransportadora;
 
   readonly carregando = signal(true);
   readonly pedido = signal<Pedido | null>(null);

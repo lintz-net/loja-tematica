@@ -216,6 +216,12 @@
   border-color: var(--cor-primaria);
 }
 
+.checkout__opcao-frete-logo {
+  height: 20px;
+  width: auto;
+  flex-shrink: 0;
+}
+
 .checkout__opcao-frete-nome {
   font-weight: 700;
 }

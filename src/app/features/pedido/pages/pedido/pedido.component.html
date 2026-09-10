@@ -34,6 +34,18 @@
     @if (envio(); as envio) {
       <div class="pedido__secao">
         <h2>Envio</h2>
+        @if (pedido()!.freteTransportadora) {
+          <p class="pedido__transportadora">
+            @if (obterLogoTransportadora(pedido()!.freteTransportadora); as logo) {
+              <img
+                [src]="'/imagens/envio/' + logo.arquivo"
+                [alt]="logo.alt"
+                (error)="$any($event.target).style.display = 'none'"
+              />
+            }
+            {{ pedido()!.freteTransportadora }} · {{ pedido()!.freteServicoNome }}
+          </p>
+        }
         @if (
           envio.statusEnvio === 'aguardando_compra' || envio.statusEnvio === 'pendente_etiqueta'
         ) {

@@ -380,11 +380,16 @@ bandeira só soltando o arquivo com o nome certo, sem mexer em código.
 **✅ Testado pelo usuário**: logos aparecendo no rodapé e no checkout (etapa de pagamento com
 cartão).
 
-**Pendente (fica pra depois)**: mostrar o logo da transportadora específica escolhida
-(`pedido.freteTransportadora`, ex.: "Jadlog") ao lado da opção de frete no checkout e do
-status do envio em `/pedido/:codigo` — precisa de um mapa nome-da-transportadora → arquivo
-(com fallback pra texto puro quando não tiver logo salvo), já que o nome vem dinâmico da
-cotação do Melhor Envio, não de uma lista fixa como as bandeiras de cartão.
+**✅ Logo dinâmico da transportadora — feito**: `shared/dados/logos-transportadora.ts`
+exporta `LOGOS_TRANSPORTADORA` (reaproveitado pelo rodapé) e `obterLogoTransportadora(nome)`,
+que casa o nome vindo dinâmico da cotação do Melhor Envio (ex.: "Jadlog") com um logo salvo
+(comparação sem acento/case, `includes` em vez de igualdade exata) — sem logo pra essa
+transportadora, cai pro nome em texto puro, sem quebrar nada. Usado em:
+- Checkout, cada opção de frete (`checkout.component.html`) — logo ao lado do nome/prazo/preço.
+- `/pedido/:codigo`, seção "Envio" (`pedido.component.html`) — nome + logo da transportadora
+  escolhida, acima da timeline de status.
+
+Testado pelo usuário nos dois lugares.
 
 ## Outros mocks/dados fixos que restam
 
