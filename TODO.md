@@ -377,6 +377,10 @@ real assim que qualquer cliente criasse conta. Corrigido em
 - Testado: RPC `eh_admin()` com a chave anônima (sem sessão) retorna `false` sem erro;
   policies de `pedidos` conferidas via `pg_policies` mostrando `eh_admin()` no lugar de `true`.
 
+**✅ Fluxo completo testado pelo usuário** — enviou o link mágico, clicou nele, voltou
+autenticado pra `/conta` vendo o próprio e-mail, botão "Sair" e a lista real dos próprios
+pedidos.
+
 **Pendente antes de produção**: o e-mail do link mágico sai pelo serviço de e-mail **padrão do
 Supabase Auth** (não pelo Resend usado pra confirmação de pedido — são dois sistemas
 diferentes), que tem limite de taxa baixo e remetente/template genéricos do Supabase.
