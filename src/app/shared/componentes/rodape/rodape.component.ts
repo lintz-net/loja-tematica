@@ -14,7 +14,23 @@ export class RodapeComponent {
   readonly emailNewsletter = signal('');
   readonly newsletterEnviada = signal(false);
 
-  readonly bandeiras = ['Visa', 'Mastercard', 'Elo', 'Amex', 'Hipercard', 'Diners'];
+  /** Logos de bandeiras/transportadoras — arquivos ainda não incluídos no repo (ver
+   * public/imagens/pagamentos e public/imagens/envio). Enquanto o arquivo não existir, o
+   * `(error)` no template esconde a tag em vez de mostrar o ícone de imagem quebrada. */
+  readonly logosPagamento = [
+    { alt: 'Visa', arquivo: 'visa.png' },
+    { alt: 'Mastercard', arquivo: 'mastercard.png' },
+    { alt: 'Elo', arquivo: 'elo.png' },
+    { alt: 'Amex', arquivo: 'amex.png' },
+    { alt: 'Hipercard', arquivo: 'hipercard.png' },
+    { alt: 'Diners', arquivo: 'diners.png' },
+    { alt: 'Pix', arquivo: 'pix.png' },
+  ];
+
+  readonly logosEnvio = [
+    { alt: 'Correios', arquivo: 'correios.png' },
+    { alt: 'Jadlog', arquivo: 'jadlog.png' },
+  ];
 
   atualizarEmailNewsletter(valor: string): void {
     this.emailNewsletter.set(valor);

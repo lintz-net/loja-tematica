@@ -55,22 +55,28 @@
   <div class="rodape__pagamentos">
     <div>
       <span class="rotulo">Meios de pagamento</span>
-      <div class="rodape__bandeiras">
-        @for (bandeira of bandeiras; track bandeira) {
-          <span class="rodape__bandeira" [attr.data-bandeira]="bandeira">{{ bandeira }}</span>
+      <div class="rodape__logos">
+        @for (logo of logosPagamento; track logo.arquivo) {
+          <img
+            [src]="'/imagens/pagamentos/' + logo.arquivo"
+            [alt]="logo.alt"
+            class="rodape__logo-img"
+            (error)="$any($event.target).style.display = 'none'"
+          />
         }
       </div>
     </div>
     <div>
       <span class="rotulo">Meios de envio</span>
-      <div class="rodape__envio">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6">
-          <rect x="2" y="7" width="13" height="9" rx="1.2" />
-          <path d="M15 10h3.5L21 13v3h-6z" />
-          <circle cx="7" cy="18" r="1.6" />
-          <circle cx="17.5" cy="18" r="1.6" />
-        </svg>
-        <span>Correios e transportadoras parceiras</span>
+      <div class="rodape__logos">
+        @for (logo of logosEnvio; track logo.arquivo) {
+          <img
+            [src]="'/imagens/envio/' + logo.arquivo"
+            [alt]="logo.alt"
+            class="rodape__logo-img"
+            (error)="$any($event.target).style.display = 'none'"
+          />
+        }
       </div>
     </div>
   </div>

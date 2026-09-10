@@ -143,36 +143,21 @@
   background: currentColor;
 }
 
-.rodape__bandeiras {
+.rodape__logos {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-}
-
-.rodape__bandeira {
-  font-family: var(--fonte-mono);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  padding: 5px 10px;
-  border-radius: var(--raio-padrao);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.7);
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.rodape__bandeira[data-bandeira='Elo'] {
-  background: #000;
-  color: #ffcb05;
-  border-color: #ffcb05;
-}
-
-.rodape__envio {
-  display: flex;
   align-items: center;
-  gap: 8px;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.85rem;
+  gap: 10px;
+}
+
+.rodape__logo-img {
+  height: 25px;
+  width: auto;
+  /* Logos oficiais vêm em fundo transparente sobre fundo claro nas artes originais — um
+   * fundo branco arredondado garante contraste/legibilidade sobre o rodapé escuro. */
+  background: #fff;
+  border-radius: 3px;
+  padding: 3px 6px;
 }
 
 .rodape__conteudo {
