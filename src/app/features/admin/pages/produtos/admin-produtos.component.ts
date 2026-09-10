@@ -1,9 +1,8 @@
 import { CurrencyPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { CatalogoRepositorio } from '../../../../core/servicos/catalogo.repositorio';
 import { AdminProdutoService } from '../../../../core/servicos/admin-produto.service';
-import { AuthService } from '../../../../core/servicos/auth.service';
 import { Produto } from '../../../../core/modelos/produto.model';
 
 @Component({
@@ -16,8 +15,6 @@ import { Produto } from '../../../../core/modelos/produto.model';
 export class AdminProdutosComponent {
   private readonly catalogoRepositorio = inject(CatalogoRepositorio);
   private readonly adminProdutoService = inject(AdminProdutoService);
-  private readonly authService = inject(AuthService);
-  private readonly router = inject(Router);
 
   readonly carregando = signal(true);
   readonly produtos = signal<Produto[]>([]);
@@ -56,9 +53,5 @@ export class AdminProdutosComponent {
         this.excluindoId.set(null);
       },
     });
-  }
-
-  sair(): void {
-    this.authService.sair().subscribe(() => this.router.navigate(['/admin/login']));
   }
 }

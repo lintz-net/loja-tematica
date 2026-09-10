@@ -1,8 +1,6 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
 import { Pedido, StatusPedido } from '../../../../core/modelos/pedido.model';
-import { AuthService } from '../../../../core/servicos/auth.service';
 import { PedidoService } from '../../../../core/servicos/pedido.service';
 import { Envio, EnvioService, StatusEnvio } from '../../../../core/servicos/envio.service';
 
@@ -33,15 +31,13 @@ const ROTULOS_STATUS_ENVIO: Record<StatusEnvio, string> = {
 @Component({
   selector: 'app-admin-pedidos',
   standalone: true,
-  imports: [DatePipe, CurrencyPipe, RouterLink],
+  imports: [DatePipe, CurrencyPipe],
   templateUrl: './admin-pedidos.component.html',
   styleUrl: './admin-pedidos.component.scss',
 })
 export class AdminPedidosComponent {
   private readonly pedidoService = inject(PedidoService);
   private readonly envioService = inject(EnvioService);
-  private readonly authService = inject(AuthService);
-  private readonly router = inject(Router);
 
   readonly statusDisponiveis = STATUS_DISPONIVEIS;
   readonly rotulosStatus = ROTULOS_STATUS;
@@ -128,9 +124,5 @@ export class AdminPedidosComponent {
         this.codigoSalvando.set(null);
       },
     });
-  }
-
-  sair(): void {
-    this.authService.sair().subscribe(() => this.router.navigate(['/admin/login']));
   }
 }

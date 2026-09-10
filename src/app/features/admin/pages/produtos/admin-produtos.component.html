@@ -1,11 +1,7 @@
 <section class="container-pagina admin-produtos">
   <header class="admin-produtos__cabecalho">
     <h1>Produtos</h1>
-    <div class="admin-produtos__acoes-cabecalho">
-      <a routerLink="/admin/pedidos" class="botao-secundario">Pedidos</a>
-      <a routerLink="/admin/produtos/novo" class="botao-primario">Novo produto</a>
-      <button type="button" class="botao-secundario" (click)="sair()">Sair</button>
-    </div>
+    <a routerLink="/admin/produtos/novo" class="botao-primario">Novo produto</a>
   </header>
 
   @if (erro()) {

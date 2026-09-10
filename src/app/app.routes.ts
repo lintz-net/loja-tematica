@@ -185,38 +185,49 @@ export const routes: Routes = [
       ),
   },
   {
-    path: 'admin/pedidos',
+    // Layout compartilhado (nav lateral + sair) pras telas atrás de login — `admin/login`
+    // fica de fora de propósito (nav não faz sentido antes de autenticar).
+    path: 'admin',
     canActivate: [adminGuard],
     loadComponent: () =>
-      import('./features/admin/pages/pedidos/admin-pedidos.component').then(
-        (m) => m.AdminPedidosComponent
+      import('./features/admin/componentes/admin-shell/admin-shell.component').then(
+        (m) => m.AdminShellComponent
       ),
-  },
-  {
-    path: 'admin/produtos',
-    canActivate: [adminGuard],
-    loadComponent: () =>
-      import('./features/admin/pages/produtos/admin-produtos.component').then(
-        (m) => m.AdminProdutosComponent
-      ),
-  },
-  {
-    path: 'admin/produtos/novo',
-    canActivate: [adminGuard],
-    canDeactivate: [descartarAlteracoesGuard],
-    loadComponent: () =>
-      import('./features/admin/pages/produto-form/admin-produto-form.component').then(
-        (m) => m.AdminProdutoFormComponent
-      ),
-  },
-  {
-    path: 'admin/produtos/:id/editar',
-    canActivate: [adminGuard],
-    canDeactivate: [descartarAlteracoesGuard],
-    loadComponent: () =>
-      import('./features/admin/pages/produto-form/admin-produto-form.component').then(
-        (m) => m.AdminProdutoFormComponent
-      ),
+    children: [
+      // Digitar só /admin (ou cair aqui logo após o login) já leva pro menu, em vez de uma
+      // área em branco dentro do layout.
+      { path: '', redirectTo: 'pedidos', pathMatch: 'full' },
+      {
+        path: 'pedidos',
+        loadComponent: () =>
+          import('./features/admin/pages/pedidos/admin-pedidos.component').then(
+            (m) => m.AdminPedidosComponent
+          ),
+      },
+      {
+        path: 'produtos',
+        loadComponent: () =>
+          import('./features/admin/pages/produtos/admin-produtos.component').then(
+            (m) => m.AdminProdutosComponent
+          ),
+      },
+      {
+        path: 'produtos/novo',
+        canDeactivate: [descartarAlteracoesGuard],
+        loadComponent: () =>
+          import('./features/admin/pages/produto-form/admin-produto-form.component').then(
+            (m) => m.AdminProdutoFormComponent
+          ),
+      },
+      {
+        path: 'produtos/:id/editar',
+        canDeactivate: [descartarAlteracoesGuard],
+        loadComponent: () =>
+          import('./features/admin/pages/produto-form/admin-produto-form.component').then(
+            (m) => m.AdminProdutoFormComponent
+          ),
+      },
+    ],
   },
   {
     path: 'conta',

@@ -263,8 +263,17 @@ página de produto "travada" (botão "Adicionar ao carrinho" nunca habilitava, p
   `admin/produtos/novo` e `admin/produtos/:id/editar`. O componente rastreia um sinal `sujo`
   via `effect()` que observa todos os campos do formulário, só passando a marcar mudança
   depois que o carregamento inicial termina (evita falso positivo ao abrir a tela de edição).
-- Ainda pendente, mais vago/grande pra fazer de uma vez: refinar UX/visual geral das telas do
-  admin (o próprio usuário achou "bem simples").
+- ✅ **Shell compartilhado do admin** — `AdminShellComponent`
+  (`features/admin/componentes/admin-shell/`) com barra lateral fixa (nav Pedidos/Produtos +
+  botão Sair), usada como layout via rota pai `admin` (com `adminGuard` e `redirectTo:
+  'pedidos'` no path vazio, então digitar só `/admin` já cai no menu) envolvendo as 4 rotas
+  filhas. Cada página perdeu seu cabeçalho duplicado (título + link cruzado + botão Sair
+  repetidos em cada uma) — só ficou o título e ações específicas da própria tela (ex.: "Novo
+  produto"). Responsivo: vira barra horizontal no topo em telas estreitas (`max-width: 720px`).
+  Ajustado depois de feedback do usuário: mais espaçamento entre os itens do menu (16px) e
+  destaque mais forte no item ativo (fundo + borda + texto na cor de acento).
+- `/admin/login` fica de fora do shell de propósito — não faz sentido mostrar navegação antes
+  de autenticar.
 
 **✅ Testado pelo usuário no navegador**: drag-and-drop reordenando imagens, exclusão real do
 arquivo no Storage e o confirm de "descartar alterações" ao sair do formulário sem salvar —
