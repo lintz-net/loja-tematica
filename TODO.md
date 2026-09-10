@@ -377,6 +377,9 @@ loggi, buslog, jt-express, latam — `.webp`). Enquanto um arquivo não existir,
 `<img>` esconde a tag em vez de mostrar ícone de imagem quebrada — dá pra adicionar/trocar
 bandeira só soltando o arquivo com o nome certo, sem mexer em código.
 
+**✅ Testado pelo usuário**: logos aparecendo no rodapé e no checkout (etapa de pagamento com
+cartão).
+
 **Pendente (fica pra depois)**: mostrar o logo da transportadora específica escolhida
 (`pedido.freteTransportadora`, ex.: "Jadlog") ao lado da opção de frete no checkout e do
 status do envio em `/pedido/:codigo` — precisa de um mapa nome-da-transportadora → arquivo
