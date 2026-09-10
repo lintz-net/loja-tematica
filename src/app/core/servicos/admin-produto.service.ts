@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { from, Observable } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
 import { FaixaMedida, Produto, VarianteProduto } from '../modelos/produto.model';
 import { SlugCategoria } from '../modelos/categoria.model';
 import { obterSupabaseClient } from './supabase.client';
@@ -135,6 +135,25 @@ export class AdminProdutoService {
         if (error) throw error;
         const { data } = obterSupabaseClient().storage.from(BUCKET).getPublicUrl(caminho);
         return data.publicUrl;
+      });
+
+    return from(promessa);
+  }
+
+  /** Apaga o arquivo do Storage de verdade (não só tira do array `imagens` do produto) —
+   * extrai o caminho a partir da URL pública, já que é isso que a API de Storage espera.
+   * Se a URL não for desse bucket (ex.: link externo digitado à mão), não faz nada. */
+  excluirImagem(url: string): Observable<void> {
+    const marcador = `/${BUCKET}/`;
+    const indice = url.indexOf(marcador);
+    if (indice === -1) return of(undefined);
+
+    const caminho = decodeURIComponent(url.slice(indice + marcador.length));
+    const promessa = obterSupabaseClient()
+      .storage.from(BUCKET)
+      .remove([caminho])
+      .then(({ error }) => {
+        if (error) throw error;
       });
 
     return from(promessa);

@@ -248,14 +248,27 @@ livre permitiu criar uma matriz incompleta (ex.: 1 cor por tamanho) que deixava 
 página de produto "travada" (botão "Adicionar ao carrinho" nunca habilitava, porque
 `varianteSelecionada()` nunca achava uma variante batendo com os dois seletores).
 
-**Testado e funcionando** (confirmado pelo usuário) — mas com melhorias pendentes que ele
-quer revisitar depois (telas ainda simples):
+**Testado e funcionando** (confirmado pelo usuário).
 
-- Reordenar imagens (hoje só entram na ordem em que foram enviadas, sem drag-and-drop).
-- Excluir imagem do Storage de verdade ao remover do produto (hoje só tira do array
-  `imagens`, o arquivo fica órfão no bucket).
-- Sem confirmação de "descartar alterações" ao sair do formulário sem salvar.
-- Geral: refinar UX/visual das telas (o próprio usuário achou "bem simples").
+**Polimento feito depois** (drag-and-drop, delete real de Storage, confirmação de descarte):
+- ✅ **Reordenar imagens por drag-and-drop** — `draggable` nativo do HTML nas miniaturas
+  (`aoIniciarArraste`/`aoSoltarEm` em `admin-produto-form.component.ts`), sem biblioteca. A
+  primeira imagem continua sendo a foto principal da listagem, a segunda a de hover.
+- ✅ **Excluir imagem do Storage de verdade** — `AdminProdutoService.excluirImagem()` extrai
+  o caminho a partir da URL pública e chama `storage.from('produtos').remove(...)`, disparado
+  junto com a remoção do array `imagens` (fire-and-forget: falha aqui não trava o admin, só
+  deixa um arquivo órfão, mesma postura de outros pontos do app).
+- ✅ **Confirmação de "descartar alterações"** — novo `descartarAlteracoesGuard`
+  (`CanDeactivate`, `src/app/core/guards/descartar-alteracoes.guard.ts`) aplicado nas rotas
+  `admin/produtos/novo` e `admin/produtos/:id/editar`. O componente rastreia um sinal `sujo`
+  via `effect()` que observa todos os campos do formulário, só passando a marcar mudança
+  depois que o carregamento inicial termina (evita falso positivo ao abrir a tela de edição).
+- Ainda pendente, mais vago/grande pra fazer de uma vez: refinar UX/visual geral das telas do
+  admin (o próprio usuário achou "bem simples").
+
+Testado: type-check limpo e as rotas `/admin/produtos/novo`/`:id/editar` compilam e
+carregam sem erro — arrastar-e-soltar e o diálogo de confirmação ainda não foram clicados de
+verdade no navegador (pendente confirmação manual do usuário).
 
 ### ✅ Imagem do item no carrinho respeita a cor escolhida — feito
 

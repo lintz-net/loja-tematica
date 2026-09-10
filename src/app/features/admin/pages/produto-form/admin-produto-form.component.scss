@@ -96,12 +96,14 @@ legend {
   flex-direction: column;
   gap: 6px;
   align-items: center;
+  cursor: grab;
 
   img {
     width: 90px;
     height: 90px;
     object-fit: cover;
     border-radius: var(--raio-padrao);
+    pointer-events: none;
   }
 
   button {
@@ -112,6 +114,10 @@ legend {
     border-radius: var(--raio-padrao);
     font-size: 0.75rem;
   }
+}
+
+.admin-produto-form__imagem--arrastando {
+  opacity: 0.4;
 }
 
 .admin-produto-form__aviso {

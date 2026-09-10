@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CatalogoRepositorio } from '../../../../core/servicos/catalogo.repositorio';
 import { AdminProdutoService } from '../../../../core/servicos/admin-produto.service';
@@ -82,6 +82,16 @@ export class AdminProdutoFormComponent {
    * galeria do produto pula pra essas fotos ao selecioná-la em vez de mostrar todas. */
   readonly imagensPorCor = signal<Record<string, string[]>>({});
 
+  /** Índice da imagem sendo arrastada — enquanto não nulo, mostra onde ela vai cair ao
+   * soltar em cima de outra miniatura. */
+  readonly indiceArrastando = signal<number | null>(null);
+
+  /** true assim que qualquer campo muda depois do formulário estar pronto (carregado, no
+   * modo edição, ou de cara, no modo criação) — usado pelo `descartarAlteracoesGuard` pra
+   * confirmar antes de sair sem salvar. Reseta depois de salvar com sucesso. */
+  readonly sujo = signal(false);
+  private formPronto = false;
+
   constructor() {
     this.catalogoRepositorio.obterCategorias().subscribe((categorias) => {
       this.categoriasDisponiveis.set(categorias);
@@ -97,13 +107,39 @@ export class AdminProdutoFormComponent {
           }
           this.preencherFormulario(produto);
           this.carregando.set(false);
+          // Adiado pro fim da fila de tarefas: o `effect()` abaixo já roda como microtask
+          // reagindo às escritas de `preencherFormulario` — se `formPronto` virasse true
+          // ainda nesse mesmo tick síncrono, esse primeiro run (o carregamento em si, não
+          // uma edição do usuário) marcaria `sujo` incorretamente.
+          setTimeout(() => (this.formPronto = true));
         },
         error: () => {
           this.erro.set('Não foi possível carregar o produto.');
           this.carregando.set(false);
         },
       });
+    } else {
+      setTimeout(() => (this.formPronto = true));
     }
+
+    effect(() => {
+      // Lê todos os signals do formulário — o efeito reroda a cada mudança em qualquer um.
+      this.nome();
+      this.slug();
+      this.descricao();
+      this.precoBase();
+      this.categoriasSelecionadas();
+      this.imagens();
+      this.pesoKg();
+      this.alturaCm();
+      this.larguraCm();
+      this.comprimentoCm();
+      this.variantes();
+      this.imagensPorCor();
+      this.guiaMedidas();
+
+      if (this.formPronto) this.sujo.set(true);
+    });
   }
 
   private preencherFormulario(produto: Produto): void {
@@ -190,6 +226,34 @@ export class AdminProdutoFormComponent {
         novo[cor] = urls.filter((u) => u !== url);
       }
       return novo;
+    });
+    // Fire-and-forget: a remoção do formulário já aconteceu (acima); falha aqui só deixa um
+    // arquivo órfão no bucket, não deve travar o admin nem exigir tratamento na tela.
+    this.adminProdutoService.excluirImagem(url).subscribe({
+      error: (erro) => console.error('Falha ao excluir imagem do Storage:', erro),
+    });
+  }
+
+  aoIniciarArraste(indice: number): void {
+    this.indiceArrastando.set(indice);
+  }
+
+  aoTerminarArraste(): void {
+    this.indiceArrastando.set(null);
+  }
+
+  /** Reordena o array `imagens` movendo a imagem arrastada pra posição de `indiceDestino` —
+   * a primeira posição continua sendo a foto principal da listagem, a segunda o hover. */
+  aoSoltarEm(indiceDestino: number): void {
+    const indiceOrigem = this.indiceArrastando();
+    this.indiceArrastando.set(null);
+    if (indiceOrigem === null || indiceOrigem === indiceDestino) return;
+
+    this.imagens.update((atual) => {
+      const copia = [...atual];
+      const [movida] = copia.splice(indiceOrigem, 1);
+      copia.splice(indiceDestino, 0, movida);
+      return copia;
     });
   }
 
@@ -370,7 +434,10 @@ export class AdminProdutoFormComponent {
       : this.adminProdutoService.criar(produto);
 
     operacao.subscribe({
-      next: () => this.router.navigate(['/admin/produtos']),
+      next: () => {
+        this.sujo.set(false);
+        this.router.navigate(['/admin/produtos']);
+      },
       error: (erro) => {
         this.salvando.set(false);
         this.erro.set(

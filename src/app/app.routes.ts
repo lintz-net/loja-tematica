@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { DadosPaginaInstitucional } from './features/institucional/pagina-institucional.component';
 import { adminGuard } from './core/guards/admin.guard';
+import { descartarAlteracoesGuard } from './core/guards/descartar-alteracoes.guard';
 
 const PAGINA_COMO_COMPRAR: DadosPaginaInstitucional = {
   titulo: 'Como comprar',
@@ -202,6 +203,7 @@ export const routes: Routes = [
   {
     path: 'admin/produtos/novo',
     canActivate: [adminGuard],
+    canDeactivate: [descartarAlteracoesGuard],
     loadComponent: () =>
       import('./features/admin/pages/produto-form/admin-produto-form.component').then(
         (m) => m.AdminProdutoFormComponent
@@ -210,6 +212,7 @@ export const routes: Routes = [
   {
     path: 'admin/produtos/:id/editar',
     canActivate: [adminGuard],
+    canDeactivate: [descartarAlteracoesGuard],
     loadComponent: () =>
       import('./features/admin/pages/produto-form/admin-produto-form.component').then(
         (m) => m.AdminProdutoFormComponent

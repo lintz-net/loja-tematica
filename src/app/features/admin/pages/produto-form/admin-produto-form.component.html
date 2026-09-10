@@ -144,9 +144,21 @@
         <legend>Imagens</legend>
 
         @if (imagens().length > 0) {
+          <p class="admin-produto-form__aviso">
+            Arraste pra reordenar — a primeira é a foto principal da listagem, a segunda
+            aparece no hover.
+          </p>
           <div class="admin-produto-form__grade-imagens">
-            @for (url of imagens(); track url) {
-              <div class="admin-produto-form__imagem">
+            @for (url of imagens(); track url; let indice = $index) {
+              <div
+                class="admin-produto-form__imagem"
+                [class.admin-produto-form__imagem--arrastando]="indiceArrastando() === indice"
+                draggable="true"
+                (dragstart)="aoIniciarArraste(indice)"
+                (dragend)="aoTerminarArraste()"
+                (dragover)="$event.preventDefault()"
+                (drop)="aoSoltarEm(indice)"
+              >
                 <img [src]="url" alt="" />
                 <button type="button" (click)="removerImagem(url)">Remover</button>
               </div>
