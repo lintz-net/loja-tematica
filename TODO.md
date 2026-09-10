@@ -254,15 +254,6 @@ quer revisitar depois (telas ainda simples):
 - Reordenar imagens (hoje só entram na ordem em que foram enviadas, sem drag-and-drop).
 - Excluir imagem do Storage de verdade ao remover do produto (hoje só tira do array
   `imagens`, o arquivo fica órfão no bucket).
-- ✅ `imagensPorCor` (mapa cor → fotos específicas) já tem UI — seção "Fotos por cor" no
-  formulário, aparece depois de marcar as cores e ter imagens enviadas. Só afeta produtos
-  cadastrados/editados pelo admin daqui pra frente — os 127 produtos antigos sem esse
-  de-para (só a Camiseta Donkey Kong tinha, curada manualmente antes do admin existir)
-  precisam ser editados um a um se quiser adicionar isso a eles.
-- ✅ `guiaMedidas` (tabela de medidas) já tem UI — fieldset "Guia de medidas (opcional)" no
-  formulário, com linhas tamanho/largura/comprimento (adicionar/remover), salvo como o mesmo
-  array `FaixaMedida[]` que o modal "Guia de medidas" da página do produto já lia. Sem
-  nenhuma linha preenchida, continua caindo na tabela genérica padrão de antes.
 - Sem confirmação de "descartar alterações" ao sair do formulário sem salvar.
 - Geral: refinar UX/visual das telas (o próprio usuário achou "bem simples").
 
