@@ -344,11 +344,44 @@ Confirmado em produção (`strong-centaur-0240eb.netlify.app`): home com os 128 
 
 ## Outros mocks/dados fixos que restam
 
-- **`/conta`** mostra um usuário fake fixo ("Convidado Fã de Tudo"), sem cadastro/login real
-  de cliente — diferente do login de admin (`/admin/login`), que já é real. Implementar
-  requer decidir o modelo (cadastro completo vs. só via Supabase Auth) — não iniciado.
 - ~~Frete no checkout~~ — **feito**, ver seção "Integração com Melhor Envio" no topo deste
   arquivo (cotação real, compra de etiqueta e rastreio via webhook).
+
+### ✅ `/conta` — login real de cliente (link mágico) — feito
+
+Modelo escolhido: login por **link mágico** via Supabase Auth (mesmo mecanismo do admin,
+sem senha) — sem formulário de cadastro completo. Cliente digita o e-mail em `/conta`,
+recebe um link (`AuthService.entrarComLinkMagico`, `signInWithOtp`), e ao clicar volta
+autenticado pra `/conta`, que passa a listar os pedidos dele
+(`PedidoService.listarMeusPedidos`) e mostra a sessão real em vez do usuário fake fixo de
+antes.
+
+**⚠️ Corrigida no processo uma falha de segurança real que isso ia expor**: toda policy de
+admin até aqui usava `to authenticated using (true)` — ou seja, *qualquer* usuário
+autenticado no Supabase (agora incluindo clientes com login por link mágico) tinha acesso de
+admin: ler todos os pedidos com dados pessoais, mudar status, criar/editar/apagar produtos e
+categorias, ler `envios`/webhooks, e subir/apagar imagens no bucket `produtos`. Nunca foi
+explorado porque só existia a conta do admin no projeto — mas ia virar uma vulnerabilidade
+real assim que qualquer cliente criasse conta. Corrigido em
+`docs/supabase/migration-010-controle-admin.sql`:
+- Tabela `admins` (RLS sem nenhuma policy — só gerenciável via SQL Editor/`service_role`) +
+  função `eh_admin()` (SECURITY DEFINER) que checa se `auth.uid()` está nela.
+- Toda policy que usava `using (true)` pra `authenticated` (pedidos, produtos, categorias,
+  envios, eventos de webhook, e os 3 policies de storage do bucket `produtos`) passou a usar
+  `using (eh_admin())`.
+- Nova policy em `pedidos` pra cliente comum: `lower(email_cliente) = lower(auth.jwt()->>'email')`
+  — só vê os próprios pedidos, nunca a tabela toda.
+- `adminGuard` (`admin.guard.ts`) também passou a chamar a RPC `eh_admin()` — antes só
+  checava se existia sessão, o que teria deixado qualquer cliente logado entrar em
+  `/admin/pedidos`.
+- Testado: RPC `eh_admin()` com a chave anônima (sem sessão) retorna `false` sem erro;
+  policies de `pedidos` conferidas via `pg_policies` mostrando `eh_admin()` no lugar de `true`.
+
+**Pendente antes de produção**: o e-mail do link mágico sai pelo serviço de e-mail **padrão do
+Supabase Auth** (não pelo Resend usado pra confirmação de pedido — são dois sistemas
+diferentes), que tem limite de taxa baixo e remetente/template genéricos do Supabase.
+Configurar SMTP customizado (Project Settings → Auth → SMTP Settings no painel do Supabase,
+pode reaproveitar o Resend) antes de operar com clientes reais.
 
 ## Marketing: tráfego pago e pixels de conversão
 

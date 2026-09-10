@@ -8,4 +8,65 @@
   border-radius: var(--raio-padrao);
   padding: 20px;
   margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 420px;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  input {
+    padding: 10px 12px;
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-padrao);
+    font-weight: 400;
+  }
+}
+
+.conta__erro {
+  color: #b3261e;
+  font-size: 0.9rem;
+}
+
+.conta__subtitulo {
+  margin-top: 32px;
+  font-size: 1.1rem;
+}
+
+.conta__pedidos {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.conta__pedido {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-padrao);
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    border-color: var(--cor-acento-secundario, #0c7d71);
+  }
+}
+
+.conta__pedido-codigo {
+  font-weight: 600;
+}
+
+.conta__pedido-data {
+  color: var(--cor-texto-suave);
 }

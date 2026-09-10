@@ -138,6 +138,13 @@ export class PedidoService {
     return from(promessa);
   }
 
+  /** Pedidos do cliente logado (`/conta`) — mesma query de `listarTodos`; quem realmente
+   * decide quais linhas voltam é a RLS (policy "Cliente pode ler os proprios pedidos" filtra
+   * pelo e-mail da sessão pra quem não é admin), então um cliente nunca vê pedido alheio. */
+  listarMeusPedidos(): Observable<Pedido[]> {
+    return this.listarTodos();
+  }
+
   /** Mesma observação de `listarTodos` — só roda no browser, autenticado. */
   atualizarStatus(codigo: string, status: Pedido['status']): Observable<Pedido> {
     const promessa = obterSupabaseClient()

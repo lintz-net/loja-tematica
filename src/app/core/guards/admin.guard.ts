@@ -16,7 +16,14 @@ export const adminGuard: CanActivateFn = async () => {
     data: { session },
   } = await obterSupabaseClient().auth.getSession();
 
-  if (session) return true;
+  if (!session) return router.createUrlTree(['/admin/login']);
+
+  /** Sessão existir não basta — desde que `/conta` (login de cliente) existe, qualquer
+   * pessoa pode ter uma sessão autenticada válida sem ser admin. `eh_admin()` (RPC,
+   * SECURITY DEFINER) checa a tabela `admins` do lado do banco; ver
+   * docs/supabase/migration-010-controle-admin.sql. */
+  const { data: souAdmin, error } = await obterSupabaseClient().rpc('eh_admin');
+  if (!error && souAdmin === true) return true;
 
   return router.createUrlTree(['/admin/login']);
 };

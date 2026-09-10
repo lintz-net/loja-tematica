@@ -1,7 +1,64 @@
 <section class="container-pagina conta">
   <h1>Minha conta</h1>
-  <div class="conta__card">
-    <p><strong>Nome:</strong> {{ usuario.nome }}</p>
-    <p><strong>E-mail:</strong> {{ usuario.email }}</p>
-  </div>
+
+  @if (autenticado()) {
+    <div class="conta__card">
+      <p><strong>E-mail:</strong> {{ email() }}</p>
+      <button type="button" class="botao-secundario" (click)="sair()">Sair</button>
+    </div>
+
+    <h2 class="conta__subtitulo">Meus pedidos</h2>
+
+    @if (carregandoPedidos()) {
+      <p>Carregando pedidos…</p>
+    } @else if (pedidos().length === 0) {
+      <p class="conta__aviso">Você ainda não tem nenhum pedido.</p>
+    } @else {
+      <ul class="conta__pedidos">
+        @for (pedido of pedidos(); track pedido.codigo) {
+          <li>
+            <a [routerLink]="['/pedido', pedido.codigo]" class="conta__pedido">
+              <span class="conta__pedido-codigo">{{ pedido.codigo }}</span>
+              <span class="conta__pedido-data">{{ pedido.criadoEm | date: 'dd/MM/yyyy' }}</span>
+              <span class="conta__pedido-total">{{ pedido.valorTotal | currency: 'BRL' }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    }
+  } @else if (linkEnviado()) {
+    <div class="conta__card">
+      <p>
+        Enviamos um link de acesso pro e-mail <strong>{{ emailDigitado() }}</strong>. Abra
+        seu e-mail e clique no link pra entrar.
+      </p>
+    </div>
+  } @else {
+    <div class="conta__card">
+      <p class="conta__aviso">
+        Entre com seu e-mail pra ver seus pedidos. Vamos te mandar um link de acesso, sem
+        precisar de senha.
+      </p>
+      <label>
+        E-mail
+        <input
+          type="email"
+          placeholder="seu@email.com"
+          [value]="emailDigitado()"
+          (input)="atualizarEmailDigitado($any($event.target).value)"
+        />
+      </label>
+      @if (erro()) {
+        <p class="conta__erro">{{ erro() }}</p>
+      }
+      <button
+        type="button"
+        class="botao-primario"
+        [disabled]="!emailDigitado().trim() || enviandoLink()"
+        (click)="enviarLinkMagico()"
+      >
+        {{ enviandoLink() ? 'Enviando…' : 'Enviar link de acesso' }}
+      </button>
+    </div>
+  }
 </section>
