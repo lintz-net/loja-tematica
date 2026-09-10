@@ -266,9 +266,9 @@ página de produto "travada" (botão "Adicionar ao carrinho" nunca habilitava, p
 - Ainda pendente, mais vago/grande pra fazer de uma vez: refinar UX/visual geral das telas do
   admin (o próprio usuário achou "bem simples").
 
-Testado: type-check limpo e as rotas `/admin/produtos/novo`/`:id/editar` compilam e
-carregam sem erro — arrastar-e-soltar e o diálogo de confirmação ainda não foram clicados de
-verdade no navegador (pendente confirmação manual do usuário).
+**✅ Testado pelo usuário no navegador**: drag-and-drop reordenando imagens, exclusão real do
+arquivo no Storage e o confirm de "descartar alterações" ao sair do formulário sem salvar —
+os três funcionando.
 
 ### ✅ Imagem do item no carrinho respeita a cor escolhida — feito
 
