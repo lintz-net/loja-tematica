@@ -229,8 +229,13 @@
                 <div class="checkout__bandeiras">
                   <span class="rotulo">Cartões aceitos</span>
                   <div class="checkout__bandeiras-lista">
-                    @for (bandeira of bandeirasAceitas; track bandeira) {
-                      <span class="checkout__bandeira" [attr.data-bandeira]="bandeira">{{ bandeira }}</span>
+                    @for (bandeira of bandeirasAceitas; track bandeira.arquivo) {
+                      <img
+                        [src]="'/imagens/pagamentos/' + bandeira.arquivo"
+                        [alt]="bandeira.alt"
+                        class="checkout__bandeira"
+                        (error)="$any($event.target).style.display = 'none'"
+                      />
                     }
                   </div>
                 </div>

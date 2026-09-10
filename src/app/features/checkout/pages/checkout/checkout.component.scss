@@ -185,46 +185,12 @@
 }
 
 .checkout__bandeira {
-  font-family: var(--fonte-mono);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  padding: 5px 10px;
-  border-radius: var(--raio-padrao);
+  height: 22px;
+  width: auto;
+  border-radius: 3px;
   border: 1px solid var(--cor-borda);
-  color: var(--cor-texto-suave);
-  background: var(--cor-fundo);
-}
-
-.checkout__bandeira[data-bandeira='Visa'] {
-  color: #1a1f71;
-  border-color: #1a1f71;
-}
-
-.checkout__bandeira[data-bandeira='Mastercard'] {
-  color: #eb5c26;
-  border-color: #eb5c26;
-}
-
-.checkout__bandeira[data-bandeira='Elo'] {
-  color: #ffcb05;
-  border-color: #000;
-  background: #000;
-}
-
-.checkout__bandeira[data-bandeira='Amex'] {
-  color: #016fd0;
-  border-color: #016fd0;
-}
-
-.checkout__bandeira[data-bandeira='Hipercard'] {
-  color: #822124;
-  border-color: #822124;
-}
-
-.checkout__bandeira[data-bandeira='Diners'] {
-  color: #0079be;
-  border-color: #0079be;
+  background: #fff;
+  padding: 3px 6px;
 }
 
 .checkout__opcoes-frete {

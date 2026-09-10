@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { LOGOS_PAGAMENTO } from '../../dados/logos-pagamento';
 
 @Component({
   selector: 'app-rodape',
@@ -14,22 +15,15 @@ export class RodapeComponent {
   readonly emailNewsletter = signal('');
   readonly newsletterEnviada = signal(false);
 
-  /** Logos de bandeiras/transportadoras — arquivos ainda não incluídos no repo (ver
-   * public/imagens/pagamentos e public/imagens/envio). Enquanto o arquivo não existir, o
-   * `(error)` no template esconde a tag em vez de mostrar o ícone de imagem quebrada. */
-  readonly logosPagamento = [
-    { alt: 'Visa', arquivo: 'visa.png' },
-    { alt: 'Mastercard', arquivo: 'mastercard.png' },
-    { alt: 'Elo', arquivo: 'elo.png' },
-    { alt: 'Amex', arquivo: 'amex.png' },
-    { alt: 'Hipercard', arquivo: 'hipercard.png' },
-    { alt: 'Diners', arquivo: 'diners.png' },
-    { alt: 'Pix', arquivo: 'pix.png' },
-  ];
+  readonly logosPagamento = LOGOS_PAGAMENTO;
 
   readonly logosEnvio = [
-    { alt: 'Correios', arquivo: 'correios.png' },
-    { alt: 'Jadlog', arquivo: 'jadlog.png' },
+    { alt: 'Correios', arquivo: 'correios.webp' },
+    { alt: 'Jadlog', arquivo: 'jadlog.webp' },
+    { alt: 'Loggi', arquivo: 'loggi.webp' },
+    { alt: 'Buslog', arquivo: 'buslog.webp' },
+    { alt: 'J&T Express', arquivo: 'jt-express.webp' },
+    { alt: 'LATAM Cargo', arquivo: 'latam.webp' },
   ];
 
   atualizarEmailNewsletter(valor: string): void {

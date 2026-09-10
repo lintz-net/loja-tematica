@@ -364,6 +364,25 @@ invocação:
 Confirmado em produção (`strong-centaur-0240eb.netlify.app`): home com os 128 produtos reais,
 `/produto/:slug` e `/categoria/:slug` com dados e tags `og:*` corretas.
 
+## ✅ Logos de pagamento e transportadoras — feito (rodapé + checkout)
+
+Rodapé (`RodapeComponent`) e o checkout (etapa de pagamento com cartão) mostram os logos
+oficiais de verdade, baixados pelo usuário (brand center de cada bandeira, não copiados de
+outro site — decisão tomada explicitamente por questão de direito de uso de marca).
+Lista compartilhada em `src/app/shared/dados/logos-pagamento.ts`
+(`LOGOS_PAGAMENTO` completo pro rodapé, `LOGOS_CARTAO` filtrado — sem Pix/Boleto — pro
+checkout). Arquivos em `public/imagens/pagamentos/` (visa, mastercard, elo, amex, hipercard,
+diners, aura, discover, boleto, pix — `.png`) e `public/imagens/envio/` (correios, jadlog,
+loggi, buslog, jt-express, latam — `.webp`). Enquanto um arquivo não existir, o `(error)` no
+`<img>` esconde a tag em vez de mostrar ícone de imagem quebrada — dá pra adicionar/trocar
+bandeira só soltando o arquivo com o nome certo, sem mexer em código.
+
+**Pendente (fica pra depois)**: mostrar o logo da transportadora específica escolhida
+(`pedido.freteTransportadora`, ex.: "Jadlog") ao lado da opção de frete no checkout e do
+status do envio em `/pedido/:codigo` — precisa de um mapa nome-da-transportadora → arquivo
+(com fallback pra texto puro quando não tiver logo salvo), já que o nome vem dinâmico da
+cotação do Melhor Envio, não de uma lista fixa como as bandeiras de cartão.
+
 ## Outros mocks/dados fixos que restam
 
 - ~~Frete no checkout~~ — **feito**, ver seção "Integração com Melhor Envio" no topo deste

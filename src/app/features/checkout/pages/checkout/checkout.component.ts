@@ -5,6 +5,7 @@ import { PedidoService } from '../../../../core/servicos/pedido.service';
 import { FreteService, OpcaoFrete } from '../../../../core/servicos/frete.service';
 import { ItemPedido } from '../../../../core/modelos/pedido.model';
 import { imagemDaVariante } from '../../../../core/utilitarios/imagem-produto.util';
+import { LOGOS_CARTAO } from '../../../../shared/dados/logos-pagamento';
 
 type EtapaCheckout = 'contato' | 'endereco' | 'frete' | 'pagamento' | 'revisao';
 
@@ -22,9 +23,6 @@ const ETAPAS: DefinicaoEtapa[] = [
 ];
 
 const MAX_PARCELAS = 6;
-
-/** Bandeiras aceitas — exibidas como selo com o nome, não os logos oficiais (marcas registradas). */
-const BANDEIRAS_ACEITAS = ['Visa', 'Mastercard', 'Elo', 'Amex', 'Hipercard', 'Diners'];
 
 @Component({
   selector: 'app-checkout',
@@ -89,7 +87,7 @@ export class CheckoutComponent {
 
   // Passo 7 — pagamento (integração real de cobrança fica pra depois — hoje é só simulação visual)
   readonly formaPagamento = signal<'cartao' | 'pix'>('pix');
-  readonly bandeirasAceitas = BANDEIRAS_ACEITAS;
+  readonly bandeirasAceitas = LOGOS_CARTAO;
 
   readonly numeroCartao = signal('');
   readonly nomeCartao = signal('');
