@@ -286,10 +286,43 @@
   text-underline-offset: 3px;
 }
 
+.checkout__cupom {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 8px;
+
+  input {
+    flex: 1;
+    min-width: 0;
+    margin-bottom: 0;
+  }
+}
+
+.checkout__cupom-botao {
+  flex-shrink: 0;
+  padding: 0 18px;
+  white-space: nowrap;
+}
+
+.checkout__cupom-aplicado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: color-mix(in srgb, var(--cor-acento-secundario) 12%, transparent);
+  border: 1px solid var(--cor-acento-secundario);
+  border-radius: var(--raio-padrao);
+  padding: 10px 14px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+}
+
 .checkout__pagamento {
   display: flex;
   gap: 10px;
   margin-bottom: 14px;
+  margin-top: 24px;
 }
 
 .checkout__pagamento button {
@@ -326,6 +359,10 @@
   padding-top: 10px;
   border-top: 1px solid var(--cor-borda);
   margin-top: 10px;
+}
+
+.checkout__resumo-linha--desconto {
+  color: var(--cor-acento-secundario);
 }
 
 .checkout__resumo-total {

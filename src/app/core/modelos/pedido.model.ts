@@ -42,4 +42,7 @@ export interface Pedido {
   freteTransportadora?: string;
   freteServicoNome?: string;
   fretePrazoDias?: number;
+  /** Cupom aplicado no checkout, se algum — ausente na maioria dos pedidos. */
+  cupomCodigo?: string;
+  valorDesconto?: number;
 }

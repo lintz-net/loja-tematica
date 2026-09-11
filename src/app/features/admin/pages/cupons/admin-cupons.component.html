@@ -1,0 +1,105 @@
+<section class="container-pagina admin-cupons">
+  <header class="admin-cupons__cabecalho">
+    <h1>Cupons</h1>
+  </header>
+
+  @if (erro()) {
+    <p class="admin-cupons__erro">{{ erro() }}</p>
+  }
+
+  <form class="admin-cupons__form" (submit)="$event.preventDefault(); criarCupom()">
+    <input
+      type="text"
+      placeholder="Código (ex: BEMVINDO10)"
+      [value]="novoCodigo()"
+      (input)="atualizarNovoCodigo($any($event.target).value)"
+    />
+    <select (change)="atualizarNovoTipoDesconto($any($event.target).value)">
+      <option value="percentual" [selected]="novoTipoDesconto() === 'percentual'">
+        Percentual (%)
+      </option>
+      <option value="valor_fixo" [selected]="novoTipoDesconto() === 'valor_fixo'">
+        Valor fixo (R$)
+      </option>
+    </select>
+    <input
+      type="number"
+      min="0.01"
+      step="0.01"
+      [placeholder]="novoTipoDesconto() === 'percentual' ? 'ex: 10' : 'ex: 20.00'"
+      [value]="novoValorDesconto()"
+      (input)="atualizarNovoValorDesconto($any($event.target).value)"
+    />
+    <input
+      type="date"
+      title="Data de expiração (opcional)"
+      [value]="novaDataExpiracao()"
+      (input)="atualizarNovaDataExpiracao($any($event.target).value)"
+    />
+    <button type="submit" class="botao-primario" [disabled]="!podeCriar() || salvando()">
+      {{ salvando() ? 'Criando…' : 'Criar cupom' }}
+    </button>
+  </form>
+
+  @if (carregando()) {
+    <p>Carregando cupons…</p>
+  } @else if (cupons().length === 0) {
+    <p>Nenhum cupom cadastrado ainda.</p>
+  } @else {
+    <div class="admin-cupons__tabela-wrap">
+      <table class="admin-cupons__tabela">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Desconto</th>
+            <th>Expira em</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (cupom of cupons(); track cupom.codigo) {
+            <tr>
+              <td>{{ cupom.codigo }}</td>
+              <td>
+                @if (cupom.tipoDesconto === 'percentual') {
+                  {{ cupom.valorDesconto }}%
+                } @else {
+                  {{ cupom.valorDesconto | currency: 'BRL' }}
+                }
+              </td>
+              <td>{{ cupom.expiraEm ? (cupom.expiraEm | date: 'dd/MM/yyyy') : 'Nunca' }}</td>
+              <td>
+                @if (!cupom.ativo) {
+                  <span class="admin-cupons__status admin-cupons__status--inativo">Inativo</span>
+                } @else if (expirado(cupom)) {
+                  <span class="admin-cupons__status admin-cupons__status--expirado">Expirado</span>
+                } @else {
+                  <span class="admin-cupons__status admin-cupons__status--ativo">Ativo</span>
+                }
+              </td>
+              <td class="admin-cupons__acoes">
+                <button
+                  type="button"
+                  class="botao-secundario"
+                  [disabled]="codigoAlternando() === cupom.codigo"
+                  (click)="alternarAtivo(cupom)"
+                >
+                  {{ cupom.ativo ? 'Desativar' : 'Ativar' }}
+                </button>
+                <button
+                  type="button"
+                  class="admin-cupons__excluir"
+                  [disabled]="codigoExcluindo() === cupom.codigo"
+                  (click)="excluir(cupom)"
+                >
+                  Excluir
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

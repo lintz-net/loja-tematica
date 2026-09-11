@@ -24,6 +24,8 @@ interface LinhaPedido {
   frete_transportadora: string | null;
   frete_servico_nome: string | null;
   frete_prazo_dias: number | null;
+  cupom_codigo: string | null;
+  valor_desconto: number | null;
 }
 
 function gerarCodigoPedido(): string {
@@ -50,6 +52,8 @@ function linhaParaPedido(linha: LinhaPedido): Pedido {
     freteTransportadora: linha.frete_transportadora ?? undefined,
     freteServicoNome: linha.frete_servico_nome ?? undefined,
     fretePrazoDias: linha.frete_prazo_dias ?? undefined,
+    cupomCodigo: linha.cupom_codigo ?? undefined,
+    valorDesconto: linha.valor_desconto ?? undefined,
   };
 }
 
@@ -83,6 +87,8 @@ export class PedidoService {
       frete_transportadora: dados.freteTransportadora ?? null,
       frete_servico_nome: dados.freteServicoNome ?? null,
       frete_prazo_dias: dados.fretePrazoDias ?? null,
+      cupom_codigo: dados.cupomCodigo ?? null,
+      valor_desconto: dados.valorDesconto ?? null,
     };
 
     return this.rest.insert('pedidos', linha).pipe(

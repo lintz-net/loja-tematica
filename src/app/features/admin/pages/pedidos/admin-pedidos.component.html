@@ -36,7 +36,13 @@
                 <br />
                 <span class="admin-pedidos__detalhe">{{ pedido.telefoneCliente }}</span>
               </td>
-              <td>{{ pedido.valorTotal | currency: 'BRL' }}</td>
+              <td>
+                {{ pedido.valorTotal | currency: 'BRL' }}
+                @if (pedido.cupomCodigo) {
+                  <br />
+                  <span class="admin-pedidos__detalhe">cupom {{ pedido.cupomCodigo }}</span>
+                }
+              </td>
               <td>{{ pedido.formaPagamento === 'pix' ? 'Pix' : 'Cartão' }}</td>
               <td>
                 @if (pedido.freteTransportadora) {

@@ -4,6 +4,7 @@ import { CarrinhoService } from '../../../../core/servicos/carrinho.service';
 import { PedidoService } from '../../../../core/servicos/pedido.service';
 import { FreteService, OpcaoFrete } from '../../../../core/servicos/frete.service';
 import { CepService } from '../../../../core/servicos/cep.service';
+import { CupomService, CupomValido } from '../../../../core/servicos/cupom.service';
 import { ItemPedido } from '../../../../core/modelos/pedido.model';
 import { imagemDaVariante } from '../../../../core/utilitarios/imagem-produto.util';
 import { mascararCep, mascararDocumento, mascararTelefone } from '../../../../core/utilitarios/mascara.util';
@@ -39,6 +40,7 @@ export class CheckoutComponent {
   private readonly pedidoService = inject(PedidoService);
   private readonly freteService = inject(FreteService);
   private readonly cepService = inject(CepService);
+  private readonly cupomService = inject(CupomService);
   private readonly router = inject(Router);
 
   readonly itens = this.carrinhoService.itensCarrinho;
@@ -143,7 +145,18 @@ export class CheckoutComponent {
   });
 
   readonly valorFrete = computed(() => this.freteSelecionado()?.preco ?? 0);
-  readonly valorTotal = computed(() => this.subtotal() + this.valorFrete());
+
+  // Cupom de desconto — validado no servidor (Edge Function `validar-cupom`), nunca calculado
+  // só no navegador: a tabela de cupons não é legível pelo `anon`.
+  readonly codigoCupom = signal('');
+  readonly cupomAplicado = signal<CupomValido | null>(null);
+  readonly validandoCupom = signal(false);
+  readonly erroCupom = signal<string | null>(null);
+  readonly valorDesconto = computed(() => this.cupomAplicado()?.desconto ?? 0);
+
+  readonly valorTotal = computed(() =>
+    Math.max(0, this.subtotal() + this.valorFrete() - this.valorDesconto())
+  );
 
   readonly pedidoFinalizado = signal(false);
   readonly numeroPedido = signal('');
@@ -243,6 +256,40 @@ export class CheckoutComponent {
 
   alternarSalvarCartao(valor: boolean): void {
     this.salvarCartao.set(valor);
+  }
+
+  atualizarCodigoCupom(valor: string): void {
+    this.codigoCupom.set(valor.toUpperCase());
+    this.erroCupom.set(null);
+  }
+
+  aplicarCupom(): void {
+    const codigo = this.codigoCupom().trim();
+    if (!codigo) return;
+
+    this.validandoCupom.set(true);
+    this.erroCupom.set(null);
+    this.cupomService.validar(codigo, this.subtotal()).subscribe({
+      next: (resultado) => {
+        this.validandoCupom.set(false);
+        if (!resultado.valido) {
+          this.erroCupom.set(resultado.motivo);
+          this.cupomAplicado.set(null);
+          return;
+        }
+        this.cupomAplicado.set(resultado);
+      },
+      error: () => {
+        this.validandoCupom.set(false);
+        this.erroCupom.set('Não foi possível validar o cupom. Tente novamente.');
+      },
+    });
+  }
+
+  removerCupom(): void {
+    this.cupomAplicado.set(null);
+    this.codigoCupom.set('');
+    this.erroCupom.set(null);
   }
 
   selecionarFrete(id: string): void {
@@ -369,6 +416,8 @@ export class CheckoutComponent {
         freteTransportadora: this.freteSelecionado()?.transportadora,
         freteServicoNome: this.freteSelecionado()?.servico,
         fretePrazoDias: this.freteSelecionado()?.prazoDias,
+        cupomCodigo: this.cupomAplicado()?.codigo,
+        valorDesconto: this.valorDesconto() > 0 ? this.valorDesconto() : undefined,
       })
       .subscribe({
         next: (pedido) => {

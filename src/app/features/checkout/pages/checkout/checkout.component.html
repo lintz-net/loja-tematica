@@ -198,6 +198,41 @@
             }
           }
           @case ('pagamento') {
+            <h3>Cupom de desconto</h3>
+            @if (cupomAplicado(); as cupom) {
+              <div class="checkout__cupom-aplicado">
+                <span>
+                  Cupom <strong>{{ cupom.codigo }}</strong> aplicado — desconto de R$
+                  {{ cupom.desconto.toFixed(2) }}
+                </span>
+                <button type="button" class="botao-secundario" (click)="removerCupom()">
+                  Remover
+                </button>
+              </div>
+            } @else {
+              <div class="checkout__cupom">
+                <input
+                  type="text"
+                  placeholder="Código do cupom"
+                  autocomplete="off"
+                  [value]="codigoCupom()"
+                  (input)="atualizarCodigoCupom($any($event.target).value)"
+                  (keyup.enter)="aplicarCupom()"
+                />
+                <button
+                  type="button"
+                  class="botao-secundario checkout__cupom-botao"
+                  [disabled]="!codigoCupom().trim() || validandoCupom()"
+                  (click)="aplicarCupom()"
+                >
+                  {{ validandoCupom() ? 'Validando…' : 'Aplicar' }}
+                </button>
+              </div>
+              @if (erroCupom()) {
+                <p class="checkout__erro-frete">{{ erroCupom() }}</p>
+              }
+            }
+
             <h3>Forma de pagamento</h3>
             <p class="checkout__ajuda">Escolha como prefere pagar.</p>
             <div class="checkout__pagamento">
@@ -398,6 +433,12 @@
           <span>Frete</span>
           <span>{{ freteSelecionado() ? 'R$ ' + valorFrete().toFixed(2) : 'a definir' }}</span>
         </div>
+        @if (valorDesconto() > 0) {
+          <div class="checkout__resumo-linha checkout__resumo-linha--desconto">
+            <span>Desconto ({{ cupomAplicado()?.codigo }})</span>
+            <span>- R$ {{ valorDesconto().toFixed(2) }}</span>
+          </div>
+        }
         <div class="checkout__resumo-total">
           <span>Total</span>
           <span>R$ {{ valorTotal().toFixed(2) }}</span>

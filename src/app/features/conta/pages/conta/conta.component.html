@@ -9,6 +9,10 @@
 
     <h2 class="conta__subtitulo">Meus pedidos</h2>
 
+    @if (avisoRecompra()) {
+      <p class="conta__aviso conta__aviso--recompra">{{ avisoRecompra() }}</p>
+    }
+
     @if (carregandoPedidos()) {
       <p>Carregando pedidos…</p>
     } @else if (pedidos().length === 0) {
@@ -16,12 +20,20 @@
     } @else {
       <ul class="conta__pedidos">
         @for (pedido of pedidos(); track pedido.codigo) {
-          <li>
+          <li class="conta__pedido-item">
             <a [routerLink]="['/pedido', pedido.codigo]" class="conta__pedido">
               <span class="conta__pedido-codigo">{{ pedido.codigo }}</span>
               <span class="conta__pedido-data">{{ pedido.criadoEm | date: 'dd/MM/yyyy' }}</span>
               <span class="conta__pedido-total">{{ pedido.valorTotal | currency: 'BRL' }}</span>
             </a>
+            <button
+              type="button"
+              class="botao-secundario conta__botao-recomprar"
+              [disabled]="codigoRecomprando() === pedido.codigo"
+              (click)="comprarNovamente(pedido)"
+            >
+              {{ codigoRecomprando() === pedido.codigo ? 'Adicionando…' : 'Comprar de novo' }}
+            </button>
           </li>
         }
       </ul>

@@ -48,19 +48,23 @@
   gap: 10px;
 }
 
+.conta__pedido-item {
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-padrao);
+  overflow: hidden;
+
+  &:hover {
+    border-color: var(--cor-acento-secundario, #0c7d71);
+  }
+}
+
 .conta__pedido {
   display: flex;
   justify-content: space-between;
   gap: 12px;
   padding: 14px 16px;
-  border: 1px solid var(--cor-borda);
-  border-radius: var(--raio-padrao);
   color: inherit;
   text-decoration: none;
-
-  &:hover {
-    border-color: var(--cor-acento-secundario, #0c7d71);
-  }
 }
 
 .conta__pedido-codigo {
@@ -69,4 +73,16 @@
 
 .conta__pedido-data {
   color: var(--cor-texto-suave);
+}
+
+.conta__botao-recomprar {
+  display: block;
+  width: 100%;
+  border-radius: 0;
+  border-width: 1px 0 0;
+  padding: 10px 16px;
+}
+
+.conta__aviso--recompra {
+  margin-bottom: 12px;
 }

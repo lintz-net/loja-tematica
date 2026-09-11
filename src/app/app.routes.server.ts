@@ -17,6 +17,7 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'admin/produtos', renderMode: RenderMode.Client },
   { path: 'admin/produtos/novo', renderMode: RenderMode.Client },
   { path: 'admin/produtos/:id/editar', renderMode: RenderMode.Client },
+  { path: 'admin/cupons', renderMode: RenderMode.Client },
   { path: 'admin/login', renderMode: RenderMode.Client },
   // O prerender em build mostrou instabilidade neste ambiente (falhas intermitentes e não
   // relacionadas ao conteúdo da rota, mesmo em páginas 100% estáticas). Como o SSR por

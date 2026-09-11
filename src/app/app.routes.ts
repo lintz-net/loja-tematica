@@ -353,6 +353,13 @@ export const routes: Routes = [
             (m) => m.AdminProdutoFormComponent
           ),
       },
+      {
+        path: 'cupons',
+        loadComponent: () =>
+          import('./features/admin/pages/cupons/admin-cupons.component').then(
+            (m) => m.AdminCuponsComponent
+          ),
+      },
     ],
   },
   {

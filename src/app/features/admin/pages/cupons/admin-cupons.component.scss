@@ -1,0 +1,93 @@
+.admin-cupons {
+  padding: 48px 0 80px;
+}
+
+.admin-cupons__cabecalho {
+  margin-bottom: 24px;
+}
+
+.admin-cupons__erro {
+  color: #b3261e;
+  margin-bottom: 16px;
+}
+
+.admin-cupons__form {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr auto;
+  gap: 10px;
+  margin-bottom: 32px;
+  align-items: center;
+
+  input,
+  select {
+    padding: 10px 12px;
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-padrao);
+    font-family: inherit;
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-cupons__form {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.admin-cupons__tabela-wrap {
+  overflow-x: auto;
+}
+
+.admin-cupons__tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+
+  th,
+  td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--cor-borda);
+    white-space: nowrap;
+  }
+
+  th {
+    color: var(--cor-texto-suave);
+    font-weight: 600;
+  }
+}
+
+.admin-cupons__status {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.admin-cupons__status--ativo {
+  background: color-mix(in srgb, var(--cor-acento-secundario) 16%, transparent);
+  color: var(--cor-acento-secundario);
+}
+
+.admin-cupons__status--inativo {
+  background: var(--cor-borda);
+  color: var(--cor-texto-suave);
+}
+
+.admin-cupons__status--expirado {
+  background: color-mix(in srgb, #b3261e 14%, transparent);
+  color: #b3261e;
+}
+
+.admin-cupons__acoes {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-cupons__excluir {
+  background: transparent;
+  border: 1px solid #b3261e;
+  color: #b3261e;
+  padding: 8px 14px;
+  border-radius: var(--raio-padrao);
+  font-weight: 600;
+}
