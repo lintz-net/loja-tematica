@@ -43,6 +43,8 @@
         E-mail
         <input
           type="email"
+          name="email"
+          autocomplete="email"
           placeholder="seu@email.com"
           [value]="emailDigitado()"
           (input)="atualizarEmailDigitado($any($event.target).value)"

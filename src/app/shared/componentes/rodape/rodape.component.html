@@ -40,6 +40,8 @@
       <form class="rodape__newsletter" (submit)="$event.preventDefault(); enviarNewsletter()">
         <input
           type="email"
+          name="email"
+          autocomplete="email"
           placeholder="E-mail"
           [value]="emailNewsletter()"
           (input)="atualizarEmailNewsletter($any($event.target).value)"

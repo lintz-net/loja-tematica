@@ -50,18 +50,24 @@
             <p class="checkout__ajuda">Pra entrarmos em contato sobre o seu pedido.</p>
             <input
               type="text"
+              name="nome"
+              autocomplete="name"
               placeholder="Nome completo"
               [value]="nome()"
               (input)="atualizarNome($any($event.target).value)"
             />
             <input
               type="email"
+              name="email"
+              autocomplete="email"
               placeholder="E-mail"
               [value]="email()"
               (input)="atualizarEmail($any($event.target).value)"
             />
             <input
               type="tel"
+              name="telefone"
+              autocomplete="tel"
               placeholder="Telefone / WhatsApp"
               maxlength="16"
               [value]="telefone()"
@@ -69,6 +75,8 @@
             />
             <input
               type="text"
+              name="documento"
+              autocomplete="off"
               placeholder="CPF ou CNPJ"
               maxlength="18"
               [value]="documento()"
@@ -85,6 +93,8 @@
             <input
               type="text"
               inputmode="numeric"
+              name="cep"
+              autocomplete="postal-code"
               placeholder="CEP"
               maxlength="9"
               [value]="cep()"
@@ -100,6 +110,8 @@
 
             <input
               type="text"
+              name="endereco"
+              autocomplete="address-line1"
               placeholder="Endereço (rua, avenida...)"
               [value]="endereco()"
               (input)="atualizarEndereco($any($event.target).value)"
@@ -107,18 +119,24 @@
             <div class="checkout__linha">
               <input
                 type="text"
+                name="numero"
+                autocomplete="address-line2"
                 placeholder="Número"
                 [value]="numero()"
                 (input)="atualizarNumero($any($event.target).value)"
               />
               <input
                 type="text"
+                name="complemento"
+                autocomplete="address-line3"
                 placeholder="Complemento (opcional)"
                 [value]="complemento()"
                 (input)="atualizarComplemento($any($event.target).value)"
               />
               <input
                 type="text"
+                name="bairro"
+                autocomplete="off"
                 placeholder="Bairro"
                 [value]="bairro()"
                 (input)="atualizarBairro($any($event.target).value)"
@@ -127,12 +145,16 @@
             <div class="checkout__linha">
               <input
                 type="text"
+                name="cidade"
+                autocomplete="address-level2"
                 placeholder="Cidade"
                 [value]="cidade()"
                 (input)="atualizarCidade($any($event.target).value)"
               />
               <input
                 type="text"
+                name="uf"
+                autocomplete="address-level1"
                 placeholder="UF"
                 maxlength="2"
                 class="checkout__campo-uf"
@@ -200,12 +222,16 @@
                 <input
                   type="text"
                   inputmode="numeric"
+                  name="cc-number"
+                  autocomplete="cc-number"
                   placeholder="Número do cartão"
                   [value]="numeroCartao()"
                   (input)="atualizarNumeroCartao($any($event.target).value)"
                 />
                 <input
                   type="text"
+                  name="cc-name"
+                  autocomplete="cc-name"
                   placeholder="Nome impresso no cartão"
                   [value]="nomeCartao()"
                   (input)="atualizarNomeCartao($any($event.target).value)"
@@ -213,6 +239,8 @@
                 <div class="checkout__linha">
                   <input
                     type="text"
+                    name="cc-exp"
+                    autocomplete="cc-exp"
                     placeholder="Vencimento (MM/AA)"
                     maxlength="5"
                     [value]="validadeCartao()"
@@ -221,6 +249,8 @@
                   <input
                     type="text"
                     inputmode="numeric"
+                    name="cc-csc"
+                    autocomplete="cc-csc"
                     placeholder="CVV"
                     maxlength="4"
                     class="checkout__campo-cvv"
@@ -239,6 +269,8 @@
 
                 <input
                   type="text"
+                  name="documento-cartao"
+                  autocomplete="off"
                   placeholder="CPF ou CNPJ do portador do cartão"
                   [value]="cpfCnpjCartao()"
                   (input)="atualizarCpfCnpjCartao($any($event.target).value)"
