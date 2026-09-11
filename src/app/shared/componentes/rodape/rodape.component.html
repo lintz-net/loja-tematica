@@ -46,10 +46,15 @@
           [value]="emailNewsletter()"
           (input)="atualizarEmailNewsletter($any($event.target).value)"
         />
-        <button type="submit">Enviar</button>
+        <button type="submit" [disabled]="enviandoNewsletter()">
+          {{ enviandoNewsletter() ? 'Enviando…' : 'Enviar' }}
+        </button>
       </form>
       @if (newsletterEnviada()) {
         <p class="rodape__newsletter-confirmacao">Cadastro realizado com sucesso!</p>
+      }
+      @if (erroNewsletter()) {
+        <p class="rodape__newsletter-erro">{{ erroNewsletter() }}</p>
       }
     </div>
   </div>

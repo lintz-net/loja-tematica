@@ -1,5 +1,54 @@
 # TODO
 
+## ✅ Dashboard de vendas no admin — feito
+
+Nova página `/admin/dashboard` (`AdminDashboardComponent`, primeiro item do menu — vira a
+tela padrão ao entrar em `/admin` ou logo após o login). Calcula tudo no browser a partir da
+mesma lista de pedidos que `/admin/pedidos` já usa (`PedidoService.listarTodos()`, já
+protegida por RLS/`eh_admin()`) — sem tabela/endpoint novo. Se o volume de pedidos crescer
+muito, vale mover esse cálculo pro banco (view/RPC) — anotado no comentário do componente.
+
+Mostra: total vendido, total de pedidos, ticket médio, vendido/pedidos nos últimos 30 dias,
+pedidos por status (barras) e os 10 produtos mais vendidos (por quantidade, com receita).
+
+## ✅ "Comprar de novo" em /conta — feito
+
+Cada pedido na lista de `/conta` ganhou um botão "Comprar de novo" que busca o produto/
+variante *atuais* do catálogo (nunca reaproveita preço/estoque salvos no pedido antigo, que
+podem estar desatualizados) e adiciona ao carrinho — itens cujo produto/variante não existem
+mais ou estão sem estoque são pulados silenciosamente, com um aviso ao final informando
+quantos ficaram de fora. Redireciona pro carrinho ao concluir.
+
+## ✅ Cupom de desconto no checkout — feito
+
+- **`docs/supabase/migration-012-cupons.sql`**: tabela `cupons` (código, tipo de desconto
+  percentual/valor fixo, valor, expiração opcional, ativo/inativo), só legível/editável por
+  admin (RLS + `eh_admin()`); e colunas `cupom_codigo`/`valor_desconto` em `pedidos` (auditoria).
+- **`supabase/functions/validar-cupom`**: valida o cupom no servidor (nunca no navegador,
+  já que a tabela não é legível por `anon`) — confere existência, `ativo` e expiração, calcula
+  o desconto (nunca deixa passar do subtotal). Testado: cupom válido, inexistente, e
+  case-insensitive.
+- **Checkout**: campo "Código do cupom" na etapa de Pagamento (`CupomService`), desconto
+  refletido no resumo lateral e no total final.
+- **Admin**: `/admin/cupons` — criar, ativar/desativar, excluir (`AdminCupomService`). Cupom
+  usado aparece em `/admin/pedidos` junto do valor total.
+
+**Pendente (fica pra depois)**: limite de uso por cliente, cupom por categoria/produto, valor
+mínimo de pedido — deixado de fora de propósito pra não over-engineering antes de saber que
+tipo de campanha a loja vai rodar de verdade.
+
+## ✅ Newsletter de verdade (Resend Audience) — feito
+
+O formulário do rodapé só confirmava visualmente, sem salvar nada. Agora cadastra o e-mail
+numa Audience do Resend (criada uma vez via API do próprio Resend — não precisou acessar o
+painel deles manualmente — ID guardado no secret `RESEND_AUDIENCE_ID`) através da Edge
+Function `cadastrar-newsletter`. Reenviar o mesmo e-mail não dá erro (Resend recusa
+duplicata, tratado como sucesso). Envio de campanhas em si continua manual, direto do painel
+do Resend pra essa audience — não construímos nenhuma tela de "disparar e-mail" aqui.
+
+Testado ponta a ponta: e-mail cadastrado confirmado na Audience via API (função de
+verificação pontual, já removida depois de conferir).
+
 ## ✅ PWA (instalar como app no celular) — feito
 
 Configurado via schematic oficial (`ng add @angular/pwa`): `@angular/service-worker`,
