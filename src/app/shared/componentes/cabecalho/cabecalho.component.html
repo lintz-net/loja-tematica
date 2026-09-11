@@ -29,7 +29,7 @@
     <div class="cabecalho__acoes">
       <button
         type="button"
-        class="cabecalho__icone"
+        class="cabecalho__icone cabecalho__icone--busca"
         title="Buscar"
         aria-label="Buscar"
         (click)="alternarBusca()"
@@ -39,7 +39,7 @@
           <path d="M19.5 19.5 15 15" stroke-linecap="round" />
         </svg>
       </button>
-      <a routerLink="/favoritos" class="cabecalho__icone" title="Favoritos" aria-label="Favoritos">
+      <a routerLink="/favoritos" class="cabecalho__icone cabecalho__icone--favoritos" title="Favoritos" aria-label="Favoritos">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8">
           <path d="M12 20.5s-7.5-4.6-10-9.3C.5 8 1.8 4.5 5.2 3.6c2-.5 4 .3 5.3 2.1l1.5 2 1.5-2c1.3-1.8 3.3-2.6 5.3-2.1 3.4.9 4.7 4.4 3.2 7.6-2.5 4.7-10 9.3-10 9.3z" stroke-linejoin="round" />
         </svg>
@@ -47,13 +47,13 @@
           <span class="cabecalho__badge">{{ quantidadeFavoritos() }}</span>
         }
       </a>
-      <a routerLink="/conta" class="cabecalho__icone" title="Minha conta" aria-label="Minha conta">
+      <a routerLink="/conta" class="cabecalho__icone cabecalho__icone--conta" title="Minha conta" aria-label="Minha conta">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8">
           <circle cx="12" cy="8" r="3.6" />
           <path d="M4.5 20c1.4-4 4-6 7.5-6s6.1 2 7.5 6" stroke-linecap="round" />
         </svg>
       </a>
-      <button type="button" class="cabecalho__icone" title="Carrinho" aria-label="Carrinho" (click)="alternarCarrinho()">
+      <button type="button" class="cabecalho__icone cabecalho__icone--carrinho" title="Carrinho" aria-label="Carrinho" (click)="alternarCarrinho()">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8">
           <path d="M3.5 6h2l1 12.2a1.8 1.8 0 0 0 1.8 1.6h8.4a1.8 1.8 0 0 0 1.8-1.6L19.5 9h-13" stroke-linecap="round" stroke-linejoin="round" />
           <circle cx="10" cy="21" r="1.2" fill="currentColor" stroke="none" />

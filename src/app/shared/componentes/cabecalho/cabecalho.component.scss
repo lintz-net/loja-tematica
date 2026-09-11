@@ -87,11 +87,27 @@
   position: relative;
   display: flex;
   color: var(--cor-texto-suave);
-  transition: color 0.15s ease;
+  transition: opacity 0.15s ease;
 }
 
 .cabecalho__icone:hover {
-  color: var(--cor-texto);
+  opacity: 0.75;
+}
+
+.cabecalho__icone--busca {
+  color: var(--cor-acento-secundario);
+}
+
+.cabecalho__icone--favoritos {
+  color: #e8355c;
+}
+
+.cabecalho__icone--conta {
+  color: #2f6fed;
+}
+
+.cabecalho__icone--carrinho {
+  color: var(--cor-primaria-escura, var(--cor-primaria));
 }
 
 .cabecalho__badge {
