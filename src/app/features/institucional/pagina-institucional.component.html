@@ -1,4 +1,7 @@
 <section class="container-pagina pagina-institucional">
+  @if (dados.selo) {
+    <span class="rotulo pagina-institucional__selo">{{ dados.selo }}</span>
+  }
   <h1>{{ dados.titulo }}</h1>
 
   @for (paragrafo of dados.paragrafos; track paragrafo) {
@@ -7,7 +10,66 @@
 
   @for (secao of dados.secoes; track secao.titulo) {
     @if (secao.titulo) {
-      <h2 class="pagina-institucional__subtitulo">{{ secao.titulo }}</h2>
+      <h2 class="pagina-institucional__subtitulo">
+        @if (secao.icone) {
+          <span class="pagina-institucional__icone" [attr.data-icone]="secao.icone">
+            @switch (secao.icone) {
+              @case ('cadeado') {
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <rect x="5" y="11" width="14" height="9" rx="2" />
+                  <path d="M8 11V7.5a4 4 0 0 1 8 0V11" stroke-linecap="round" />
+                </svg>
+              }
+              @case ('escudo') {
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M12 3l7 3v5.5c0 4.5-3 7.7-7 9-4-1.3-7-4.5-7-9V6z" stroke-linejoin="round" />
+                  <path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              }
+              @case ('base-dados') {
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <ellipse cx="12" cy="6" rx="7" ry="2.6" />
+                  <path d="M5 6v12c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6V6" />
+                  <path d="M5 12c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6" />
+                </svg>
+              }
+              @case ('compartilhar') {
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <circle cx="6" cy="12" r="2.4" />
+                  <circle cx="18" cy="6" r="2.4" />
+                  <circle cx="18" cy="18" r="2.4" />
+                  <path d="M8.2 10.8l7.6-3.6M8.2 13.2l7.6 3.6" />
+                </svg>
+              }
+              @case ('cookie') {
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M20.5 12.8A8.5 8.5 0 1 1 11.2 3.5c-.3 1.4.8 2.7 2.2 2.5 1.6-.2 2.9 1.1 2.7 2.7-.2 1.4 1.1 2.5 2.5 2.2.9-.2 1.7.1 1.9.9z" />
+                  <circle cx="9" cy="10" r="0.9" fill="currentColor" stroke="none" />
+                  <circle cx="13" cy="15" r="0.9" fill="currentColor" stroke="none" />
+                  <circle cx="9.5" cy="15.5" r="0.7" fill="currentColor" stroke="none" />
+                </svg>
+              }
+              @case ('email') {
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <rect x="3.5" y="5.5" width="17" height="13" rx="2" />
+                  <path d="M4 7l8 6 8-6" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              }
+              @case ('coracao') {
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M12 20s-7.5-4.6-9.8-9.4C.6 7 2.4 4 5.6 4c1.9 0 3.4 1 4.4 2.4C11 5 12.5 4 14.4 4c3.2 0 5 3 3.4 6.6C15.5 15.4 12 20 12 20z" stroke-linejoin="round" />
+                </svg>
+              }
+              @case ('estrela') {
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.2 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.2 5.9-.8z" stroke-linejoin="round" />
+                </svg>
+              }
+            }
+          </span>
+        }
+        {{ secao.titulo }}
+      </h2>
     }
     @for (paragrafo of secao.paragrafos; track paragrafo) {
       <p>{{ paragrafo }}</p>

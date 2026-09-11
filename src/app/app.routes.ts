@@ -64,19 +64,138 @@ const PAGINA_COMO_COMPRAR: DadosPaginaInstitucional = {
 const PAGINA_QUEM_SOMOS: DadosPaginaInstitucional = {
   titulo: 'Quem somos',
   paragrafos: [
-    'A Vista Nostálgica é uma vitrine para descobrir camisetas, bermudas e polos com estampas que remetem a games, cinema, música, futebol, carros e humor.',
-    'Trabalhamos com fornecedores especializados em estampas DTF e emborrachada, com curadoria própria — cada peça é escolhida pensando em quem quer vestir uma lembrança, não só uma camiseta.',
+    'A Vista Nostálgica nasceu da vontade de transformar lembranças em algo pra vestir. Cada estampa do nosso catálogo carrega uma referência de games, cinema, música, futebol, carros ou humor — peças pensadas pra quem quer contar uma história, não só usar uma camiseta.',
   ],
-  nota: 'Página de exemplo com conteúdo fictício, criada para validar a estrutura da loja.',
+  secoes: [
+    {
+      titulo: 'Nossa missão',
+      icone: 'coracao',
+      paragrafos: [
+        'Acreditamos que roupa também é forma de expressão. Nossa missão é oferecer estampas com identidade — de qualidade, com curadoria própria e a um preço justo — pra quem quer carregar um pedaço da cultura pop no dia a dia.',
+      ],
+    },
+    {
+      titulo: 'Curadoria e qualidade',
+      icone: 'estrela',
+      paragrafos: [
+        'Trabalhamos com fornecedores especializados em estampas DTF e emborrachada, feitas pra durar lavagem após lavagem sem rachar ou desbotar. Cada peça passa por curadoria própria antes de entrar no site — só entra o que a gente mesmo usaria.',
+      ],
+    },
+    {
+      titulo: 'Compra segura, do pedido à entrega',
+      icone: 'escudo',
+      lista: [
+        'Pagamento processado por parceiro homologado, com Pix e cartão de crédito.',
+        'Frete calculado em tempo real e etiqueta gerada por transportadoras parceiras confiáveis.',
+        'Acompanhamento do pedido disponível a qualquer momento, direto pelo link enviado por e-mail.',
+      ],
+    },
+    {
+      titulo: 'Atendimento de verdade',
+      icone: 'email',
+      paragrafos: [
+        'Time pequeno, atendimento próximo. Dúvida antes de comprar, troca ou devolução — é só chamar no WhatsApp ou mandar um e-mail pra contato@vistanostalgica.com.br que a gente responde.',
+      ],
+    },
+  ],
 };
 
 const PAGINA_POLITICA_PRIVACIDADE: DadosPaginaInstitucional = {
   titulo: 'Política de privacidade',
+  selo: 'Atualizada em setembro de 2026',
   paragrafos: [
-    'Coletamos apenas os dados necessários para processar seu pedido: nome, e-mail, telefone e endereço de entrega.',
-    'Essas informações são usadas exclusivamente para viabilizar a compra — comunicação sobre o pedido, entrega e suporte — e não são compartilhadas com terceiros além dos parceiros de logística e pagamento estritamente necessários para concluir a transação.',
+    'A Vista Nostálgica respeita a sua privacidade e leva a proteção dos seus dados a sério. Esta política explica quais informações coletamos quando você visita nosso site ou faz uma compra, como usamos esses dados, com quem eventualmente compartilhamos e quais direitos você tem sobre eles, em conformidade com a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018).',
   ],
-  nota: 'Página de exemplo com conteúdo fictício. Antes de operar de verdade, esse texto precisa ser revisado por um advogado e adequado à LGPD.',
+  secoes: [
+    {
+      titulo: 'Quais dados coletamos',
+      icone: 'base-dados',
+      paragrafos: [
+        'Coletamos apenas os dados necessários para viabilizar sua compra e melhorar sua experiência na loja:',
+      ],
+      lista: [
+        'Dados de identificação e contato: nome, e-mail e telefone/WhatsApp.',
+        'Dados de entrega: endereço completo e CPF ou CNPJ (este último exigido pela transportadora para emissão da etiqueta de envio).',
+        'Dados do pedido: itens comprados, valores, forma de pagamento escolhida e status da entrega.',
+        'Dados de navegação: páginas visitadas e itens no carrinho, usados apenas para o funcionamento do site (nenhum cookie de rastreamento de terceiros está ativo hoje).',
+      ],
+    },
+    {
+      titulo: 'Como usamos seus dados',
+      icone: 'escudo',
+      paragrafos: [
+        'Usamos suas informações exclusivamente para as seguintes finalidades:',
+      ],
+      lista: [
+        'Processar e confirmar seu pedido, incluindo cobrança e emissão de etiqueta de envio.',
+        'Comunicar atualizações sobre o pedido (confirmação de compra, status de envio e entrega).',
+        'Prestar suporte quando você entra em contato conosco.',
+        'Cumprir obrigações legais e fiscais, quando aplicável.',
+      ],
+    },
+    {
+      titulo: 'Com quem compartilhamos',
+      icone: 'compartilhar',
+      paragrafos: [
+        'Não vendemos nem alugamos seus dados para fins de marketing de terceiros. Compartilhamos apenas o estritamente necessário com parceiros que viabilizam a operação da loja:',
+      ],
+      lista: [
+        'Processador de pagamento (Mercado Pago), para viabilizar a cobrança do pedido.',
+        'Melhor Envio e as transportadoras parceiras (Correios, Jadlog e outras), para calcular o frete e realizar a entrega.',
+        'Provedores de infraestrutura (hospedagem e banco de dados), que armazenam as informações de forma segura em nosso nome.',
+      ],
+    },
+    {
+      titulo: 'Cookies e tecnologias semelhantes',
+      icone: 'cookie',
+      paragrafos: [
+        'Usamos cookies essenciais para o funcionamento do site — por exemplo, para manter os itens do seu carrinho enquanto você navega. Não usamos, no momento, cookies de rastreamento ou pixels de publicidade de terceiros; caso isso mude no futuro, esta política será atualizada e o consentimento será solicitado antes de qualquer cookie não essencial ser carregado.',
+      ],
+    },
+    {
+      titulo: 'Segurança dos dados',
+      icone: 'cadeado',
+      paragrafos: [
+        'Adotamos medidas técnicas para proteger suas informações: conexão criptografada (HTTPS) em todo o site, banco de dados com controle de acesso restrito e autenticação obrigatória para qualquer acesso administrativo aos pedidos. Apesar dos cuidados, nenhum sistema é 100% livre de riscos — caso identifiquemos qualquer incidente de segurança que afete seus dados, você será notificado conforme exigido pela LGPD.',
+      ],
+    },
+    {
+      titulo: 'Seus direitos como titular dos dados',
+      icone: 'escudo',
+      paragrafos: [
+        'De acordo com a LGPD, você tem direito a:',
+      ],
+      lista: [
+        'Confirmar a existência de tratamento dos seus dados.',
+        'Acessar os dados que temos sobre você.',
+        'Corrigir dados incompletos, inexatos ou desatualizados.',
+        'Solicitar a anonimização, bloqueio ou eliminação de dados desnecessários.',
+        'Solicitar a portabilidade dos dados a outro fornecedor.',
+        'Revogar o consentimento e solicitar a eliminação dos dados tratados com base nele.',
+      ],
+    },
+    {
+      titulo: 'Por quanto tempo guardamos seus dados',
+      icone: 'base-dados',
+      paragrafos: [
+        'Mantemos seus dados pelo tempo necessário para cumprir as finalidades descritas nesta política e as obrigações legais e fiscais aplicáveis (por exemplo, comprovantes de venda). Após esse período, os dados são eliminados ou anonimizados com segurança.',
+      ],
+    },
+    {
+      titulo: 'Alterações desta política',
+      icone: 'escudo',
+      paragrafos: [
+        'Esta política pode ser atualizada periodicamente para refletir mudanças na forma como operamos ou na legislação aplicável. A data no topo desta página indica a versão mais recente.',
+      ],
+    },
+    {
+      titulo: 'Fale conosco',
+      icone: 'email',
+      paragrafos: [
+        'Para dúvidas sobre esta política ou para exercer qualquer um dos seus direitos como titular de dados, entre em contato pelo e-mail contato@vistanostalgica.com.br.',
+      ],
+    },
+  ],
 };
 
 const PAGINA_TROCAS_DEVOLUCOES: DadosPaginaInstitucional = {

@@ -2,6 +2,11 @@
   max-width: 720px;
 }
 
+.pagina-institucional__selo {
+  margin-bottom: 10px;
+  display: inline-block;
+}
+
 .pagina-institucional h1 {
   margin-bottom: 20px;
 }
@@ -15,6 +20,21 @@
 .pagina-institucional__subtitulo {
   margin: 32px 0 12px;
   font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pagina-institucional__icone {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--cor-acento-secundario) 14%, transparent);
+  color: var(--cor-acento-secundario);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .pagina-institucional__lista {

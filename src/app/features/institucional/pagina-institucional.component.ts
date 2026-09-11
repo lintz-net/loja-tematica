@@ -6,8 +6,21 @@ export interface Passo {
   texto: string;
 }
 
+/** Ícone ilustrativo ao lado do título da seção — só os usados hoje (política de
+ * privacidade); adicionar mais conforme necessário em `pagina-institucional.component.html`. */
+export type IconeSecao =
+  | 'cadeado'
+  | 'escudo'
+  | 'base-dados'
+  | 'compartilhar'
+  | 'cookie'
+  | 'email'
+  | 'coracao'
+  | 'estrela';
+
 export interface SecaoInstitucional {
   titulo?: string;
+  icone?: IconeSecao;
   paragrafos?: string[];
   lista?: string[];
   passos?: Passo[];
@@ -15,6 +28,9 @@ export interface SecaoInstitucional {
 
 export interface DadosPaginaInstitucional {
   titulo: string;
+  /** Selo pequeno acima do título (ex.: "Atualizado em..."), pro visual de página de
+   * verdade em vez de rascunho — usado na política de privacidade. */
+  selo?: string;
   paragrafos?: string[];
   secoes?: SecaoInstitucional[];
   passos?: Passo[];
