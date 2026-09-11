@@ -99,6 +99,9 @@
       <h2>Entrega</h2>
       <p>
         {{ pedido()!.endereco.endereco }}, {{ pedido()!.endereco.numero }}
+        @if (pedido()!.endereco.complemento) {
+          · {{ pedido()!.endereco.complemento }}
+        }
         @if (pedido()!.endereco.bairro) {
           · {{ pedido()!.endereco.bairro }}
         }

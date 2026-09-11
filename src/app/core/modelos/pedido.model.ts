@@ -13,6 +13,7 @@ export interface ItemPedido {
 export interface EnderecoPedido {
   endereco: string;
   numero: string;
+  complemento?: string;
   bairro: string;
   cidade: string;
   uf: string;

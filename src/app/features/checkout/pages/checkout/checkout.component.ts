@@ -3,8 +3,10 @@ import { Router, RouterLink } from '@angular/router';
 import { CarrinhoService } from '../../../../core/servicos/carrinho.service';
 import { PedidoService } from '../../../../core/servicos/pedido.service';
 import { FreteService, OpcaoFrete } from '../../../../core/servicos/frete.service';
+import { CepService } from '../../../../core/servicos/cep.service';
 import { ItemPedido } from '../../../../core/modelos/pedido.model';
 import { imagemDaVariante } from '../../../../core/utilitarios/imagem-produto.util';
+import { mascararCep, mascararDocumento, mascararTelefone } from '../../../../core/utilitarios/mascara.util';
 import { LOGOS_CARTAO } from '../../../../shared/dados/logos-pagamento';
 import { obterLogoTransportadora } from '../../../../shared/dados/logos-transportadora';
 
@@ -36,6 +38,7 @@ export class CheckoutComponent {
   private readonly carrinhoService = inject(CarrinhoService);
   private readonly pedidoService = inject(PedidoService);
   private readonly freteService = inject(FreteService);
+  private readonly cepService = inject(CepService);
   private readonly router = inject(Router);
 
   readonly itens = this.carrinhoService.itensCarrinho;
@@ -66,11 +69,20 @@ export class CheckoutComponent {
   // Passo 5 — endereço de entrega
   readonly endereco = signal('');
   readonly numero = signal('');
+  readonly complemento = signal('');
   readonly bairro = signal('');
   readonly cidade = signal('');
   readonly uf = signal('');
   readonly cep = signal('');
+  readonly buscandoCep = signal(false);
+  readonly erroCep = signal<string | null>(null);
+  /** true só quando o ViaCEP confirmou que o CEP não existe — bloqueia o avanço (evita pedido
+   * com endereço de entrega inexistente). Falha de rede/serviço fora do ar NÃO bloqueia (fail
+   * open: um problema do lado do ViaCEP não pode impedir a venda), só avisa e deixa preencher
+   * manualmente. Reseta a cada edição do campo, até a próxima busca confirmar de novo. */
+  readonly cepInvalido = signal(false);
   readonly enderecoValido = computed(() =>
+    !this.cepInvalido() &&
     [this.endereco(), this.numero(), this.cidade(), this.uf(), this.cep()].every(
       (valor) => valor.trim().length > 0
     )
@@ -149,11 +161,11 @@ export class CheckoutComponent {
   }
 
   atualizarTelefone(valor: string): void {
-    this.telefone.set(valor);
+    this.telefone.set(mascararTelefone(valor));
   }
 
   atualizarDocumento(valor: string): void {
-    this.documento.set(valor);
+    this.documento.set(mascararDocumento(valor));
   }
 
   atualizarEndereco(valor: string): void {
@@ -162,6 +174,10 @@ export class CheckoutComponent {
 
   atualizarNumero(valor: string): void {
     this.numero.set(valor);
+  }
+
+  atualizarComplemento(valor: string): void {
+    this.complemento.set(valor);
   }
 
   atualizarBairro(valor: string): void {
@@ -177,7 +193,32 @@ export class CheckoutComponent {
   }
 
   atualizarCep(valor: string): void {
-    this.cep.set(valor);
+    const cepMascarado = mascararCep(valor);
+    this.cep.set(cepMascarado);
+    this.erroCep.set(null);
+    this.cepInvalido.set(false);
+
+    if (cepMascarado.replace(/\D/g, '').length !== 8) return;
+
+    this.buscandoCep.set(true);
+    this.cepService.buscarEndereco(cepMascarado).subscribe({
+      next: (endereco) => {
+        this.buscandoCep.set(false);
+        if (!endereco) {
+          this.erroCep.set('CEP não encontrado — confira o número antes de continuar.');
+          this.cepInvalido.set(true);
+          return;
+        }
+        this.endereco.set(endereco.endereco);
+        this.bairro.set(endereco.bairro);
+        this.cidade.set(endereco.cidade);
+        this.uf.set(endereco.uf);
+      },
+      error: () => {
+        this.buscandoCep.set(false);
+        this.erroCep.set('Não foi possível buscar o CEP — preencha manualmente.');
+      },
+    });
   }
 
   atualizarNumeroCartao(valor: string): void {
@@ -317,6 +358,7 @@ export class CheckoutComponent {
         endereco: {
           endereco: this.endereco(),
           numero: this.numero(),
+          complemento: this.complemento() || undefined,
           bairro: this.bairro(),
           cidade: this.cidade(),
           uf: this.uf(),

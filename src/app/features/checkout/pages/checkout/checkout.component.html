@@ -63,12 +63,14 @@
             <input
               type="tel"
               placeholder="Telefone / WhatsApp"
+              maxlength="16"
               [value]="telefone()"
               (input)="atualizarTelefone($any($event.target).value)"
             />
             <input
               type="text"
               placeholder="CPF ou CNPJ"
+              maxlength="18"
               [value]="documento()"
               (input)="atualizarDocumento($any($event.target).value)"
             />
@@ -79,6 +81,23 @@
           @case ('endereco') {
             <h3>Endereço de entrega</h3>
             <p class="checkout__ajuda">Confira se os dados estão certos pra evitar atrasos.</p>
+
+            <input
+              type="text"
+              inputmode="numeric"
+              placeholder="CEP"
+              maxlength="9"
+              [value]="cep()"
+              (input)="atualizarCep($any($event.target).value)"
+            />
+            @if (buscandoCep()) {
+              <p class="checkout__ajuda checkout__ajuda--pequena">Buscando endereço…</p>
+            } @else if (erroCep()) {
+              <p class="checkout__ajuda checkout__ajuda--pequena checkout__erro-frete">
+                {{ erroCep() }}
+              </p>
+            }
+
             <input
               type="text"
               placeholder="Endereço (rua, avenida...)"
@@ -91,6 +110,12 @@
                 placeholder="Número"
                 [value]="numero()"
                 (input)="atualizarNumero($any($event.target).value)"
+              />
+              <input
+                type="text"
+                placeholder="Complemento (opcional)"
+                [value]="complemento()"
+                (input)="atualizarComplemento($any($event.target).value)"
               />
               <input
                 type="text"
@@ -113,12 +138,6 @@
                 class="checkout__campo-uf"
                 [value]="uf()"
                 (input)="atualizarUf($any($event.target).value)"
-              />
-              <input
-                type="text"
-                placeholder="CEP"
-                [value]="cep()"
-                (input)="atualizarCep($any($event.target).value)"
               />
             </div>
           }
@@ -272,7 +291,9 @@
                 </button>
               </div>
               <p>
-                {{ endereco() }}, {{ numero() }} @if (bairro()) { · {{ bairro() }} }
+                {{ endereco() }}, {{ numero() }}
+                @if (complemento()) { · {{ complemento() }} }
+                @if (bairro()) { · {{ bairro() }} }
                 <br />
                 {{ cidade() }}/{{ uf() }} · CEP {{ cep() }}
               </p>

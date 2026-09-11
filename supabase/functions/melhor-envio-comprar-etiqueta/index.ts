@@ -22,6 +22,7 @@ const DIMENSAO_PADRAO_CM = { altura: 5, largura: 20, comprimento: 25 };
 interface EnderecoPedido {
   endereco: string;
   numero: string;
+  complemento?: string;
   bairro: string;
   cidade: string;
   uf: string;
@@ -201,6 +202,7 @@ Deno.serve(async (req: Request) => {
         document: (documentoDestinatario ?? pedido.documento_cliente ?? '').replace(/\D/g, ''),
         address: pedido.endereco.endereco,
         number: pedido.endereco.numero,
+        complement: pedido.endereco.complemento ?? '',
         district: pedido.endereco.bairro,
         city: pedido.endereco.cidade,
         state_abbr: pedido.endereco.uf,
