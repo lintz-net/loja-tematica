@@ -1,5 +1,33 @@
 # TODO
 
+## Ideias levantadas, ainda não implementadas
+
+- **Avaliações/reviews de produto** — prova social é um dos maiores fatores de conversão em
+  e-commerce de moda/estampa.
+- **Produtos relacionados / "quem comprou também levou"** na página de produto.
+- **Fluxo de troca/devolução dentro da conta** (`/conta`), em vez de só por e-mail.
+- **Nota fiscal/comprovante pra download** em `/conta`.
+
+## ✅ "Avise-me quando chegar" (variante sem estoque) — feito
+
+- **`docs/supabase/migration-013-avisos-estoque.sql`**: tabela `avisos_estoque` (produto,
+  variante, tamanho, cor, e-mail, `notificado`) — insert liberado pro público (`anon`), sem
+  select/update (só admin lê, via `eh_admin()`).
+- **Página de produto**: tamanho/cor sem estoque deixaram de ser botões desabilitados —
+  agora dá pra selecionar a combinação mesmo assim, e no lugar de "Adicionar ao carrinho"
+  aparece um formulário "Avise-me quando chegar" (`AvisoEstoqueService`, insert puro via
+  REST, mesmo padrão de `PedidoService`).
+- **`supabase/functions/notificar-estoque`**: quando o admin salva um produto e alguma
+  variante saiu de estoque 0 pra um valor positivo, `AdminProdutoFormComponent` (que guarda o
+  estoque original de cada variante ao carregar o formulário) dispara essa function
+  automaticamente — ela busca todo mundo inscrito pra aquela variante com `notificado=false`,
+  manda e-mail via Resend, e marca como notificado. Fire-and-forget: falha aqui não trava o
+  salvamento do produto.
+
+Testado ponta a ponta: cadastro de e-mail numa variante zerada confirmado no banco;
+reposição de estoque pela tela do admin disparou o e-mail de verdade e marcou
+`notificado = true`.
+
 ## ✅ Dashboard de vendas no admin — feito
 
 Nova página `/admin/dashboard` (`AdminDashboardComponent`, primeiro item do menu — vira a

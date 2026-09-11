@@ -10,6 +10,7 @@ import {
   VarianteProduto,
 } from '../../../../core/modelos/produto.model';
 import { CORES_CONHECIDAS, corParaEstiloSwatch } from '../../../../core/utilitarios/cor.util';
+import { NotificarEstoqueService } from '../../../../core/servicos/notificar-estoque.service';
 
 const TAMANHOS_PADRAO = ['P', 'M', 'G', 'GG', 'Único'];
 const ESTOQUE_PADRAO = 10;
@@ -43,6 +44,7 @@ export class AdminProdutoFormComponent {
   private readonly router = inject(Router);
   private readonly catalogoRepositorio = inject(CatalogoRepositorio);
   private readonly adminProdutoService = inject(AdminProdutoService);
+  private readonly notificarEstoqueService = inject(NotificarEstoqueService);
 
   private readonly idEdicao = this.route.snapshot.paramMap.get('id');
   readonly modoEdicao = this.idEdicao !== null;
@@ -100,6 +102,11 @@ export class AdminProdutoFormComponent {
    * confirmar antes de sair sem salvar. Reseta depois de salvar com sucesso. */
   readonly sujo = signal(false);
   private formPronto = false;
+
+  /** Estoque de cada variante como veio do banco (antes de qualquer edição na tela) — usado
+   * só pra detectar, ao salvar, quais variantes saíram de 0 pra algum estoque e disparar
+   * `notificar-estoque` pra elas. Vazio no modo criação (produto novo nunca tem inscrito). */
+  private estoqueOriginalPorVarianteId = new Map<string, number>();
 
   constructor() {
     this.catalogoRepositorio.obterCategorias().subscribe((categorias) => {
@@ -173,6 +180,9 @@ export class AdminProdutoFormComponent {
       precoOverride: v.precoOverride ?? null,
     }));
     this.variantes.set(variantesExistentes);
+    this.estoqueOriginalPorVarianteId = new Map(
+      variantesExistentes.map((v) => [v.id, v.quantidadeEstoque])
+    );
     this.tamanhosMarcados.set(new Set(variantesExistentes.map((v) => v.tamanho)));
     this.coresMarcadas.set(new Set(variantesExistentes.map((v) => v.cor)));
     this.imagensPorCor.set(produto.imagensPorCor ?? {});
@@ -397,6 +407,17 @@ export class AdminProdutoFormComponent {
     );
   }
 
+  /** Dispara "avise-me quando chegar" pra toda variante que saiu de estoque zerado pra algum
+   * estoque positivo nesse salvamento — fire-and-forget, não atrasa a navegação de volta. */
+  private notificarVariantesRepostas(produtoSlug: string): void {
+    for (const variante of this.variantes()) {
+      const estoqueAntes = this.estoqueOriginalPorVarianteId.get(variante.id);
+      if (estoqueAntes === 0 && variante.quantidadeEstoque > 0) {
+        this.notificarEstoqueService.notificarReposicao(variante.id, produtoSlug);
+      }
+    }
+  }
+
   podeSalvar(): boolean {
     return (
       this.nome().trim().length > 0 &&
@@ -455,6 +476,7 @@ export class AdminProdutoFormComponent {
     operacao.subscribe({
       next: () => {
         this.sujo.set(false);
+        this.notificarVariantesRepostas(produto.slug);
         this.router.navigate(['/admin/produtos']);
       },
       error: (erro) => {

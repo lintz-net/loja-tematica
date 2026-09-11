@@ -6,6 +6,7 @@ import { CatalogoRepositorio } from '../../../../core/servicos/catalogo.reposito
 import { CarrinhoService } from '../../../../core/servicos/carrinho.service';
 import { FavoritosService } from '../../../../core/servicos/favoritos.service';
 import { VistosRecentementeService } from '../../../../core/servicos/vistos-recentemente.service';
+import { AvisoEstoqueService } from '../../../../core/servicos/aviso-estoque.service';
 import { SeoService } from '../../../../core/servicos/seo.service';
 import { FaixaMedida } from '../../../../core/modelos/produto.model';
 import { corParaEstiloSwatch } from '../../../../core/utilitarios/cor.util';
@@ -32,6 +33,7 @@ export class DetalheProdutoComponent {
   private readonly carrinhoService = inject(CarrinhoService);
   private readonly favoritosService = inject(FavoritosService);
   private readonly vistosRecentementeService = inject(VistosRecentementeService);
+  private readonly avisoEstoqueService = inject(AvisoEstoqueService);
   private readonly seoService = inject(SeoService);
 
   private readonly slugProduto$ = this.route.paramMap.pipe(
@@ -151,6 +153,19 @@ export class DetalheProdutoComponent {
     );
   });
 
+  /** A variante existe (tamanho+cor válidos) mas está zerada — mostra o formulário "avise-me"
+   * no lugar do botão de comprar. */
+  readonly varianteEsgotada = computed(() => {
+    const variante = this.varianteSelecionada();
+    return variante && variante.quantidadeEstoque === 0 ? variante : null;
+  });
+
+  readonly emailAvisoEstoque = signal('');
+  readonly emailAvisoEstoqueValido = computed(() => /\S+@\S+\.\S+/.test(this.emailAvisoEstoque()));
+  readonly enviandoAvisoEstoque = signal(false);
+  readonly avisoEstoqueEnviado = signal(false);
+  readonly erroAvisoEstoque = signal<string | null>(null);
+
   readonly precoExibido = computed(() => {
     const produto = this.produto();
     const variante = this.varianteSelecionada();
@@ -158,16 +173,16 @@ export class DetalheProdutoComponent {
     return variante?.precoOverride ?? produto.precoBase;
   });
 
-  selecionarTamanho(tamanho: string, disponivel: boolean): void {
-    if (!disponivel) return;
+  selecionarTamanho(tamanho: string): void {
     this.tamanhoSelecionado.set(tamanho);
     this.itemAdicionado.set(false);
+    this.avisoEstoqueEnviado.set(false);
   }
 
-  selecionarCor(cor: string, disponivel: boolean): void {
-    if (!disponivel) return;
+  selecionarCor(cor: string): void {
     this.corSelecionada.set(cor);
     this.itemAdicionado.set(false);
+    this.avisoEstoqueEnviado.set(false);
   }
 
   alterarQuantidade(delta: number): void {
@@ -185,6 +200,31 @@ export class DetalheProdutoComponent {
 
   irParaCarrinho(): void {
     this.router.navigate(['/carrinho']);
+  }
+
+  atualizarEmailAvisoEstoque(valor: string): void {
+    this.emailAvisoEstoque.set(valor);
+    this.erroAvisoEstoque.set(null);
+  }
+
+  avisarQuandoChegar(): void {
+    const produto = this.produto();
+    const variante = this.varianteEsgotada();
+    if (!produto || !variante || !this.emailAvisoEstoqueValido()) return;
+
+    this.enviandoAvisoEstoque.set(true);
+    this.erroAvisoEstoque.set(null);
+    this.avisoEstoqueService.cadastrar(produto, variante, this.emailAvisoEstoque()).subscribe({
+      next: () => {
+        this.enviandoAvisoEstoque.set(false);
+        this.avisoEstoqueEnviado.set(true);
+        this.emailAvisoEstoque.set('');
+      },
+      error: () => {
+        this.enviandoAvisoEstoque.set(false);
+        this.erroAvisoEstoque.set('Não foi possível cadastrar. Tente novamente.');
+      },
+    });
   }
 
   readonly favoritado = computed(() => {

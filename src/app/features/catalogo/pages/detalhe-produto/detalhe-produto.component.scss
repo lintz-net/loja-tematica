@@ -230,6 +230,30 @@
   cursor: not-allowed;
 }
 
+.detalhe-produto__avise-me-form {
+  display: flex;
+  gap: 8px;
+
+  input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-padrao);
+  }
+}
+
+.detalhe-produto__avise-me-confirmacao {
+  color: var(--cor-acento-secundario);
+  font-size: 0.9rem;
+}
+
+.detalhe-produto__avise-me-erro {
+  color: #b3261e;
+  font-size: 0.85rem;
+  margin-top: 8px;
+}
+
 .guia-medidas {
   width: 100%;
   border-collapse: collapse;
