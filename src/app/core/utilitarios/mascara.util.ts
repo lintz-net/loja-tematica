@@ -9,7 +9,14 @@ export function mascararCep(valor: string): string {
 }
 
 export function mascararTelefone(valor: string): string {
-  const digitos = valor.replace(/\D/g, '').slice(0, 11);
+  let digitos = valor.replace(/\D/g, '');
+  // Autopreenchimento do navegador às vezes inclui o código do país (+55) — um número de
+  // celular/fixo brasileiro tem no máximo 11 dígitos (DDD + 9 dígitos), então mais que isso
+  // começando com 55 só pode ser o código do país grudado na frente.
+  if (digitos.length > 11 && digitos.startsWith('55')) {
+    digitos = digitos.slice(2);
+  }
+  digitos = digitos.slice(0, 11);
   if (digitos.length <= 2) return digitos;
   if (digitos.length <= 6) return `(${digitos.slice(0, 2)}) ${digitos.slice(2)}`;
   // Fixo tem 8 dígitos após o DDD, celular 9 — o separador do meio muda de posição sozinho

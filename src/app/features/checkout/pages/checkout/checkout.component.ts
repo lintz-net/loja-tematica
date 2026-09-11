@@ -75,14 +75,12 @@ export class CheckoutComponent {
   readonly uf = signal('');
   readonly cep = signal('');
   readonly buscandoCep = signal(false);
+  /** ViaCEP não é uma base completa — CEPs novos ou pouco comuns podem ser reais e mesmo
+   * assim não estarem cadastrados lá. Por isso um CEP "não encontrado" só vira aviso forte
+   * (`erroCep`), sem travar o avanço: bloquear na marra arriscava perder venda de cliente com
+   * endereço válido só porque o ViaCEP não conhece aquele CEP específico. */
   readonly erroCep = signal<string | null>(null);
-  /** true só quando o ViaCEP confirmou que o CEP não existe — bloqueia o avanço (evita pedido
-   * com endereço de entrega inexistente). Falha de rede/serviço fora do ar NÃO bloqueia (fail
-   * open: um problema do lado do ViaCEP não pode impedir a venda), só avisa e deixa preencher
-   * manualmente. Reseta a cada edição do campo, até a próxima busca confirmar de novo. */
-  readonly cepInvalido = signal(false);
   readonly enderecoValido = computed(() =>
-    !this.cepInvalido() &&
     [this.endereco(), this.numero(), this.cidade(), this.uf(), this.cep()].every(
       (valor) => valor.trim().length > 0
     )
@@ -196,7 +194,6 @@ export class CheckoutComponent {
     const cepMascarado = mascararCep(valor);
     this.cep.set(cepMascarado);
     this.erroCep.set(null);
-    this.cepInvalido.set(false);
 
     if (cepMascarado.replace(/\D/g, '').length !== 8) return;
 
@@ -205,8 +202,7 @@ export class CheckoutComponent {
       next: (endereco) => {
         this.buscandoCep.set(false);
         if (!endereco) {
-          this.erroCep.set('CEP não encontrado — confira o número antes de continuar.');
-          this.cepInvalido.set(true);
+          this.erroCep.set('CEP não encontrado — confira se digitou certo antes de continuar.');
           return;
         }
         this.endereco.set(endereco.endereco);
