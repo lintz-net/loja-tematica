@@ -313,9 +313,16 @@ export const routes: Routes = [
         (m) => m.AdminShellComponent
       ),
     children: [
-      // Digitar só /admin (ou cair aqui logo após o login) já leva pro menu, em vez de uma
-      // área em branco dentro do layout.
-      { path: '', redirectTo: 'pedidos', pathMatch: 'full' },
+      // Digitar só /admin (ou cair aqui logo após o login) já leva pro dashboard, em vez de
+      // uma área em branco dentro do layout.
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./features/admin/pages/dashboard/admin-dashboard.component').then(
+            (m) => m.AdminDashboardComponent
+          ),
+      },
       {
         path: 'pedidos',
         loadComponent: () =>

@@ -32,7 +32,7 @@ export class AdminLoginComponent {
     this.authService.entrar(this.email(), this.senha()).subscribe({
       next: () => {
         this.entrando.set(false);
-        this.router.navigate(['/admin/pedidos']);
+        this.router.navigate(['/admin/dashboard']);
       },
       error: () => {
         this.entrando.set(false);

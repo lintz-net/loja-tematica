@@ -1,0 +1,79 @@
+<section class="container-pagina admin-dashboard">
+  <header class="admin-dashboard__cabecalho">
+    <h1>Dashboard</h1>
+  </header>
+
+  @if (erro()) {
+    <p class="admin-dashboard__erro">{{ erro() }}</p>
+  }
+
+  @if (carregando()) {
+    <p>Carregando…</p>
+  } @else if (totalPedidos() === 0) {
+    <p>Nenhum pedido ainda — os números aparecem aqui assim que o primeiro pedido chegar.</p>
+  } @else {
+    <div class="admin-dashboard__cartoes">
+      <div class="admin-dashboard__cartao">
+        <span class="rotulo">Total vendido</span>
+        <strong>{{ totalVendido() | currency: 'BRL' }}</strong>
+      </div>
+      <div class="admin-dashboard__cartao">
+        <span class="rotulo">Pedidos</span>
+        <strong>{{ totalPedidos() }}</strong>
+      </div>
+      <div class="admin-dashboard__cartao">
+        <span class="rotulo">Ticket médio</span>
+        <strong>{{ ticketMedio() | currency: 'BRL' }}</strong>
+      </div>
+      <div class="admin-dashboard__cartao">
+        <span class="rotulo">Últimos 30 dias</span>
+        <strong>{{ totalVendido30Dias() | currency: 'BRL' }}</strong>
+        <span class="admin-dashboard__cartao-detalhe">{{ totalPedidos30Dias() }} pedido(s)</span>
+      </div>
+    </div>
+
+    <div class="admin-dashboard__colunas">
+      <section class="admin-dashboard__secao">
+        <h2>Pedidos por status</h2>
+        <div class="admin-dashboard__barras">
+          @for (status of statusOrdem; track status) {
+            <div class="admin-dashboard__linha-barra">
+              <span class="admin-dashboard__barra-rotulo">{{ rotulosStatus[status] }}</span>
+              <div class="admin-dashboard__barra-trilho">
+                <div
+                  class="admin-dashboard__barra-preenchida"
+                  [style.width.%]="(pedidosPorStatus()[status] / maiorContagemStatus()) * 100"
+                ></div>
+              </div>
+              <span class="admin-dashboard__barra-valor">{{ pedidosPorStatus()[status] }}</span>
+            </div>
+          }
+        </div>
+      </section>
+
+      <section class="admin-dashboard__secao">
+        <h2>Produtos mais vendidos</h2>
+        <div class="admin-dashboard__tabela-wrap">
+          <table class="admin-dashboard__tabela">
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th>Qtd.</th>
+                <th>Receita</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (produto of produtosMaisVendidos(); track produto.produtoSlug) {
+                <tr>
+                  <td>{{ produto.produtoNome }}</td>
+                  <td>{{ produto.quantidade }}</td>
+                  <td>{{ produto.receita | currency: 'BRL' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  }
+</section>

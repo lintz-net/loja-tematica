@@ -1,0 +1,116 @@
+.admin-dashboard {
+  padding: 48px 0 80px;
+}
+
+.admin-dashboard__cabecalho {
+  margin-bottom: 24px;
+}
+
+.admin-dashboard__erro {
+  color: #b3261e;
+  margin-bottom: 16px;
+}
+
+.admin-dashboard__cartoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.admin-dashboard__cartao {
+  background: var(--cor-fundo-alt);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-padrao);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  strong {
+    font-size: 1.6rem;
+    font-family: var(--fonte-titulo);
+  }
+}
+
+.admin-dashboard__cartao-detalhe {
+  font-size: 0.8rem;
+  color: var(--cor-texto-suave);
+}
+
+.admin-dashboard__colunas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+@media (max-width: 860px) {
+  .admin-dashboard__colunas {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-dashboard__secao h2 {
+  font-size: 1rem;
+  margin-bottom: 16px;
+}
+
+.admin-dashboard__barras {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-dashboard__linha-barra {
+  display: grid;
+  grid-template-columns: 90px 1fr 32px;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-dashboard__barra-rotulo {
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
+}
+
+.admin-dashboard__barra-trilho {
+  background: var(--cor-borda);
+  border-radius: 999px;
+  height: 10px;
+  overflow: hidden;
+}
+
+.admin-dashboard__barra-preenchida {
+  background: var(--cor-acento-secundario);
+  height: 100%;
+  border-radius: 999px;
+}
+
+.admin-dashboard__barra-valor {
+  font-family: var(--fonte-mono);
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+.admin-dashboard__tabela-wrap {
+  overflow-x: auto;
+}
+
+.admin-dashboard__tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+
+  th,
+  td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--cor-borda);
+    white-space: nowrap;
+  }
+
+  th {
+    color: var(--cor-texto-suave);
+    font-weight: 600;
+  }
+}

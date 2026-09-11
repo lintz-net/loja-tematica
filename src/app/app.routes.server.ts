@@ -12,6 +12,7 @@ export const serverRoutes: ServerRoute[] = [
   // nada com SSR — e forçar SSR neles chama o Supabase no servidor, que pode quebrar
   // (RealtimeClient exige WebSocket nativo, indisponível em runtimes Node mais antigos).
   { path: 'pedido/:codigo', renderMode: RenderMode.Client },
+  { path: 'admin/dashboard', renderMode: RenderMode.Client },
   { path: 'admin/pedidos', renderMode: RenderMode.Client },
   { path: 'admin/produtos', renderMode: RenderMode.Client },
   { path: 'admin/produtos/novo', renderMode: RenderMode.Client },
