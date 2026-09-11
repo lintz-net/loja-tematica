@@ -14,7 +14,12 @@ export interface FaixaMedida {
   tamanho: string;
   larguraCm: number;
   comprimentoCm: number;
+  /** Opcional — nem toda tabela de medidas informa cintura (a padrão da loja, masculina/
+   * unissex e feminina, informa; uma tabela customizada por produto pode não ter). */
+  cinturaCm?: number;
 }
+
+export type GeneroProduto = 'masculino' | 'feminino' | 'unissex';
 
 export interface Produto {
   id: string;
@@ -31,8 +36,12 @@ export interface Produto {
    * uma cor com entrada aqui, a galeria do detalhe passa a exibir só essas fotos; sem entrada
    * para a cor, ou sem cor selecionada, a galeria volta a mostrar `imagens` inteira. */
   imagensPorCor?: Record<string, string[]>;
-  /** Tabela de medidas para o modal "Guia de medidas". Quando ausente, usa-se uma tabela genérica. */
+  /** Tabela de medidas para o modal "Guia de medidas". Quando ausente, usa-se a tabela
+   * padrão masculina/unissex ou feminina (baby look) da loja, de acordo com `genero`. */
   guiaMedidas?: FaixaMedida[];
+  /** Determina qual tabela padrão de medidas mostrar quando `guiaMedidas` não é informado.
+   * `unissex` cai na mesma tabela que `masculino` (corte tradicional, sem tabela própria). */
+  genero?: GeneroProduto;
   /** Peso/dimensões de uma unidade — usados na cotação de frete (Melhor Envio). Quando
    * ausentes, a cotação usa um valor padrão genérico (menos preciso). */
   pesoKg?: number;

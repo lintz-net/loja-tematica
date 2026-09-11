@@ -112,24 +112,39 @@
   </section>
 
   <app-modal [aberto]="guiaMedidasAberto()" titulo="Guia de medidas" (fechar)="fecharGuiaMedidas()">
-    <table class="guia-medidas">
-      <thead>
-        <tr>
-          <th>Tamanho</th>
-          <th>Largura (cm)</th>
-          <th>Comprimento (cm)</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (linha of guiaMedidas(); track linha.tamanho) {
+    @if (guiaMedidasCustomizada(); as tabela) {
+      <table class="guia-medidas">
+        <thead>
           <tr>
-            <td>{{ linha.tamanho }}</td>
-            <td>{{ linha.larguraCm }}</td>
-            <td>{{ linha.comprimentoCm }}</td>
+            <th>Tamanho</th>
+            <th>Peito (cm)</th>
+            @if (guiaMedidasTemCintura()) {
+              <th>Cintura (cm)</th>
+            }
+            <th>Altura (cm)</th>
           </tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          @for (linha of tabela; track linha.tamanho) {
+            <tr>
+              <td>{{ linha.tamanho }}</td>
+              <td>{{ linha.larguraCm }}</td>
+              @if (guiaMedidasTemCintura()) {
+                <td>{{ linha.cinturaCm ?? '—' }}</td>
+              }
+              <td>{{ linha.comprimentoCm }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <img
+        [src]="imagemGuiaMedidasPadrao()"
+        alt="Tabela de medidas"
+        class="guia-medidas__imagem"
+        loading="lazy"
+      />
+    }
     <p class="guia-medidas__nota">Medidas aproximadas, tiradas peça a peça. Margem de tolerância de 2 cm.</p>
   </app-modal>
 } @else if (carregando()) {

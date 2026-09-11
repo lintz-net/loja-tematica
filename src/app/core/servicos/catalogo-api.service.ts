@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { Categoria, SlugCategoria } from '../modelos/categoria.model';
-import { FaixaMedida, Produto, VarianteProduto } from '../modelos/produto.model';
+import { FaixaMedida, GeneroProduto, Produto, VarianteProduto } from '../modelos/produto.model';
 import { CatalogoRepositorio } from './catalogo.repositorio';
 import { SupabaseRestService } from './supabase-rest.service';
 
@@ -24,6 +24,7 @@ interface LinhaProduto {
   imagens: string[];
   imagens_por_cor: Record<string, string[]> | null;
   guia_medidas: FaixaMedida[] | null;
+  genero: GeneroProduto | null;
   peso_kg: number | null;
   altura_cm: number | null;
   largura_cm: number | null;
@@ -53,6 +54,7 @@ function linhaParaProduto(linha: LinhaProduto): Produto {
     imagens: linha.imagens,
     imagensPorCor: linha.imagens_por_cor ?? undefined,
     guiaMedidas: linha.guia_medidas ?? undefined,
+    genero: linha.genero ?? undefined,
     pesoKg: linha.peso_kg ?? undefined,
     alturaCm: linha.altura_cm ?? undefined,
     larguraCm: linha.largura_cm ?? undefined,

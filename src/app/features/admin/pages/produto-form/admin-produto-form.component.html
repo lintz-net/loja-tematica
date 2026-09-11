@@ -86,11 +86,49 @@
         </label>
       </fieldset>
 
+      <fieldset class="admin-produto-form__genero">
+        <legend>Corte / gênero</legend>
+        <p class="admin-produto-form__aviso">
+          Determina qual tabela padrão de medidas aparece pro cliente quando não há uma
+          tabela customizada abaixo.
+        </p>
+        <label class="admin-produto-form__checkbox">
+          <input
+            type="radio"
+            name="genero"
+            value="unissex"
+            [checked]="genero() === 'unissex'"
+            (change)="atualizarGenero('unissex')"
+          />
+          Unissex / corte tradicional
+        </label>
+        <label class="admin-produto-form__checkbox">
+          <input
+            type="radio"
+            name="genero"
+            value="masculino"
+            [checked]="genero() === 'masculino'"
+            (change)="atualizarGenero('masculino')"
+          />
+          Masculino
+        </label>
+        <label class="admin-produto-form__checkbox">
+          <input
+            type="radio"
+            name="genero"
+            value="feminino"
+            [checked]="genero() === 'feminino'"
+            (change)="atualizarGenero('feminino')"
+          />
+          Feminino (baby look)
+        </label>
+      </fieldset>
+
       <fieldset class="admin-produto-form__guia-medidas">
-        <legend>Guia de medidas (opcional)</legend>
+        <legend>Guia de medidas customizada (opcional)</legend>
         <p class="admin-produto-form__aviso">
           Tabela mostrada no modal "Guia de medidas" da página do produto. Sem nenhuma linha
-          aqui, o cliente vê uma tabela genérica padrão.
+          aqui, o cliente vê a tabela padrão de acordo com o corte/gênero acima.
         </p>
 
         @for (faixa of guiaMedidas(); track $index) {
@@ -105,7 +143,7 @@
               type="number"
               step="0.5"
               min="0"
-              placeholder="Largura (cm)"
+              placeholder="Peito (cm)"
               [value]="faixa.larguraCm"
               (input)="atualizarFaixaMedida($index, 'larguraCm', $any($event.target).value)"
             />
@@ -113,7 +151,15 @@
               type="number"
               step="0.5"
               min="0"
-              placeholder="Comprimento (cm)"
+              placeholder="Cintura (cm, opcional)"
+              [value]="faixa.cinturaCm"
+              (input)="atualizarFaixaMedida($index, 'cinturaCm', $any($event.target).value)"
+            />
+            <input
+              type="number"
+              step="0.5"
+              min="0"
+              placeholder="Altura (cm)"
               [value]="faixa.comprimentoCm"
               (input)="atualizarFaixaMedida($index, 'comprimentoCm', $any($event.target).value)"
             />

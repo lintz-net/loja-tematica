@@ -13,12 +13,10 @@ import { GaleriaProdutoComponent } from '../../../../shared/componentes/galeria-
 import { ModalComponent } from '../../../../shared/componentes/modal/modal.component';
 import { VistosRecentementeComponent } from '../../../../shared/componentes/vistos-recentemente/vistos-recentemente.component';
 
-const GUIA_MEDIDAS_PADRAO: FaixaMedida[] = [
-  { tamanho: 'P', larguraCm: 48, comprimentoCm: 68 },
-  { tamanho: 'M', larguraCm: 51, comprimentoCm: 70 },
-  { tamanho: 'G', larguraCm: 54, comprimentoCm: 72 },
-  { tamanho: 'GG', larguraCm: 57, comprimentoCm: 74 },
-];
+/** Imagens das tabelas padrão (fornecidas pelo usuário) — mostradas no modal "Guia de
+ * medidas" quando o produto não tem uma tabela customizada própria. */
+const IMAGEM_GUIA_MASCULINA = '/imagens/guia-medidas/medidas-masculina.webp';
+const IMAGEM_GUIA_FEMININA = '/imagens/guia-medidas/medidas-feminina.webp';
 
 @Component({
   selector: 'app-detalhe-produto',
@@ -112,7 +110,21 @@ export class DetalheProdutoComponent {
     return tamanhos.length > 1 || (tamanhos.length === 1 && tamanhos[0] !== 'Único');
   });
 
-  readonly guiaMedidas = computed(() => this.produto()?.guiaMedidas ?? GUIA_MEDIDAS_PADRAO);
+  /** Tabela customizada do produto (poucos casos excepcionais) — quando ausente, o modal
+   * mostra a imagem padrão (masculina/unissex ou feminina) em vez de uma tabela. */
+  readonly guiaMedidasCustomizada = computed<FaixaMedida[] | null>(
+    () => this.produto()?.guiaMedidas ?? null
+  );
+
+  /** Só mostra a coluna "Cintura" quando pelo menos uma linha da tabela customizada tem esse
+   * dado. */
+  readonly guiaMedidasTemCintura = computed(() =>
+    (this.guiaMedidasCustomizada() ?? []).some((linha) => linha.cinturaCm !== undefined)
+  );
+
+  readonly imagemGuiaMedidasPadrao = computed(() =>
+    this.produto()?.genero === 'feminino' ? IMAGEM_GUIA_FEMININA : IMAGEM_GUIA_MASCULINA
+  );
 
   constructor() {
     effect(() => {

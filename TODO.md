@@ -298,6 +298,25 @@ página de produto "travada" (botão "Adicionar ao carrinho" nunca habilitava, p
 arquivo no Storage e o confirm de "descartar alterações" ao sair do formulário sem salvar —
 os três funcionando.
 
+### ✅ Guia de medidas com imagens reais (masculina/feminina) — feito
+
+O modal "Guia de medidas" mostrava uma tabela de números inventados. Agora mostra as imagens
+reais fornecidas pelo usuário (tabela ilustrada com boneco + medidas) — uma para corte
+masculino/unissex, outra para feminino (baby look) — escolhida de acordo com o novo campo
+`genero` do produto (`docs/supabase/migration-011-genero-produto.sql`, default `'unissex'`
+pros 128 produtos antigos). Fieldset "Corte / gênero" no admin (`admin-produto-form`) deixa
+escolher Unissex/Masculino/Feminino por produto.
+
+A tabela customizada por produto (`guiaMedidas`, caso excepcional) continua existindo e tem
+prioridade sobre a imagem padrão — ganhou uma coluna "Cintura" opcional no processo.
+
+Imagens em `public/imagens/guia-medidas/` (`medidas-masculina.webp`/`medidas-feminina.webp`)
+— otimizadas de ~2MB (PNG original) pra ~125KB cada via `sharp` (instalado temporariamente,
+não ficou como dependência), mesma resolução (1408×768), sem perda visível de qualidade.
+
+**✅ Testado pelo usuário**: imagem masculina aparecendo por padrão; marcando um produto como
+"Feminino" no admin, a imagem feminina passou a aparecer nele.
+
 ### ✅ Imagem do item no carrinho respeita a cor escolhida — feito
 
 Carrinho, gaveta lateral e checkout (que grava a imagem no pedido/e-mail de confirmação)

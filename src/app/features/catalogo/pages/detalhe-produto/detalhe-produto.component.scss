@@ -251,6 +251,13 @@
   letter-spacing: 0.08em;
 }
 
+.guia-medidas__imagem {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--raio-padrao);
+}
+
 .guia-medidas__nota {
   margin: 14px 0 0;
   font-size: 0.8rem;

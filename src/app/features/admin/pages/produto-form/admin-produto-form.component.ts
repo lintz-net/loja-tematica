@@ -3,7 +3,12 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CatalogoRepositorio } from '../../../../core/servicos/catalogo.repositorio';
 import { AdminProdutoService } from '../../../../core/servicos/admin-produto.service';
 import { Categoria, SlugCategoria } from '../../../../core/modelos/categoria.model';
-import { FaixaMedida, Produto, VarianteProduto } from '../../../../core/modelos/produto.model';
+import {
+  FaixaMedida,
+  GeneroProduto,
+  Produto,
+  VarianteProduto,
+} from '../../../../core/modelos/produto.model';
 import { CORES_CONHECIDAS, corParaEstiloSwatch } from '../../../../core/utilitarios/cor.util';
 
 const TAMANHOS_PADRAO = ['P', 'M', 'G', 'GG', 'Único'];
@@ -75,8 +80,12 @@ export class AdminProdutoFormComponent {
   readonly variantes = signal<LinhaVariante[]>([]);
 
   /** Tabela de medidas do modal "Guia de medidas" na página do produto — opcional; sem
-   * nenhuma linha aqui, o cliente vê uma tabela genérica padrão. */
+   * nenhuma linha aqui, o cliente vê a tabela padrão masculina/unissex ou feminina, de
+   * acordo com `genero`. */
   readonly guiaMedidas = signal<FaixaMedida[]>([]);
+
+  /** Determina qual tabela padrão de medidas mostrar quando não há `guiaMedidas` customizada. */
+  readonly genero = signal<GeneroProduto>('unissex');
 
   /** Mapa cor → fotos específicas daquela cor (opcional) — quando preenchido pra uma cor, a
    * galeria do produto pula pra essas fotos ao selecioná-la em vez de mostrar todas. */
@@ -137,6 +146,7 @@ export class AdminProdutoFormComponent {
       this.variantes();
       this.imagensPorCor();
       this.guiaMedidas();
+      this.genero();
 
       if (this.formPronto) this.sujo.set(true);
     });
@@ -167,6 +177,7 @@ export class AdminProdutoFormComponent {
     this.coresMarcadas.set(new Set(variantesExistentes.map((v) => v.cor)));
     this.imagensPorCor.set(produto.imagensPorCor ?? {});
     this.guiaMedidas.set(produto.guiaMedidas ?? []);
+    this.genero.set(produto.genero ?? 'unissex');
   }
 
   atualizarNome(valor: string): void {
@@ -357,8 +368,15 @@ export class AdminProdutoFormComponent {
     );
   }
 
+  atualizarGenero(valor: string): void {
+    this.genero.set(valor as GeneroProduto);
+  }
+
   adicionarFaixaMedida(): void {
-    this.guiaMedidas.update((atual) => [...atual, { tamanho: '', larguraCm: 0, comprimentoCm: 0 }]);
+    this.guiaMedidas.update((atual) => [
+      ...atual,
+      { tamanho: '', larguraCm: 0, cinturaCm: 0, comprimentoCm: 0 },
+    ]);
   }
 
   removerFaixaMedida(indice: number): void {
@@ -410,6 +428,7 @@ export class AdminProdutoFormComponent {
       imagensPorCor:
         Object.keys(imagensPorCorPreenchido).length > 0 ? imagensPorCorPreenchido : undefined,
       guiaMedidas: this.guiaMedidas().length > 0 ? this.guiaMedidas() : undefined,
+      genero: this.genero(),
       pesoKg: this.pesoKg() ?? undefined,
       alturaCm: this.alturaCm() ?? undefined,
       larguraCm: this.larguraCm() ?? undefined,
