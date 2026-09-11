@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, isDevMode } from '@angular/core';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideRouter, withInMemoryScrolling, withViewTransitions } from '@angular/router';
 import { routes } from './app.routes';
@@ -7,6 +7,7 @@ import { CatalogoApiService } from './core/servicos/catalogo-api.service';
 import { BannerRepositorio } from './core/servicos/banner.repositorio';
 import { BannerApiService } from './core/servicos/banner-api.service';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+import { provideServiceWorker } from '@angular/service-worker';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -25,5 +26,9 @@ export const appConfig: ApplicationConfig = {
     { provide: CatalogoRepositorio, useClass: CatalogoApiService },
     { provide: BannerRepositorio, useClass: BannerApiService },
     provideClientHydration(withEventReplay()),
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000',
+    }),
   ],
 };

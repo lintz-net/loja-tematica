@@ -1,5 +1,24 @@
 # TODO
 
+## ✅ PWA (instalar como app no celular) — feito
+
+Configurado via schematic oficial (`ng add @angular/pwa`): `@angular/service-worker`,
+`ngsw-config.json` (cache padrão do schematic — app shell + assets estáticos, sem cache de
+dados dinâmicos/Supabase), `public/manifest.webmanifest` e `provideServiceWorker(...)` em
+`app.config.ts` (`enabled: !isDevMode()` — só ativa em build de produção).
+
+Ícones (`public/icons/`) gerados com a marca de verdade (monograma "VN" em âmbar sobre fundo
+escuro, mesma paleta do site) em vez dos ícones-padrão do Angular — gerados via `sharp`
+(instalado temporariamente, não ficou como dependência). `index.html` ganhou `theme-color` e
+`apple-touch-icon` (iOS não lê o manifest pra isso).
+
+Testado: `ng build` de produção gera `ngsw-worker.js`/`ngsw.json`/`manifest.webmanifest`
+corretamente; `ng serve` (dev) continua sem service worker, como esperado.
+
+**Pendente**: testar "Adicionar à tela inicial" de verdade no celular — só dá pra validar
+isso contra o site publicado (produção, HTTPS), não em `ng serve` nem numa build estática
+local, porque o service worker só liga fora do modo dev.
+
 ## 🚧 Integração com Melhor Envio (frete/etiqueta/rastreio) — em andamento
 
 Integração completa planejada em etapas (cotação → compra de etiqueta → rastreio). Convenção:
