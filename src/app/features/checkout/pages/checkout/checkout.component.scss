@@ -411,3 +411,24 @@
     text-decoration: none;
   }
 }
+
+.checkout-pix__qrcode {
+  width: 220px;
+  height: 220px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  padding: 8px;
+  background: #fff;
+}
+
+.checkout-pix__copia-cola {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  max-width: 420px;
+
+  input {
+    flex: 1;
+    min-width: 0;
+  }
+}

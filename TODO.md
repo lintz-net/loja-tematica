@@ -2,15 +2,20 @@
 
 ## 🔴 Bloqueadores pra produção
 
-- **Pagamento real (Mercado Pago)** — checkout hoje só simula visualmente (Pix/cartão),
-  nenhum pagamento é processado de verdade. Bloqueado desde antes por um erro genérico
-  ("Ocorreu um erro. Tente novamente mais tarde") no painel de dev do Mercado Pago ao criar
-  a aplicação/credenciais de teste — parece instabilidade do lado deles, vale tentar de novo.
-  PSP escolhido: Mercado Pago, Pix primeiro (sem tokenização de cartão), cartão depois.
-  Nunca processar número de cartão no nosso backend/frontend — usar o SDK de tokenização do
-  Mercado Pago quando for a vez do cartão. Os campos de cartão hoje no checkout
-  (`numeroCartao`, `cvvCartao` etc.) são só simulação visual, não devem ser reaproveitados
-  como estão.
+- **Pagamento real (Mercado Pago)** — backend pronto e deployado: migration
+  (`status_pagamento`, `eventos_webhook_mercado_pago`), Edge Functions
+  `mercado-pago-criar-pagamento`/`mercado-pago-webhook`, e o checkout já chama tudo isso de
+  verdade (tela de QR code Pix + polling até aprovação). Testado ponta a ponta e **bloqueado
+  pelo Mercado Pago**: `POST /v1/payments` devolve sempre `500 internal_error` genérico pra
+  essa conta/aplicação de teste, tanto Pix quanto cartão (confirmado isolando a chamada fora
+  do nosso backend). Corrigido o `address_pending` da conta (endereço estava vazio no cadastro
+  do Mercado Livre/Pago), mas o 500 persistiu. Confirmado com o suporte deles que Pix não é
+  testável em sandbox (só cartão de teste) — mesmo assim o cartão de teste também dá 500.
+  Chamado aberto no suporte do Mercado Pago aguardando retorno. PSP escolhido: Mercado Pago,
+  Pix primeiro (sem tokenização de cartão), cartão depois — Efí e Stripe cogitados como
+  alternativas caso o suporte não resolva. Nunca processar número de cartão no nosso
+  backend/frontend — usar o SDK de tokenização do Mercado Pago quando for a vez do cartão real
+  (a opção "Cartão" no checkout está desabilitada por ora, só Pix é real).
 - **Domínio próprio** (`vistanostalgica.com.br`) — registro/DNS adiado por decisão do
   usuário, sem pressa. `environment.prod.ts` já está pronto com a URL certa, só falta
   registrar o domínio e apontar o DNS pro Netlify (painel do Netlify → domínio do site →
@@ -38,9 +43,11 @@
   venda é solução técnica temporária, fora das regras do Melhor Envio. Conversar com contador
   antes de operar assim por muito tempo em escala. NF-e automática e logística reversa ficam
   fora de escopo por enquanto.
-- **Evento `order.received` do Melhor Envio** não tem status equivalente no nosso enum
-  `status_envio` — só fica logado em `eventos_webhook_melhor_envio`, não atualiza `envios`.
-  Revisar se faz sentido mapear pra algum status quando isso for observado de verdade.
+- ~~**Evento `order.received` do Melhor Envio**~~ — investigado: nunca ocorreu em produção
+  apesar de `created`, `released`, `ready-to-print`, `posted` e `delivered` já terem disparado
+  de verdade várias vezes. Não se aplica ao nosso fluxo de compra de etiqueta via API (carrinho
+  → checkout → gerar) — decidido não mapear pra não arriscar regressão de status caso apareça
+  fora de ordem no futuro. Segue só logado em `eventos_webhook_melhor_envio`, sem ação.
 - **Imagem de preview `og-padrao.jpg`** (`environment.prod.ts`/`SeoService`) é fictícia —
   subir uma imagem de verdade antes de publicar (afeta como o link aparece compartilhado no
   WhatsApp/Instagram/Facebook).

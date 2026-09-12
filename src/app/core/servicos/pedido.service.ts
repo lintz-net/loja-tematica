@@ -26,6 +26,17 @@ interface LinhaPedido {
   frete_prazo_dias: number | null;
   cupom_codigo: string | null;
   valor_desconto: number | null;
+  status_pagamento?: Pedido['statusPagamento'];
+  pix_qr_code?: string | null;
+  pix_qr_code_base64?: string | null;
+  pix_expira_em?: string | null;
+}
+
+interface RespostaPagamentoPix {
+  idPagamento: string;
+  qrCode: string;
+  qrCodeBase64: string;
+  expiraEm: string;
 }
 
 function gerarCodigoPedido(): string {
@@ -54,6 +65,10 @@ function linhaParaPedido(linha: LinhaPedido): Pedido {
     fretePrazoDias: linha.frete_prazo_dias ?? undefined,
     cupomCodigo: linha.cupom_codigo ?? undefined,
     valorDesconto: linha.valor_desconto ?? undefined,
+    statusPagamento: linha.status_pagamento ?? undefined,
+    pixQrCode: linha.pix_qr_code ?? undefined,
+    pixQrCodeBase64: linha.pix_qr_code_base64 ?? undefined,
+    pixExpiraEm: linha.pix_expira_em ?? undefined,
   };
 }
 
@@ -116,6 +131,34 @@ export class PedidoService {
         urlAcompanhamento: `${environment.siteUrl}/pedido/${pedido.codigo}`,
       }),
     }).catch((erro) => console.error('Falha ao enviar e-mail de confirmação do pedido:', erro));
+  }
+
+  /** Chama a Edge Function que cria a cobrança Pix no Mercado Pago pro pedido já inserido.
+   * O access token do Mercado Pago é secreto e só existe na Edge Function — o Angular nunca
+   * fala direto com a API deles. */
+  criarPagamentoPix(dados: {
+    codigoPedido: string;
+    valorTotal: number;
+    emailCliente: string;
+    nomeCliente: string;
+    documentoCliente?: string;
+  }): Observable<RespostaPagamentoPix> {
+    const promessa = fetch(`${environment.supabaseUrl}/functions/v1/mercado-pago-criar-pagamento`, {
+      method: 'POST',
+      headers: {
+        apikey: environment.supabaseKey,
+        Authorization: `Bearer ${environment.supabaseKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(dados),
+    }).then(async (resposta) => {
+      if (!resposta.ok) {
+        throw new Error(`Falha ao criar pagamento Pix (${resposta.status})`);
+      }
+      return (await resposta.json()) as RespostaPagamentoPix;
+    });
+
+    return from(promessa);
   }
 
   /** Usa a função `obter_pedido_por_codigo` (RPC) em vez de select direto na tabela — a

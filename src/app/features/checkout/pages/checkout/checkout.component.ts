@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CarrinhoService } from '../../../../core/servicos/carrinho.service';
 import { PedidoService } from '../../../../core/servicos/pedido.service';
@@ -35,7 +35,7 @@ const MAX_PARCELAS = 6;
   templateUrl: './checkout.component.html',
   styleUrl: './checkout.component.scss',
 })
-export class CheckoutComponent {
+export class CheckoutComponent implements OnDestroy {
   private readonly carrinhoService = inject(CarrinhoService);
   private readonly pedidoService = inject(PedidoService);
   private readonly freteService = inject(FreteService);
@@ -162,6 +162,17 @@ export class CheckoutComponent {
   readonly numeroPedido = signal('');
   readonly finalizandoPedido = signal(false);
   readonly erroFinalizacao = signal<string | null>(null);
+
+  // Pagamento Pix real (Mercado Pago) — QR code exibido enquanto aguardamos a confirmação,
+  // que chega via webhook e é lida aqui por polling em `obter_pedido_por_codigo`.
+  readonly aguardandoPix = signal(false);
+  readonly pixQrCode = signal<string | null>(null);
+  readonly pixQrCodeBase64 = signal<string | null>(null);
+  readonly pixCodigoCopiado = signal(false);
+  readonly statusPagamentoPix = signal<'pendente' | 'aprovado' | 'recusado' | 'cancelado' | 'expirado'>(
+    'pendente'
+  );
+  private polling: ReturnType<typeof setInterval> | null = null;
 
   atualizarNome(valor: string): void {
     this.nome.set(valor);
@@ -422,9 +433,15 @@ export class CheckoutComponent {
       .subscribe({
         next: (pedido) => {
           this.numeroPedido.set(pedido.codigo);
+          this.carrinhoService.limparCarrinho();
+
+          if (this.formaPagamento() === 'pix') {
+            this.gerarPagamentoPix(pedido.codigo);
+            return;
+          }
+
           this.pedidoFinalizado.set(true);
           this.finalizandoPedido.set(false);
-          this.carrinhoService.limparCarrinho();
         },
         error: () => {
           this.finalizandoPedido.set(false);
@@ -433,6 +450,73 @@ export class CheckoutComponent {
           );
         },
       });
+  }
+
+  /** Gera a cobrança Pix pro pedido recém-criado e começa a aguardar a confirmação. Se a
+   * geração falhar, o pedido continua registrado (status_pagamento 'pendente') — o cliente
+   * pode tentar de novo pela tela de acompanhamento, então aqui só mostramos o erro. */
+  private gerarPagamentoPix(codigoPedido: string): void {
+    this.pedidoService
+      .criarPagamentoPix({
+        codigoPedido,
+        valorTotal: this.valorTotal(),
+        emailCliente: this.email(),
+        nomeCliente: this.nome(),
+        documentoCliente: this.documento(),
+      })
+      .subscribe({
+        next: (pagamento) => {
+          this.pixQrCode.set(pagamento.qrCode);
+          this.pixQrCodeBase64.set(pagamento.qrCodeBase64);
+          this.finalizandoPedido.set(false);
+          this.aguardandoPix.set(true);
+          this.iniciarPollingPagamento(codigoPedido);
+        },
+        error: () => {
+          this.finalizandoPedido.set(false);
+          this.erroFinalizacao.set(
+            'Pedido registrado, mas não foi possível gerar o Pix agora. Acompanhe o pedido em "Meus pedidos" pra tentar de novo.'
+          );
+        },
+      });
+  }
+
+  private iniciarPollingPagamento(codigoPedido: string): void {
+    this.pararPolling();
+    this.polling = setInterval(() => {
+      this.pedidoService.obterPorCodigo(codigoPedido).subscribe((pedido) => {
+        const status = pedido?.statusPagamento;
+        if (!status || status === 'pendente') return;
+
+        this.statusPagamentoPix.set(status);
+        this.pararPolling();
+
+        if (status === 'aprovado') {
+          this.aguardandoPix.set(false);
+          this.pedidoFinalizado.set(true);
+        }
+      });
+    }, 4000);
+  }
+
+  private pararPolling(): void {
+    if (this.polling !== null) {
+      clearInterval(this.polling);
+      this.polling = null;
+    }
+  }
+
+  copiarCodigoPix(): void {
+    const codigo = this.pixQrCode();
+    if (!codigo) return;
+    navigator.clipboard.writeText(codigo).then(() => {
+      this.pixCodigoCopiado.set(true);
+      setTimeout(() => this.pixCodigoCopiado.set(false), 2000);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.pararPolling();
   }
 
   voltarParaHome(): void {

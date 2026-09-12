@@ -1,4 +1,29 @@
-@if (pedidoFinalizado()) {
+@if (aguardandoPix()) {
+  <section class="container-pagina checkout-sucesso">
+    <span class="rotulo">Pedido {{ numeroPedido() }}</span>
+    <h1>Escaneie o QR code pra pagar com Pix</h1>
+    <p>
+      Valor: <strong>R$ {{ valorTotal().toFixed(2) }}</strong> — assim que o pagamento for
+      confirmado, esta página avança automaticamente.
+    </p>
+    @if (pixQrCodeBase64()) {
+      <img
+        [src]="'data:image/png;base64,' + pixQrCodeBase64()"
+        alt="QR code do Pix"
+        class="checkout-pix__qrcode"
+      />
+    }
+    <div class="checkout-pix__copia-cola">
+      <input type="text" readonly [value]="pixQrCode()" />
+      <button type="button" class="botao-secundario" (click)="copiarCodigoPix()">
+        {{ pixCodigoCopiado() ? 'Copiado!' : 'Copiar código' }}
+      </button>
+    </div>
+    <p class="checkout__ajuda checkout__ajuda--pequena">
+      Aguardando confirmação do pagamento…
+    </p>
+  </section>
+} @else if (pedidoFinalizado()) {
   <section class="container-pagina checkout-sucesso">
     <span class="checkout-sucesso__icone">
       <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2">
@@ -245,10 +270,11 @@
               </button>
               <button
                 type="button"
+                disabled
+                title="Pagamento por cartão ainda não está disponível"
                 [class.selecionado]="formaPagamento() === 'cartao'"
-                (click)="selecionarFormaPagamento('cartao')"
               >
-                Cartão
+                Cartão (em breve)
               </button>
             </div>
 

@@ -45,4 +45,10 @@ export interface Pedido {
   /** Cupom aplicado no checkout, se algum — ausente na maioria dos pedidos. */
   cupomCodigo?: string;
   valorDesconto?: number;
+  /** Status do pagamento no Mercado Pago — independente de `status` (logística). Ausente em
+   * pedidos de antes dessa coluna existir. */
+  statusPagamento?: 'pendente' | 'aprovado' | 'recusado' | 'cancelado' | 'expirado';
+  pixQrCode?: string;
+  pixQrCodeBase64?: string;
+  pixExpiraEm?: string;
 }
