@@ -51,6 +51,22 @@
 - **Imagem de preview `og-padrao.jpg`** (`environment.prod.ts`/`SeoService`) é fictícia —
   subir uma imagem de verdade antes de publicar (afeta como o link aparece compartilhado no
   WhatsApp/Instagram/Facebook).
+- **Rodar `docs/supabase/migration-016-cidades-frete-gratis.sql`** no SQL Editor do Supabase
+  (produção) — adiciona a coluna `cidades_frete_gratis` em `configuracao_loja`. Sem isso, o
+  admin não consegue salvar em `/admin/config` (a nova seção de cidades quebra o update).
+
+## Entrega presencial / frete grátis por cidade
+
+- **Implementado**: `/admin/config` agora tem uma lista de cidades (nome + UF) onde a
+  entrega/retirada é presencial — quando o CEP do cliente no checkout cai numa dessas
+  cidades (comparação normalizada, sem acento/caixa, via `normalizarTexto`), a cotação do
+  Melhor Envio é pulada e o frete vira grátis automaticamente (`checkout.component.ts`,
+  `entregaLocalGratis`/`cotarFrete`). A opção sintética usa `id: 'entrega-local'` e nunca é
+  enviada como `freteServicoId` do pedido — assim o admin não tenta comprar etiqueta do
+  Melhor Envio pra ela (`podeComprarEtiqueta` já trata `freteServicoId` ausente como "sem
+  etiqueta pra comprar").
+- Não cobre casos como bairro específico dentro da cidade ou raio de distância — é
+  cidade+UF inteira ou nada. Se precisar de granularidade menor no futuro, reavaliar.
 
 ## Reaproveitar o código pra outra loja temática
 

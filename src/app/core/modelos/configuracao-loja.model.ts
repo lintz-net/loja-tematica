@@ -1,3 +1,8 @@
+export interface CidadeFreteGratis {
+  cidade: string;
+  uf: string;
+}
+
 export interface ConfiguracaoLoja {
   nomeLoja: string;
   descricaoPadrao: string;
@@ -7,4 +12,7 @@ export interface ConfiguracaoLoja {
   whatsappMensagem: string;
   instagramUrl?: string;
   tiktokUrl?: string;
+  /** Cidades onde a loja entrega/retira pessoalmente — nessas, o checkout pula a cotação do
+   * Melhor Envio e oferece frete grátis direto. */
+  cidadesFreteGratis: CidadeFreteGratis[];
 }

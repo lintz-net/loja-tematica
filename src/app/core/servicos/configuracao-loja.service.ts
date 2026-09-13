@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { from, map, Observable, tap } from 'rxjs';
-import { ConfiguracaoLoja } from '../modelos/configuracao-loja.model';
+import { CidadeFreteGratis, ConfiguracaoLoja } from '../modelos/configuracao-loja.model';
 import { SupabaseRestService } from './supabase-rest.service';
 import { obterSupabaseClient } from './supabase.client';
 
@@ -12,6 +12,7 @@ interface LinhaConfiguracaoLoja {
   whatsapp_mensagem: string;
   instagram_url: string | null;
   tiktok_url: string | null;
+  cidades_frete_gratis: CidadeFreteGratis[] | null;
 }
 
 function linhaParaConfiguracao(linha: LinhaConfiguracaoLoja): ConfiguracaoLoja {
@@ -23,6 +24,7 @@ function linhaParaConfiguracao(linha: LinhaConfiguracaoLoja): ConfiguracaoLoja {
     whatsappMensagem: linha.whatsapp_mensagem,
     instagramUrl: linha.instagram_url ?? undefined,
     tiktokUrl: linha.tiktok_url ?? undefined,
+    cidadesFreteGratis: linha.cidades_frete_gratis ?? [],
   };
 }
 
@@ -67,6 +69,7 @@ export class ConfiguracaoLojaService {
         whatsapp_mensagem: dados.whatsappMensagem,
         instagram_url: dados.instagramUrl || null,
         tiktok_url: dados.tiktokUrl || null,
+        cidades_frete_gratis: dados.cidadesFreteGratis,
         atualizado_em: new Date().toISOString(),
       })
       .eq('id', 'loja')

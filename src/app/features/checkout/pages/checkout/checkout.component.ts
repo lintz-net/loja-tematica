@@ -5,11 +5,18 @@ import { PedidoService } from '../../../../core/servicos/pedido.service';
 import { FreteService, OpcaoFrete } from '../../../../core/servicos/frete.service';
 import { CepService } from '../../../../core/servicos/cep.service';
 import { CupomService, CupomValido } from '../../../../core/servicos/cupom.service';
+import { ConfiguracaoLojaService } from '../../../../core/servicos/configuracao-loja.service';
 import { ItemPedido } from '../../../../core/modelos/pedido.model';
 import { imagemDaVariante } from '../../../../core/utilitarios/imagem-produto.util';
 import { mascararCep, mascararDocumento, mascararTelefone } from '../../../../core/utilitarios/mascara.util';
+import { normalizarTexto } from '../../../../core/utilitarios/texto.util';
 import { LOGOS_CARTAO } from '../../../../shared/dados/logos-pagamento';
 import { obterLogoTransportadora } from '../../../../shared/dados/logos-transportadora';
+
+/** Id sintético usado quando a entrega é presencial/grátis (cidade configurada em
+ * /admin/config) — nunca enviado como `freteServicoId` do pedido, pra admin não tentar
+ * comprar etiqueta do Melhor Envio pra essa opção (ver `podeComprarEtiqueta`). */
+const ID_FRETE_LOCAL = 'entrega-local';
 
 type EtapaCheckout = 'contato' | 'endereco' | 'frete' | 'pagamento' | 'revisao';
 
@@ -41,6 +48,7 @@ export class CheckoutComponent implements OnDestroy {
   private readonly freteService = inject(FreteService);
   private readonly cepService = inject(CepService);
   private readonly cupomService = inject(CupomService);
+  private readonly configuracaoLojaService = inject(ConfiguracaoLojaService);
   private readonly router = inject(Router);
 
   readonly itens = this.carrinhoService.itensCarrinho;
@@ -87,6 +95,18 @@ export class CheckoutComponent implements OnDestroy {
       (valor) => valor.trim().length > 0
     )
   );
+
+  /** Cidade/UF do endereço bate com a lista configurada em /admin/config? Comparação
+   * normalizada (sem acento/caixa) pra não falhar por diferença de digitação entre o que o
+   * ViaCEP devolve e o que o admin cadastrou. */
+  readonly entregaLocalGratis = computed(() => {
+    const cidades = this.configuracaoLojaService.configuracao()?.cidadesFreteGratis ?? [];
+    const cidadeAtual = normalizarTexto(this.cidade());
+    const ufAtual = normalizarTexto(this.uf());
+    return cidades.some(
+      (item) => normalizarTexto(item.cidade) === cidadeAtual && normalizarTexto(item.uf) === ufAtual
+    );
+  });
 
   // Passo 6 — frete: cotação real via Melhor Envio (Edge Function `melhor-envio-cotar`),
   // disparada ao avançar do endereço pro frete — nunca chamamos a API deles direto daqui.
@@ -346,11 +366,30 @@ export class CheckoutComponent implements OnDestroy {
   }
 
   /** Cotação real de frete — busca as opções assim que o cliente chega na etapa de frete,
-   * usando o CEP já informado e os itens do carrinho (peso/dimensões vêm do produto). */
+   * usando o CEP já informado e os itens do carrinho (peso/dimensões vêm do produto). Pulada
+   * por completo quando a cidade tem entrega/retirada presencial configurada em
+   * /admin/config — nesse caso a única opção é frete grátis, sem chamar o Melhor Envio. */
   cotarFrete(): void {
-    this.carregandoFrete.set(true);
     this.erroFrete.set(null);
     this.freteSelecionadoId.set(null);
+
+    if (this.entregaLocalGratis()) {
+      this.carregandoFrete.set(false);
+      const opcaoLocal: OpcaoFrete = {
+        id: ID_FRETE_LOCAL,
+        nome: 'Entrega/retirada combinada com a loja',
+        prazo: 'A combinar',
+        preco: 0,
+        transportadora: 'Entrega local',
+        servico: 'Grátis',
+        prazoDias: 0,
+      };
+      this.opcoesFrete.set([opcaoLocal]);
+      this.freteSelecionadoId.set(ID_FRETE_LOCAL);
+      return;
+    }
+
+    this.carregandoFrete.set(true);
     this.opcoesFrete.set([]);
 
     const itensParaCotacao = this.itens().map((item) => ({
@@ -423,7 +462,10 @@ export class CheckoutComponent implements OnDestroy {
         parcelas: this.formaPagamento() === 'cartao' ? this.parcelas() : 1,
         valorFrete: this.valorFrete(),
         valorTotal: this.valorTotal(),
-        freteServicoId: this.freteSelecionado()?.id,
+        // Sem freteServicoId pra entrega local — não é um serviço real do Melhor Envio, não
+        // há etiqueta pra comprar (ver podeComprarEtiqueta em admin-pedidos.component.ts).
+        freteServicoId:
+          this.freteSelecionado()?.id === ID_FRETE_LOCAL ? undefined : this.freteSelecionado()?.id,
         freteTransportadora: this.freteSelecionado()?.transportadora,
         freteServicoNome: this.freteSelecionado()?.servico,
         fretePrazoDias: this.freteSelecionado()?.prazoDias,

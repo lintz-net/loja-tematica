@@ -50,3 +50,68 @@
     margin-top: 8px;
   }
 }
+
+.admin-config__cidades {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-config__cidades-titulo {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.admin-config__lista-cidades {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--cor-fundo-alt);
+    border-radius: var(--raio-padrao);
+    font-size: 0.9rem;
+  }
+
+  button {
+    border: none;
+    background: none;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--cor-texto-suave);
+    margin-top: 0;
+  }
+}
+
+.admin-config__adicionar-cidade {
+  display: flex;
+  gap: 8px;
+
+  input {
+    padding: 10px 12px;
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-padrao);
+    font-family: inherit;
+  }
+
+  input:first-child {
+    flex: 1;
+  }
+
+  input:nth-child(2) {
+    width: 64px;
+    text-transform: uppercase;
+  }
+
+  button {
+    margin-top: 0;
+  }
+}

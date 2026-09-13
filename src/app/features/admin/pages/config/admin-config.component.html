@@ -81,6 +81,49 @@
       />
     </label>
 
+    <div class="admin-config__cidades">
+      <label class="admin-config__cidades-titulo">
+        Cidades com entrega/retirada grátis (sem transportadora)
+      </label>
+      <p class="admin-config__ajuda">
+        Quando o cliente informa um CEP dessas cidades no checkout, o frete é grátis e a
+        cotação do Melhor Envio é pulada — use pra cidade da loja e vizinhas, quando a entrega
+        é feita pessoalmente.
+      </p>
+
+      @if (cidadesFreteGratis().length > 0) {
+        <ul class="admin-config__lista-cidades">
+          @for (item of cidadesFreteGratis(); track item.cidade + item.uf; let i = $index) {
+            <li>
+              <span>{{ item.cidade }} - {{ item.uf }}</span>
+              <button type="button" (click)="removerCidadeFreteGratis(i)" aria-label="Remover">
+                ×
+              </button>
+            </li>
+          }
+        </ul>
+      }
+
+      <div class="admin-config__adicionar-cidade">
+        <input
+          type="text"
+          placeholder="Cidade"
+          [value]="novaCidade()"
+          (input)="novaCidade.set($any($event.target).value)"
+        />
+        <input
+          type="text"
+          placeholder="UF"
+          maxlength="2"
+          [value]="novaUf()"
+          (input)="novaUf.set($any($event.target).value)"
+        />
+        <button type="button" class="botao-secundario" (click)="adicionarCidadeFreteGratis()">
+          Adicionar
+        </button>
+      </div>
+    </div>
+
     <button type="submit" class="botao-primario" [disabled]="!podeSalvar() || salvando()">
       {{ salvando() ? 'Salvando…' : 'Salvar' }}
     </button>

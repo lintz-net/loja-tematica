@@ -216,7 +216,9 @@
                     }
                     <span class="checkout__opcao-frete-nome">{{ opcao.nome }}</span>
                     <span class="checkout__opcao-frete-prazo">{{ opcao.prazo }}</span>
-                    <span class="checkout__opcao-frete-preco">R$ {{ opcao.preco.toFixed(2) }}</span>
+                    <span class="checkout__opcao-frete-preco">
+                      {{ opcao.preco === 0 ? 'Grátis' : 'R$ ' + opcao.preco.toFixed(2) }}
+                    </span>
                   </button>
                 }
               </div>
@@ -400,8 +402,8 @@
                 </button>
               </div>
               <p>
-                {{ freteSelecionado()?.nome }} — {{ freteSelecionado()?.prazo }} — R$
-                {{ freteSelecionado()?.preco?.toFixed(2) }}
+                {{ freteSelecionado()?.nome }} — {{ freteSelecionado()?.prazo }} —
+                {{ valorFrete() === 0 ? 'Grátis' : 'R$ ' + valorFrete().toFixed(2) }}
               </p>
             </div>
 
@@ -457,7 +459,15 @@
         </div>
         <div class="checkout__resumo-linha">
           <span>Frete</span>
-          <span>{{ freteSelecionado() ? 'R$ ' + valorFrete().toFixed(2) : 'a definir' }}</span>
+          <span>
+            @if (!freteSelecionado()) {
+              a definir
+            } @else if (valorFrete() === 0) {
+              Grátis
+            } @else {
+              R$ {{ valorFrete().toFixed(2) }}
+            }
+          </span>
         </div>
         @if (valorDesconto() > 0) {
           <div class="checkout__resumo-linha checkout__resumo-linha--desconto">

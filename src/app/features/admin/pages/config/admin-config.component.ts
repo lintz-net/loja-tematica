@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { ConfiguracaoLoja } from '../../../../core/modelos/configuracao-loja.model';
+import { CidadeFreteGratis, ConfiguracaoLoja } from '../../../../core/modelos/configuracao-loja.model';
 import { ConfiguracaoLojaService } from '../../../../core/servicos/configuracao-loja.service';
 
 /** Identidade da loja (nome, contato, redes sociais) — o que hoje aparece no título das
@@ -29,6 +29,25 @@ export class AdminConfigComponent {
   readonly whatsappMensagem = signal(this.configuracaoAtual.whatsappMensagem);
   readonly instagramUrl = signal(this.configuracaoAtual.instagramUrl ?? '');
   readonly tiktokUrl = signal(this.configuracaoAtual.tiktokUrl ?? '');
+  readonly cidadesFreteGratis = signal<CidadeFreteGratis[]>([
+    ...this.configuracaoAtual.cidadesFreteGratis,
+  ]);
+  readonly novaCidade = signal('');
+  readonly novaUf = signal('');
+
+  adicionarCidadeFreteGratis(): void {
+    const cidade = this.novaCidade().trim();
+    const uf = this.novaUf().trim().toUpperCase();
+    if (!cidade || uf.length !== 2) return;
+
+    this.cidadesFreteGratis.update((lista) => [...lista, { cidade, uf }]);
+    this.novaCidade.set('');
+    this.novaUf.set('');
+  }
+
+  removerCidadeFreteGratis(indice: number): void {
+    this.cidadesFreteGratis.update((lista) => lista.filter((_, i) => i !== indice));
+  }
 
   readonly podeSalvar = (): boolean =>
     this.nomeLoja().trim().length > 0 &&
@@ -48,6 +67,7 @@ export class AdminConfigComponent {
       whatsappMensagem: this.whatsappMensagem().trim(),
       instagramUrl: this.instagramUrl().trim() || undefined,
       tiktokUrl: this.tiktokUrl().trim() || undefined,
+      cidadesFreteGratis: this.cidadesFreteGratis(),
     };
 
     this.salvando.set(true);
