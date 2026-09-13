@@ -18,12 +18,11 @@
     </a>
 
     <nav class="cabecalho__navegacao">
-      <a routerLink="/categoria/musica" routerLinkActive="ativo">Música</a>
-      <a routerLink="/categoria/futebol" routerLinkActive="ativo">Futebol</a>
-      <a routerLink="/categoria/geek" routerLinkActive="ativo">Geek</a>
-      <a routerLink="/categoria/automotivo" routerLinkActive="ativo">Automotivo</a>
-      <a routerLink="/categoria/cinema" routerLinkActive="ativo">Cinema</a>
-      <a routerLink="/categoria/humor" routerLinkActive="ativo">Humor</a>
+      @for (categoria of categorias(); track categoria.id) {
+        <a [routerLink]="['/categoria', categoria.slug]" routerLinkActive="ativo">
+          {{ categoria.nome }}
+        </a>
+      }
     </nav>
 
     <div class="cabecalho__acoes">
@@ -86,11 +85,10 @@
   </header>
 
   <nav class="menu-mobile__navegacao">
-    <a routerLink="/categoria/musica" routerLinkActive="ativo">Música</a>
-    <a routerLink="/categoria/futebol" routerLinkActive="ativo">Futebol</a>
-    <a routerLink="/categoria/geek" routerLinkActive="ativo">Geek</a>
-    <a routerLink="/categoria/automotivo" routerLinkActive="ativo">Automotivo</a>
-    <a routerLink="/categoria/cinema" routerLinkActive="ativo">Cinema</a>
-    <a routerLink="/categoria/humor" routerLinkActive="ativo">Humor</a>
+    @for (categoria of categorias(); track categoria.id) {
+      <a [routerLink]="['/categoria', categoria.slug]" routerLinkActive="ativo">
+        {{ categoria.nome }}
+      </a>
+    }
   </nav>
 </aside>

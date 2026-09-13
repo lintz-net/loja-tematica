@@ -36,7 +36,7 @@ function linhaParaCategoria(linha: LinhaCategoria): Categoria {
   return {
     id: linha.id,
     nome: linha.nome,
-    slug: linha.slug as SlugCategoria,
+    slug: linha.slug,
     corTema: linha.cor_tema,
     descricaoCurta: linha.descricao_curta,
     icone: linha.icone,

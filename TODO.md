@@ -70,6 +70,26 @@
 
 ## Reaproveitar o código pra outra loja temática
 
+- **Varredura completa por referências hardcoded às categorias originais** (música, futebol,
+  geek, automotivo, cinema, humor) — pedido explícito do usuário: quer criar lojas novas mais
+  facilmente, então qualquer acoplamento indevido a essas 6 categorias específicas é bug, não
+  só falta de dado. Achados e correções:
+  - **`categoria.model.ts`**: `SlugCategoria` era uma union fixa com as 6 categorias, usada
+    como tipo em `Produto.categorias` e forçada via `as SlugCategoria` no mapeamento da API
+    (`catalogo-api.service.ts`). Nenhuma lógica de fato dependia dos valores específicos (é só
+    passado adiante), mas o tipo mentia pro compilador e pra quem for programar numa loja
+    nova. Virou `type SlugCategoria = string`, cast removido.
+  - **`cabecalho.component.html`/`.ts`**: menu de navegação (desktop e mobile) tinha os 6
+    links de categoria hardcoded — loja com categorias diferentes mostraria um menu todo
+    errado, com links mortos. Agora busca `categorias()` via `CatalogoRepositorio` (mesmo
+    padrão já usado na home) e itera com `@for`.
+  - **`rodape.component.html`**: link "Produtos" apontava fixo pra `/categoria/geek`. Trocado
+    por `routerLink="/" fragment="categorias"`, que leva pra seção de categorias da home
+    (genérico, `anchorScrolling` já habilitado em `app.config.ts`).
+  - `home.component.scss` (`.home-card-categoria--musica`/etc.), `temas.scss` (`.tema-*`) e
+    `app.routes.ts` (textos institucionais) continuam com essas categorias — revisados e
+    confirmados como intencionais: são decoração/design/conteúdo editorial específico de cada
+    loja, não bug de acoplamento (documentado em detalhe nas entradas anteriores desta seção).
 - **Identidade da loja parametrizada** — nome, descrição SEO, e-mail de contato, WhatsApp e
   redes sociais saíram do código e foram pra tabela `configuracao_loja` (linha única),
   editável em `/admin/config`. Buscada uma única vez via `APP_INITIALIZER` (não mais cada
