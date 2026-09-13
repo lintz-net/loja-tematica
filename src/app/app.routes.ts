@@ -3,6 +3,11 @@ import { DadosPaginaInstitucional } from './features/institucional/pagina-instit
 import { adminGuard } from './core/guards/admin.guard';
 import { descartarAlteracoesGuard } from './core/guards/descartar-alteracoes.guard';
 
+// Estes textos são conteúdo jurídico/editorial hardcoded por loja (estrutura, prazos, nomes
+// de parceiros mudam de loja pra loja — não vale abstrair pro banco). As referências à marca
+// e ao e-mail de contato usam os placeholders {{nomeLoja}} e {{emailContato}}, substituídos
+// em runtime por `PaginaInstitucionalComponent` a partir de `ConfiguracaoLojaService` — assim
+// pelo menos essas duas não precisam ser encontradas e trocadas manualmente numa loja nova.
 const PAGINA_COMO_COMPRAR: DadosPaginaInstitucional = {
   titulo: 'Como comprar',
   paragrafos: [
@@ -64,7 +69,7 @@ const PAGINA_COMO_COMPRAR: DadosPaginaInstitucional = {
 const PAGINA_QUEM_SOMOS: DadosPaginaInstitucional = {
   titulo: 'Quem somos',
   paragrafos: [
-    'A Vista Nostálgica nasceu da vontade de transformar lembranças em algo pra vestir. Cada estampa do nosso catálogo carrega uma referência de games, cinema, música, futebol, carros ou humor — peças pensadas pra quem quer contar uma história, não só usar uma camiseta.',
+    'A {{nomeLoja}} nasceu da vontade de transformar lembranças em algo pra vestir. Cada estampa do nosso catálogo carrega uma referência de games, cinema, música, futebol, carros ou humor — peças pensadas pra quem quer contar uma história, não só usar uma camiseta.',
   ],
   secoes: [
     {
@@ -94,7 +99,7 @@ const PAGINA_QUEM_SOMOS: DadosPaginaInstitucional = {
       titulo: 'Atendimento de verdade',
       icone: 'email',
       paragrafos: [
-        'Time pequeno, atendimento próximo. Dúvida antes de comprar, troca ou devolução — é só chamar no WhatsApp ou mandar um e-mail pra contato@vistanostalgica.com.br que a gente responde.',
+        'Time pequeno, atendimento próximo. Dúvida antes de comprar, troca ou devolução — é só chamar no WhatsApp ou mandar um e-mail pra {{emailContato}} que a gente responde.',
       ],
     },
   ],
@@ -104,7 +109,7 @@ const PAGINA_POLITICA_PRIVACIDADE: DadosPaginaInstitucional = {
   titulo: 'Política de privacidade',
   selo: 'Atualizada em setembro de 2026',
   paragrafos: [
-    'A Vista Nostálgica respeita a sua privacidade e leva a proteção dos seus dados a sério. Esta política explica quais informações coletamos quando você visita nosso site ou faz uma compra, como usamos esses dados, com quem eventualmente compartilhamos e quais direitos você tem sobre eles, em conformidade com a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018).',
+    'A {{nomeLoja}} respeita a sua privacidade e leva a proteção dos seus dados a sério. Esta política explica quais informações coletamos quando você visita nosso site ou faz uma compra, como usamos esses dados, com quem eventualmente compartilhamos e quais direitos você tem sobre eles, em conformidade com a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018).',
   ],
   secoes: [
     {
@@ -192,7 +197,7 @@ const PAGINA_POLITICA_PRIVACIDADE: DadosPaginaInstitucional = {
       titulo: 'Fale conosco',
       icone: 'email',
       paragrafos: [
-        'Para dúvidas sobre esta política ou para exercer qualquer um dos seus direitos como titular de dados, entre em contato pelo e-mail contato@vistanostalgica.com.br.',
+        'Para dúvidas sobre esta política ou para exercer qualquer um dos seus direitos como titular de dados, entre em contato pelo e-mail {{emailContato}}.',
       ],
     },
   ],
@@ -207,7 +212,7 @@ const PAGINA_TROCAS_DEVOLUCOES: DadosPaginaInstitucional = {
     {
       titulo: 'Onde trocar ou devolver?',
       paragrafos: [
-        'Pelo e-mail: envie uma mensagem para contato@vistanostalgica.com.br solicitando a troca ou devolução. Entraremos em contato o mais breve possível para orientá-lo sobre os próximos passos e o envio do produto.',
+        'Pelo e-mail: envie uma mensagem para {{emailContato}} solicitando a troca ou devolução. Entraremos em contato o mais breve possível para orientá-lo sobre os próximos passos e o envio do produto.',
       ],
     },
     {

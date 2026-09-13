@@ -73,15 +73,21 @@
   `supabaseUrl`, `supabaseKey`, `mercadoPagoPublicKey`, `siteUrl`), conta Resend própria,
   conta Melhor Envio própria (endereço do remetente), possivelmente conta Mercado Pago
   própria (quem recebe o dinheiro é outro negócio), site novo no Netlify, domínio novo.
-- **Paleta de cores por categoria** (`src/app/temas/temas.scss`) continua sendo código, não
-  banco — é decisão de arte/design por categoria (`.tema-musica`, `.tema-geek` etc.), não
-  texto operacional. Pra uma loja com categorias diferentes, criar as classes `.tema-*`
-  correspondentes ali.
-- **`src/index.html`** (title/favicon/manifest estáticos) continua sendo arquivo — é o HTML
-  de entrada, não dá pra vir do banco; editar uma vez na hora de montar a loja nova.
+- **Paleta de cores por categoria** (`src/app/temas/temas.scss`) — revisado: continua sendo
+  código, não banco (decisão de arte/design por categoria, `.tema-musica`/`.tema-geek` etc.);
+  categorias diferentes numa loja nova exigem classes `.tema-*` novas de qualquer forma, não
+  dá pra abstrair. Comentário no topo do arquivo agora deixa isso explícito pra quem for
+  montar a loja nova.
+- **`src/index.html`** — revisado: title/description/og/twitter hardcoded eram redundantes
+  (sempre sobrescritos em toda requisição pelo SSR via `SeoService`, nunca vistos por usuário
+  ou crawler real); trocados por placeholder genérico + comentário explicando. Favicon/
+  manifest/apple-touch-icon continuam arquivo de verdade — só isso precisa trocar por loja.
 - Textos institucionais longos (política de privacidade, como comprar etc. em
-  `app.routes.ts`) continuam hardcoded — são conteúdo jurídico/editorial específico de cada
-  loja, fora do escopo desta parametrização.
+  `app.routes.ts`) — revisado: estrutura/prazos/parceiros continuam hardcoded (conteúdo
+  jurídico/editorial específico de cada loja). As referências a nome da loja e e-mail de
+  contato foram trocadas por placeholders `{{nomeLoja}}`/`{{emailContato}}`, resolvidos em
+  runtime por `PaginaInstitucionalComponent` a partir de `ConfiguracaoLojaService` — pelo
+  menos essas duas não precisam ser encontradas e trocadas manualmente numa loja nova.
 
 ## Ideias levantadas, ainda não implementadas
 

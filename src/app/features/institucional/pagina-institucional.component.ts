@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { ConfiguracaoLojaService } from '../../core/servicos/configuracao-loja.service';
 
 export interface Passo {
   titulo: string;
@@ -45,6 +46,42 @@ export interface DadosPaginaInstitucional {
 })
 export class PaginaInstitucionalComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly configuracaoLojaService = inject(ConfiguracaoLojaService);
 
-  readonly dados = this.route.snapshot.data['pagina'] as DadosPaginaInstitucional;
+  readonly dados = this.substituirPlaceholders(
+    this.route.snapshot.data['pagina'] as DadosPaginaInstitucional
+  );
+
+  /** Troca {{nomeLoja}}/{{emailContato}} pelos valores reais — ver comentário em
+   * `app.routes.ts` sobre por que esses textos usam placeholder em vez de vir do banco
+   * inteiros. Resolvido de forma síncrona porque `ConfiguracaoLojaService` já foi carregado
+   * pelo `APP_INITIALIZER` antes de qualquer componente rodar. */
+  private substituirPlaceholders(dados: DadosPaginaInstitucional): DadosPaginaInstitucional {
+    const configuracao = this.configuracaoLojaService.configuracao();
+    const valores: Record<string, string> = {
+      nomeLoja: configuracao?.nomeLoja ?? '',
+      emailContato: configuracao?.emailContato ?? '',
+    };
+    const resolver = (texto: string): string =>
+      texto.replace(/\{\{(\w+)\}\}/g, (_, chave) => valores[chave] ?? '');
+
+    const resolverPassos = (passos?: Passo[]): Passo[] | undefined =>
+      passos?.map((passo) => ({ titulo: resolver(passo.titulo), texto: resolver(passo.texto) }));
+
+    return {
+      ...dados,
+      titulo: resolver(dados.titulo),
+      selo: dados.selo ? resolver(dados.selo) : dados.selo,
+      nota: dados.nota ? resolver(dados.nota) : dados.nota,
+      paragrafos: dados.paragrafos?.map(resolver),
+      passos: resolverPassos(dados.passos),
+      secoes: dados.secoes?.map((secao) => ({
+        ...secao,
+        titulo: secao.titulo ? resolver(secao.titulo) : secao.titulo,
+        paragrafos: secao.paragrafos?.map(resolver),
+        lista: secao.lista?.map(resolver),
+        passos: resolverPassos(secao.passos),
+      })),
+    };
+  }
 }

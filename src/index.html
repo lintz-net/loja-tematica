@@ -2,20 +2,26 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Vista Nostálgica</title>
+  <!-- Title/description/og/twitter abaixo são sobrescritos em toda requisição pelo SSR via
+       SeoService (dados vêm de `configuracao_loja` no banco) — o valor aqui nunca chega a um
+       usuário ou crawler real, só serve de fallback se o SSR falhar. Não precisa trocar por
+       loja, mas fique livre pra ajustar se quiser um fallback mais descritivo. -->
+  <title>Loja temática</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <meta name="description" content="Camisetas, bermudas e polos com estampas que remetem a games, cinema, música, futebol, carros e humor.">
-  <meta property="og:site_name" content="Vista Nostálgica">
+  <meta name="description" content="Loja temática.">
+  <meta property="og:site_name" content="Loja temática">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Vista Nostálgica">
-  <meta property="og:description" content="Camisetas, bermudas e polos com estampas que remetem a games, cinema, música, futebol, carros e humor.">
-  <meta property="og:image" content="https://vistanostalgica.com.br/og-padrao.jpg">
+  <meta property="og:title" content="Loja temática">
+  <meta property="og:description" content="Loja temática.">
+  <meta property="og:image" content="og-padrao.jpg">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Vista Nostálgica">
-  <meta name="twitter:description" content="Camisetas, bermudas e polos com estampas que remetem a games, cinema, música, futebol, carros e humor.">
-  <meta name="twitter:image" content="https://vistanostalgica.com.br/og-padrao.jpg">
+  <meta name="twitter:title" content="Loja temática">
+  <meta name="twitter:description" content="Loja temática.">
+  <meta name="twitter:image" content="og-padrao.jpg">
+  <!-- Abaixo: arquivos estáticos reais (ícones/manifest) — precisam existir em public/ por
+       loja, não vêm do banco. Editar na hora de montar uma loja nova. -->
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#17141a">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">

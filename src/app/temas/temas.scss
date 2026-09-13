@@ -10,6 +10,11 @@
 // Regra de contraste: --cor-primaria (âmbar) É USADA SÓ COMO FUNDO de chip/botão, sempre
 // pareada com --cor-primaria-contraste. Nunca usar --cor-primaria como cor de texto direto
 // sobre a página — em branco, o âmbar não tem contraste suficiente pra ser legível.
+//
+// Reaproveitando pra uma loja nova: isso é decisão de arte/design, não dado operacional —
+// continua sendo código, não banco. Redefina o :root com a paleta de marca da loja nova e
+// crie as classes .tema-* correspondentes às categorias de produto dela (os nomes/cores
+// abaixo — música, futebol, geek etc. — são específicos da Vista Nostálgica).
 
 :root {
   --cor-fundo: #faf8f4;
