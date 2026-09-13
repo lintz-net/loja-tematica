@@ -126,7 +126,18 @@
   max-width: 32ch;
 }
 
-// ---- cenas por categoria (só CSS — nenhuma imagem externa) ----
+// ---- cena de fundo do card ----
+//
+// Fallback genérico: usa --gradiente-tema, definido por categoria via a classe .tema-<slug>
+// já aplicada no mesmo elemento (ver home.component.html) — funciona pra qualquer categoria
+// nova sem precisar de uma regra --<slug> dedicada aqui. O escurecimento por cima garante
+// contraste pro texto branco independente das cores da paleta de cada loja.
+// As regras --musica/--futebol/etc. abaixo são só uma textura extra pras categorias
+// específicas da Vista Nostálgica — puramente decorativas, sem efeito em categorias novas.
+.home-card-categoria__cena {
+  background: linear-gradient(200deg, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.22) 70%),
+    var(--gradiente-tema);
+}
 
 .home-card-categoria--musica .home-card-categoria__cena {
   background: radial-gradient(circle at 78% 18%, rgba(255, 255, 255, 0.14), transparent 40%),

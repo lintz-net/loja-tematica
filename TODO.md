@@ -88,6 +88,30 @@
   contato foram trocadas por placeholders `{{nomeLoja}}`/`{{emailContato}}`, resolvidos em
   runtime por `PaginaInstitucionalComponent` a partir de `ConfiguracaoLojaService` — pelo
   menos essas duas não precisam ser encontradas e trocadas manualmente numa loja nova.
+- **Bugs encontrados rodando a loja "UtiliMaker" de verdade** (categorias diferentes das
+  originais: música/futebol/geek/automotivo/cinema/humor), corrigidos aqui pra próxima loja
+  não bater no mesmo problema:
+  - `galeria-produto`: produto com 1 imagem só ficava espremido numa coluna de 76px — o grid
+    `76px 1fr` da galeria assumia a coluna de miniaturas (só renderizada com 2+ imagens)
+    sempre presente. Corrigido com `.galeria-produto__principal:only-child { grid-column: 1 /
+    -1; }`, sem precisar de lógica no componente.
+  - `home.component.scss`: cards de categoria na home ficavam sem fundo/com texto branco
+    ilegível pra qualquer categoria fora da lista fixa `.home-card-categoria--musica/
+    --futebol/--geek/--automotivo/--cinema/--humor`. Adicionado fallback genérico em
+    `.home-card-categoria__cena` usando `var(--gradiente-tema)` (já definido por qualquer
+    `.tema-<slug>`, aplicado no mesmo elemento) + um escurecimento por cima pra garantir
+    contraste do texto branco independente da paleta da loja. As regras `--musica` etc.
+    seguem existindo como textura extra só pra essas categorias específicas.
+  - Textos hardcoded específicos de loja de camiseta: hero da home ("estampas de games,
+    cinema, música, futebol, carros e humor... em forma de camiseta", link fixo "Direto pra
+    Geek →"), seção de categorias ("Escolha sua tribo" / "Seis vitrines, uma coleção"), e
+    contagem em "peças" (home e listagem) — trocados por texto genérico
+    (`{{ nomeLoja() }}`, `{{ totalProdutos() }}`, CTA pra `primeiraCategoria()` dinâmica,
+    "produtos" em vez de "peças").
+  - `detalhe-produto`: breadcrumb da categoria mostrava o slug cru (ex.:
+    `decoracao-e-organizacao`) em vez do nome de exibição — adicionado
+    `nomeCategoriaPrincipal()`, que resolve o slug pra `categoria.nome` via
+    `CatalogoRepositorio.obterCategorias()`.
 
 ## Ideias levantadas, ainda não implementadas
 

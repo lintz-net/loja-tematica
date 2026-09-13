@@ -46,6 +46,12 @@
   background: var(--cor-fundo-alt);
   border-radius: var(--raio-padrao);
   overflow: hidden;
+  // Sem miniaturas (produto com 1 imagem só), a coluna de 76px do grid não é renderizada —
+  // sem isso, o auto-placement do grid ainda encaixa este item na primeira coluna (76px) em
+  // vez de ocupar a largura toda.
+  &:only-child {
+    grid-column: 1 / -1;
+  }
 }
 
 .galeria-produto__foto {

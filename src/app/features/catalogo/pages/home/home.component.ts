@@ -49,4 +49,6 @@ export class HomeComponent {
   });
 
   readonly totalProdutos = computed(() => this.produtos().length);
+
+  readonly primeiraCategoria = computed(() => this.categorias()[0] ?? null);
 }

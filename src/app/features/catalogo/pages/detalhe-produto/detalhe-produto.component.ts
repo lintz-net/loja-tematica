@@ -54,6 +54,18 @@ export class DetalheProdutoComponent {
     { initialValue: undefined }
   );
 
+  private readonly categorias = toSignal(this.catalogoRepositorio.obterCategorias(), {
+    initialValue: [],
+  });
+
+  /** Nome de exibição da categoria (não o slug cru, ex.: "decoracao-e-organizacao") — cai de
+   * volta pro slug só se a categoria não for encontrada na lista. */
+  readonly nomeCategoriaPrincipal = computed(() => {
+    const slug = this.produto()?.categorias[0];
+    if (!slug) return '';
+    return this.categorias().find((categoria) => categoria.slug === slug)?.nome ?? slug;
+  });
+
   readonly tamanhosDisponiveis = computed(() => {
     const variantes = this.produto()?.variantes ?? [];
     return Array.from(new Set(variantes.map((v) => v.tamanho)));
