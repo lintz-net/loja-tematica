@@ -40,3 +40,7 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+# Estado local da CLI do Supabase (project-ref, pooler-url) — não é portátil entre
+# projetos/clones e não deveria ter sido versionado.
+supabase/.temp/
