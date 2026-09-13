@@ -26,16 +26,10 @@ export class SeoService {
    * WhatsApp/Instagram/Facebook). Nome da loja vem de `ConfiguracaoLojaService` (banco), não
    * hardcoded, pra permitir reaproveitar o código em outra loja temática. */
   definir(dados: DadosSeo): void {
-    this.configuracaoLojaService.obter().subscribe((configuracao) => {
-      const tituloCompleto =
-        dados.titulo === configuracao.nomeLoja
-          ? configuracao.nomeLoja
-          : `${dados.titulo} · ${configuracao.nomeLoja}`;
-      this.aplicarTags(dados, tituloCompleto);
-    });
-  }
-
-  private aplicarTags(dados: DadosSeo, tituloCompleto: string): void {
+    // Sempre resolvido antes de qualquer componente rodar — ver APP_INITIALIZER em app.config.ts.
+    const nomeLoja = this.configuracaoLojaService.configuracao()?.nomeLoja ?? '';
+    const tituloCompleto =
+      dados.titulo === nomeLoja ? nomeLoja : `${dados.titulo} · ${nomeLoja}`;
     this.title.setTitle(tituloCompleto);
 
     this.definirTag('description', dados.descricao);
@@ -64,8 +58,10 @@ export class SeoService {
 
   /** Restaura os valores padrão do site — usado por páginas sem dados próprios de SEO. */
   redefinirPadrao(): void {
-    this.configuracaoLojaService.obter().subscribe((configuracao) => {
-      this.definir({ titulo: configuracao.nomeLoja, descricao: configuracao.descricaoPadrao });
+    const configuracao = this.configuracaoLojaService.configuracao();
+    this.definir({
+      titulo: configuracao?.nomeLoja ?? '',
+      descricao: configuracao?.descricaoPadrao ?? '',
     });
   }
 

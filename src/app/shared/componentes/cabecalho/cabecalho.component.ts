@@ -1,4 +1,4 @@
-import { Component, HostListener, inject, signal } from '@angular/core';
+import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { NavigationStart, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CarrinhoService } from '../../../core/servicos/carrinho.service';
 import { BuscaService } from '../../../core/servicos/busca.service';
@@ -23,11 +23,9 @@ export class CabecalhoComponent {
   readonly quantidadeFavoritos = this.favoritosService.quantidadeFavoritos;
 
   readonly menuMobileAberto = signal(false);
-  readonly nomeLoja = signal('');
+  readonly nomeLoja = computed(() => this.configuracaoLojaService.configuracao()?.nomeLoja ?? '');
 
   constructor() {
-    this.configuracaoLojaService.obter().subscribe((configuracao) => this.nomeLoja.set(configuracao.nomeLoja));
-
     this.router.events.subscribe((evento) => {
       if (evento instanceof NavigationStart) {
         this.menuMobileAberto.set(false);

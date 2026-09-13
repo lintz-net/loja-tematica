@@ -1,5 +1,5 @@
-import { Injectable, inject } from '@angular/core';
-import { from, map, Observable, shareReplay } from 'rxjs';
+import { Injectable, inject, signal } from '@angular/core';
+import { from, map, Observable, tap } from 'rxjs';
 import { ConfiguracaoLoja } from '../modelos/configuracao-loja.model';
 import { SupabaseRestService } from './supabase-rest.service';
 import { obterSupabaseClient } from './supabase.client';
@@ -29,21 +29,30 @@ function linhaParaConfiguracao(linha: LinhaConfiguracaoLoja): ConfiguracaoLoja {
 /** Identidade da loja (nome, contato, redes sociais) — vem do banco (tabela
  * `configuracao_loja`, linha única) em vez de hardcoded, pra permitir reaproveitar o mesmo
  * código-fonte em outra loja temática só trocando o conteúdo dessa tabela em outro projeto
- * Supabase. Lido via REST puro (SSR-safe, ver SupabaseRestService) e cacheado em memória —
- * a config não muda durante a vida da aba/requisição. */
+ * Supabase.
+ *
+ * Buscada uma única vez, no `APP_INITIALIZER` (ver `app.config.ts`), antes do app terminar de
+ * inicializar — os consumidores (rodapé, cabeçalho, WhatsApp flutuante, home, admin-shell,
+ * SeoService) só leem o signal `configuracao`, já resolvido, em vez de cada um assinar sua
+ * própria busca assíncrona. Com 5+ componentes fazendo isso de forma independente, o tempo
+ * até o app "estabilizar" (`ApplicationRef.isStable()`) cresce, e em conjunto com tráfego de
+ * fundo alheio ao app (ex.: extensões do navegador que ficam fazendo polling na página) pode
+ * estourar o timeout de hidratação do Angular (NG0506), causando conteúdo duplicado na tela. */
 @Injectable({ providedIn: 'root' })
 export class ConfiguracaoLojaService {
   private readonly rest = inject(SupabaseRestService);
 
-  private readonly configuracao$: Observable<ConfiguracaoLoja> = this.rest
-    .select<LinhaConfiguracaoLoja[]>('configuracao_loja', '?select=*&id=eq.loja')
-    .pipe(
-      map((linhas) => linhaParaConfiguracao(linhas[0])),
-      shareReplay(1)
-    );
+  private readonly _configuracao = signal<ConfiguracaoLoja | null>(null);
+  readonly configuracao = this._configuracao.asReadonly();
 
-  obter(): Observable<ConfiguracaoLoja> {
-    return this.configuracao$;
+  /** Chamado uma única vez pelo `APP_INITIALIZER`. */
+  carregarInicial(): Observable<ConfiguracaoLoja> {
+    return this.rest
+      .select<LinhaConfiguracaoLoja[]>('configuracao_loja', '?select=*&id=eq.loja')
+      .pipe(
+        map((linhas) => linhaParaConfiguracao(linhas[0])),
+        tap((configuracao) => this._configuracao.set(configuracao))
+      );
   }
 
   /** Só usado em `/admin/config`, atrás de login — RLS restringe update a admin autenticado. */
@@ -68,6 +77,6 @@ export class ConfiguracaoLojaService {
         return linhaParaConfiguracao(data as LinhaConfiguracaoLoja);
       });
 
-    return from(promessa);
+    return from(promessa).pipe(tap((configuracao) => this._configuracao.set(configuracao)));
   }
 }

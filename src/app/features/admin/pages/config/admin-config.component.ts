@@ -15,37 +15,20 @@ import { ConfiguracaoLojaService } from '../../../../core/servicos/configuracao-
 export class AdminConfigComponent {
   private readonly configuracaoLojaService = inject(ConfiguracaoLojaService);
 
-  readonly carregando = signal(true);
   readonly salvando = signal(false);
   readonly erro = signal<string | null>(null);
   readonly salvo = signal(false);
 
-  readonly nomeLoja = signal('');
-  readonly descricaoPadrao = signal('');
-  readonly emailContato = signal('');
-  readonly whatsappNumero = signal('');
-  readonly whatsappMensagem = signal('');
-  readonly instagramUrl = signal('');
-  readonly tiktokUrl = signal('');
+  // Já resolvido pelo APP_INITIALIZER (ver app.config.ts) antes de qualquer componente rodar.
+  private readonly configuracaoAtual = this.configuracaoLojaService.configuracao()!;
 
-  constructor() {
-    this.configuracaoLojaService.obter().subscribe({
-      next: (configuracao) => {
-        this.nomeLoja.set(configuracao.nomeLoja);
-        this.descricaoPadrao.set(configuracao.descricaoPadrao);
-        this.emailContato.set(configuracao.emailContato);
-        this.whatsappNumero.set(configuracao.whatsappNumero);
-        this.whatsappMensagem.set(configuracao.whatsappMensagem);
-        this.instagramUrl.set(configuracao.instagramUrl ?? '');
-        this.tiktokUrl.set(configuracao.tiktokUrl ?? '');
-        this.carregando.set(false);
-      },
-      error: () => {
-        this.erro.set('Não foi possível carregar a configuração da loja.');
-        this.carregando.set(false);
-      },
-    });
-  }
+  readonly nomeLoja = signal(this.configuracaoAtual.nomeLoja);
+  readonly descricaoPadrao = signal(this.configuracaoAtual.descricaoPadrao);
+  readonly emailContato = signal(this.configuracaoAtual.emailContato);
+  readonly whatsappNumero = signal(this.configuracaoAtual.whatsappNumero);
+  readonly whatsappMensagem = signal(this.configuracaoAtual.whatsappMensagem);
+  readonly instagramUrl = signal(this.configuracaoAtual.instagramUrl ?? '');
+  readonly tiktokUrl = signal(this.configuracaoAtual.tiktokUrl ?? '');
 
   readonly podeSalvar = (): boolean =>
     this.nomeLoja().trim().length > 0 &&

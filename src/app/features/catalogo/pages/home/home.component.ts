@@ -1,7 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
 import { CatalogoRepositorio } from '../../../../core/servicos/catalogo.repositorio';
 import { BannerRepositorio } from '../../../../core/servicos/banner.repositorio';
 import { CarrosselComponent } from '../../../../shared/componentes/carrossel/carrossel.component';
@@ -22,10 +21,7 @@ export class HomeComponent {
   private readonly seoService = inject(SeoService);
   private readonly configuracaoLojaService = inject(ConfiguracaoLojaService);
 
-  readonly nomeLoja = toSignal(
-    this.configuracaoLojaService.obter().pipe(map((configuracao) => configuracao.nomeLoja)),
-    { initialValue: '' }
-  );
+  readonly nomeLoja = computed(() => this.configuracaoLojaService.configuracao()?.nomeLoja ?? '');
 
   constructor() {
     this.seoService.redefinirPadrao();

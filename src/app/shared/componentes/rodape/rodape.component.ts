@@ -4,7 +4,6 @@ import { LOGOS_PAGAMENTO } from '../../dados/logos-pagamento';
 import { LOGOS_TRANSPORTADORA } from '../../dados/logos-transportadora';
 import { NewsletterService } from '../../../core/servicos/newsletter.service';
 import { ConfiguracaoLojaService } from '../../../core/servicos/configuracao-loja.service';
-import { ConfiguracaoLoja } from '../../../core/modelos/configuracao-loja.model';
 
 @Component({
   selector: 'app-rodape',
@@ -18,11 +17,7 @@ export class RodapeComponent {
   private readonly configuracaoLojaService = inject(ConfiguracaoLojaService);
 
   readonly anoAtual = new Date().getFullYear();
-  readonly configuracao = signal<ConfiguracaoLoja | null>(null);
-
-  constructor() {
-    this.configuracaoLojaService.obter().subscribe((configuracao) => this.configuracao.set(configuracao));
-  }
+  readonly configuracao = this.configuracaoLojaService.configuracao;
 
   readonly emailNewsletter = signal('');
   readonly newsletterEnviada = signal(false);

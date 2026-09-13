@@ -56,8 +56,18 @@
 
 - **Identidade da loja parametrizada** — nome, descrição SEO, e-mail de contato, WhatsApp e
   redes sociais saíram do código e foram pra tabela `configuracao_loja` (linha única),
-  editável em `/admin/config`. Consumido por `SeoService`, rodapé, WhatsApp flutuante,
-  cabeçalho, home e admin-shell — nenhum desses tem mais o nome "Vista Nostálgica" hardcoded.
+  editável em `/admin/config`. Buscada uma única vez via `APP_INITIALIZER` (não mais cada
+  componente assinando por conta própria) e consumida como signal síncrono por `SeoService`,
+  rodapé, WhatsApp flutuante, cabeçalho, home e admin-shell — nenhum desses tem mais o nome
+  "Vista Nostálgica" hardcoded.
+- **Investigado**: banner duplicado aparecendo na home só no `ng serve` (nunca no build de
+  produção testado localmente via `dist/loja-tematica/server/server.mjs`) — causado por uma
+  extensão de navegador (cupom/cashback, permitida em InPrivate) que fica fazendo polling
+  contínuo na página; isso nunca deixa `ApplicationRef.isStable()` completar dentro dos 10s
+  que a hidratação do Angular espera (`NG0506`), e o Angular acaba renderizando tudo de novo
+  por cima do HTML do servidor. Não é bug do nosso código — confirmado comparando com a
+  mesma extensão ativa contra um build de produção real, que carrega normalmente. Não precisa
+  de ação, só não estranhar se aparecer de novo rodando `ng serve` com esse tipo de extensão.
 - **O que ainda precisa mudar por loja** (não dá pra colocar em tabela, é infraestrutura):
   novo projeto Supabase inteiro (`environment.ts`/`.prod.ts`/`.development.ts` —
   `supabaseUrl`, `supabaseKey`, `mercadoPagoPublicKey`, `siteUrl`), conta Resend própria,

@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { ConfiguracaoLojaService } from '../../../core/servicos/configuracao-loja.service';
 
 @Component({
@@ -10,13 +10,9 @@ import { ConfiguracaoLojaService } from '../../../core/servicos/configuracao-loj
 export class WhatsappFlutuanteComponent {
   private readonly configuracaoLojaService = inject(ConfiguracaoLojaService);
 
-  readonly linkWhatsapp = signal('');
-
-  constructor() {
-    this.configuracaoLojaService.obter().subscribe((configuracao) => {
-      this.linkWhatsapp.set(
-        `https://wa.me/${configuracao.whatsappNumero}?text=${encodeURIComponent(configuracao.whatsappMensagem)}`
-      );
-    });
-  }
+  readonly linkWhatsapp = computed(() => {
+    const configuracao = this.configuracaoLojaService.configuracao();
+    if (!configuracao) return '';
+    return `https://wa.me/${configuracao.whatsappNumero}?text=${encodeURIComponent(configuracao.whatsappMensagem)}`;
+  });
 }
