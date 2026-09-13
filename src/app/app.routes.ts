@@ -360,6 +360,13 @@ export const routes: Routes = [
             (m) => m.AdminCuponsComponent
           ),
       },
+      {
+        path: 'config',
+        loadComponent: () =>
+          import('./features/admin/pages/config/admin-config.component').then(
+            (m) => m.AdminConfigComponent
+          ),
+      },
     ],
   },
   {

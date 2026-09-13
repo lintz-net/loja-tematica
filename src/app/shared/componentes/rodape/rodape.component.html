@@ -2,26 +2,32 @@
   <div class="rodape__topo">
     <div class="rodape__coluna rodape__coluna--marca">
       <a routerLink="/" class="rodape__logo">
-        <span>Nostál</span><span class="rodape__logo-acento">gika</span>
+        {{ configuracao()?.nomeLoja }}
       </a>
 
       <div class="rodape__redes">
-        <span class="rodape__icone-social" title="Instagram">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6">
-            <rect x="3.5" y="3.5" width="17" height="17" rx="5" />
-            <circle cx="12" cy="12" r="4" />
-            <circle cx="17.2" cy="6.8" r="0.9" fill="currentColor" stroke="none" />
-          </svg>
-        </span>
-        <span class="rodape__icone-social" title="TikTok">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6">
-            <path d="M14 4v10.2a3.3 3.3 0 1 1-3.3-3.3c.3 0 .6 0 .9.1" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M14 4c.4 2.1 2 3.6 4 3.9" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </span>
+        @if (configuracao()?.instagramUrl; as instagram) {
+          <a class="rodape__icone-social" title="Instagram" [href]="instagram" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6">
+              <rect x="3.5" y="3.5" width="17" height="17" rx="5" />
+              <circle cx="12" cy="12" r="4" />
+              <circle cx="17.2" cy="6.8" r="0.9" fill="currentColor" stroke="none" />
+            </svg>
+          </a>
+        }
+        @if (configuracao()?.tiktokUrl; as tiktok) {
+          <a class="rodape__icone-social" title="TikTok" [href]="tiktok" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M14 4v10.2a3.3 3.3 0 1 1-3.3-3.3c.3 0 .6 0 .9.1" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M14 4c.4 2.1 2 3.6 4 3.9" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </a>
+        }
       </div>
 
-      <a class="rodape__contato" href="mailto:contato@vistanostalgica.com.br">contato&#64;vistanostalgica.com.br</a>
+      @if (configuracao(); as config) {
+        <a class="rodape__contato" [href]="'mailto:' + config.emailContato">{{ config.emailContato }}</a>
+      }
       <p class="rodape__aviso">Nenhum pagamento é processado nesta etapa.</p>
     </div>
 
@@ -89,6 +95,6 @@
   </div>
 
   <div class="rodape__conteudo">
-    <p>© {{ anoAtual }} Vista Nostálgica — todos os direitos reservados.</p>
+    <p>© {{ anoAtual }} {{ configuracao()?.nomeLoja }} — todos os direitos reservados.</p>
   </div>
 </footer>

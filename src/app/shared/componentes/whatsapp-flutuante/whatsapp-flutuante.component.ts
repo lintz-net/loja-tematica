@@ -1,7 +1,5 @@
-import { Component } from '@angular/core';
-
-const NUMERO_WHATSAPP = '5519991354644';
-const MENSAGEM_PADRAO = 'Olá! Preciso de ajuda com um produto da Vista Nostálgica.';
+import { Component, inject, signal } from '@angular/core';
+import { ConfiguracaoLojaService } from '../../../core/servicos/configuracao-loja.service';
 
 @Component({
   selector: 'app-whatsapp-flutuante',
@@ -10,5 +8,15 @@ const MENSAGEM_PADRAO = 'Olá! Preciso de ajuda com um produto da Vista Nostálg
   styleUrl: './whatsapp-flutuante.component.scss',
 })
 export class WhatsappFlutuanteComponent {
-  readonly linkWhatsapp = `https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(MENSAGEM_PADRAO)}`;
+  private readonly configuracaoLojaService = inject(ConfiguracaoLojaService);
+
+  readonly linkWhatsapp = signal('');
+
+  constructor() {
+    this.configuracaoLojaService.obter().subscribe((configuracao) => {
+      this.linkWhatsapp.set(
+        `https://wa.me/${configuracao.whatsappNumero}?text=${encodeURIComponent(configuracao.whatsappMensagem)}`
+      );
+    });
+  }
 }

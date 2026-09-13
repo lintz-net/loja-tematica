@@ -1,0 +1,52 @@
+.admin-config {
+  padding: 48px 0 80px;
+  max-width: 560px;
+}
+
+.admin-config__cabecalho {
+  margin-bottom: 24px;
+}
+
+.admin-config__ajuda {
+  color: var(--cor-texto-suave);
+  margin-top: 4px;
+}
+
+.admin-config__erro {
+  color: #b3261e;
+  margin-bottom: 16px;
+}
+
+.admin-config__sucesso {
+  color: var(--cor-acento-secundario);
+  margin-bottom: 16px;
+}
+
+.admin-config__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  input,
+  textarea {
+    padding: 10px 12px;
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-padrao);
+    font-family: inherit;
+    font-weight: 400;
+    resize: vertical;
+  }
+
+  button {
+    align-self: flex-start;
+    margin-top: 8px;
+  }
+}

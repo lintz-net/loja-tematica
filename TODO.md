@@ -52,6 +52,27 @@
   subir uma imagem de verdade antes de publicar (afeta como o link aparece compartilhado no
   WhatsApp/Instagram/Facebook).
 
+## Reaproveitar o código pra outra loja temática
+
+- **Identidade da loja parametrizada** — nome, descrição SEO, e-mail de contato, WhatsApp e
+  redes sociais saíram do código e foram pra tabela `configuracao_loja` (linha única),
+  editável em `/admin/config`. Consumido por `SeoService`, rodapé, WhatsApp flutuante,
+  cabeçalho, home e admin-shell — nenhum desses tem mais o nome "Vista Nostálgica" hardcoded.
+- **O que ainda precisa mudar por loja** (não dá pra colocar em tabela, é infraestrutura):
+  novo projeto Supabase inteiro (`environment.ts`/`.prod.ts`/`.development.ts` —
+  `supabaseUrl`, `supabaseKey`, `mercadoPagoPublicKey`, `siteUrl`), conta Resend própria,
+  conta Melhor Envio própria (endereço do remetente), possivelmente conta Mercado Pago
+  própria (quem recebe o dinheiro é outro negócio), site novo no Netlify, domínio novo.
+- **Paleta de cores por categoria** (`src/app/temas/temas.scss`) continua sendo código, não
+  banco — é decisão de arte/design por categoria (`.tema-musica`, `.tema-geek` etc.), não
+  texto operacional. Pra uma loja com categorias diferentes, criar as classes `.tema-*`
+  correspondentes ali.
+- **`src/index.html`** (title/favicon/manifest estáticos) continua sendo arquivo — é o HTML
+  de entrada, não dá pra vir do banco; editar uma vez na hora de montar a loja nova.
+- Textos institucionais longos (política de privacidade, como comprar etc. em
+  `app.routes.ts`) continuam hardcoded — são conteúdo jurídico/editorial específico de cada
+  loja, fora do escopo desta parametrização.
+
 ## Ideias levantadas, ainda não implementadas
 
 - **Avaliações/reviews de produto** — prova social é um dos maiores fatores de conversão em

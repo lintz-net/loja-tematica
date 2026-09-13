@@ -1,0 +1,92 @@
+<section class="container-pagina admin-config">
+  <header class="admin-config__cabecalho">
+    <h1>Configurações da loja</h1>
+    <p class="admin-config__ajuda">
+      Nome, contato e redes sociais usados no site (título das páginas, rodapé, botão de
+      WhatsApp e painel admin).
+    </p>
+  </header>
+
+  @if (carregando()) {
+    <p>Carregando…</p>
+  } @else {
+    @if (erro()) {
+      <p class="admin-config__erro">{{ erro() }}</p>
+    }
+    @if (salvo()) {
+      <p class="admin-config__sucesso">Configuração salva com sucesso.</p>
+    }
+
+    <form class="admin-config__form" (submit)="$event.preventDefault(); salvar()">
+      <label>
+        Nome da loja
+        <input
+          type="text"
+          [value]="nomeLoja()"
+          (input)="nomeLoja.set($any($event.target).value)"
+        />
+      </label>
+
+      <label>
+        Descrição padrão (SEO)
+        <textarea
+          rows="3"
+          [value]="descricaoPadrao()"
+          (input)="descricaoPadrao.set($any($event.target).value)"
+        ></textarea>
+      </label>
+
+      <label>
+        E-mail de contato
+        <input
+          type="email"
+          [value]="emailContato()"
+          (input)="emailContato.set($any($event.target).value)"
+        />
+      </label>
+
+      <label>
+        Número do WhatsApp (com DDI e DDD, só dígitos)
+        <input
+          type="text"
+          placeholder="ex: 5519991354644"
+          [value]="whatsappNumero()"
+          (input)="whatsappNumero.set($any($event.target).value)"
+        />
+      </label>
+
+      <label>
+        Mensagem padrão do WhatsApp
+        <textarea
+          rows="2"
+          [value]="whatsappMensagem()"
+          (input)="whatsappMensagem.set($any($event.target).value)"
+        ></textarea>
+      </label>
+
+      <label>
+        Instagram (URL completa, opcional)
+        <input
+          type="url"
+          placeholder="https://instagram.com/..."
+          [value]="instagramUrl()"
+          (input)="instagramUrl.set($any($event.target).value)"
+        />
+      </label>
+
+      <label>
+        TikTok (URL completa, opcional)
+        <input
+          type="url"
+          placeholder="https://tiktok.com/@..."
+          [value]="tiktokUrl()"
+          (input)="tiktokUrl.set($any($event.target).value)"
+        />
+      </label>
+
+      <button type="submit" class="botao-primario" [disabled]="!podeSalvar() || salvando()">
+        {{ salvando() ? 'Salvando…' : 'Salvar' }}
+      </button>
+    </form>
+  }
+</section>

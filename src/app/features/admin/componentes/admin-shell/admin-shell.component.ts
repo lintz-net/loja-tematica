@@ -1,6 +1,7 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../../../core/servicos/auth.service';
+import { ConfiguracaoLojaService } from '../../../../core/servicos/configuracao-loja.service';
 
 /** Layout compartilhado das telas de admin (pedidos, produtos, formulário de produto) —
  * navegação lateral fixa + botão de sair, em vez de cada página repetir seu próprio
@@ -15,6 +16,13 @@ import { AuthService } from '../../../../core/servicos/auth.service';
 export class AdminShellComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly configuracaoLojaService = inject(ConfiguracaoLojaService);
+
+  readonly nomeLoja = signal('');
+
+  constructor() {
+    this.configuracaoLojaService.obter().subscribe((configuracao) => this.nomeLoja.set(configuracao.nomeLoja));
+  }
 
   sair(): void {
     this.authService.sair().subscribe(() => this.router.navigate(['/admin/login']));

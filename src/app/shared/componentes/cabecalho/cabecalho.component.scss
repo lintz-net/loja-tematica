@@ -24,17 +24,6 @@
   white-space: nowrap;
 }
 
-.cabecalho__logo-marca {
-  color: var(--cor-texto);
-}
-
-// Marcador estilo caneta marca-texto — mantém contraste (texto sempre em --cor-texto)
-// e usa o âmbar como destaque, não como cor de letra.
-.cabecalho__logo-acento {
-  color: var(--cor-texto);
-  background-image: linear-gradient(transparent 62%, var(--cor-primaria) 62%);
-}
-
 .cabecalho__navegacao {
   display: flex;
   flex-wrap: nowrap;

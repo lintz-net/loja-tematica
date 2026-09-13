@@ -3,6 +3,7 @@ import { NavigationStart, Router, RouterLink, RouterLinkActive } from '@angular/
 import { CarrinhoService } from '../../../core/servicos/carrinho.service';
 import { BuscaService } from '../../../core/servicos/busca.service';
 import { FavoritosService } from '../../../core/servicos/favoritos.service';
+import { ConfiguracaoLojaService } from '../../../core/servicos/configuracao-loja.service';
 
 @Component({
   selector: 'app-cabecalho',
@@ -15,14 +16,18 @@ export class CabecalhoComponent {
   private readonly carrinhoService = inject(CarrinhoService);
   private readonly buscaService = inject(BuscaService);
   private readonly favoritosService = inject(FavoritosService);
+  private readonly configuracaoLojaService = inject(ConfiguracaoLojaService);
   private readonly router = inject(Router);
 
   readonly quantidadeTotalItens = this.carrinhoService.quantidadeTotalItens;
   readonly quantidadeFavoritos = this.favoritosService.quantidadeFavoritos;
 
   readonly menuMobileAberto = signal(false);
+  readonly nomeLoja = signal('');
 
   constructor() {
+    this.configuracaoLojaService.obter().subscribe((configuracao) => this.nomeLoja.set(configuracao.nomeLoja));
+
     this.router.events.subscribe((evento) => {
       if (evento instanceof NavigationStart) {
         this.menuMobileAberto.set(false);

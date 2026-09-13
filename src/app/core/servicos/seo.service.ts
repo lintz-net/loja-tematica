@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { environment } from '../../../environments/environment';
+import { ConfiguracaoLojaService } from './configuracao-loja.service';
 
 export interface DadosSeo {
   titulo: string;
@@ -10,23 +11,31 @@ export interface DadosSeo {
   tipo?: 'website' | 'product';
 }
 
-const TITULO_SITE = 'Vista Nostálgica';
-const DESCRICAO_PADRAO =
-  'Camisetas, bermudas e polos com estampas que remetem a games, cinema, música, futebol, carros e humor.';
 const IMAGEM_PADRAO = `${environment.siteUrl}/og-padrao.jpg`;
 
 @Injectable({ providedIn: 'root' })
 export class SeoService {
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
+  private readonly configuracaoLojaService = inject(ConfiguracaoLojaService);
 
   /** Define título e meta tags (description, Open Graph, Twitter Card) da página atual.
    * Chamado a partir do componente de cada rota (home, produto, categoria) assim que os
    * dados relevantes carregam — em SSR, isso acontece antes da página ser serializada,
    * então o crawler recebe o HTML já com as tags certas (essencial pro preview de link no
-   * WhatsApp/Instagram/Facebook). */
+   * WhatsApp/Instagram/Facebook). Nome da loja vem de `ConfiguracaoLojaService` (banco), não
+   * hardcoded, pra permitir reaproveitar o código em outra loja temática. */
   definir(dados: DadosSeo): void {
-    const tituloCompleto = dados.titulo === TITULO_SITE ? TITULO_SITE : `${dados.titulo} · ${TITULO_SITE}`;
+    this.configuracaoLojaService.obter().subscribe((configuracao) => {
+      const tituloCompleto =
+        dados.titulo === configuracao.nomeLoja
+          ? configuracao.nomeLoja
+          : `${dados.titulo} · ${configuracao.nomeLoja}`;
+      this.aplicarTags(dados, tituloCompleto);
+    });
+  }
+
+  private aplicarTags(dados: DadosSeo, tituloCompleto: string): void {
     this.title.setTitle(tituloCompleto);
 
     this.definirTag('description', dados.descricao);
@@ -55,7 +64,9 @@ export class SeoService {
 
   /** Restaura os valores padrão do site — usado por páginas sem dados próprios de SEO. */
   redefinirPadrao(): void {
-    this.definir({ titulo: TITULO_SITE, descricao: DESCRICAO_PADRAO });
+    this.configuracaoLojaService.obter().subscribe((configuracao) => {
+      this.definir({ titulo: configuracao.nomeLoja, descricao: configuracao.descricaoPadrao });
+    });
   }
 
   private definirTag(name: string, content: string): void {

@@ -1,11 +1,13 @@
 import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 import { CatalogoRepositorio } from '../../../../core/servicos/catalogo.repositorio';
 import { BannerRepositorio } from '../../../../core/servicos/banner.repositorio';
 import { CarrosselComponent } from '../../../../shared/componentes/carrossel/carrossel.component';
 import { VistosRecentementeComponent } from '../../../../shared/componentes/vistos-recentemente/vistos-recentemente.component';
 import { SeoService } from '../../../../core/servicos/seo.service';
+import { ConfiguracaoLojaService } from '../../../../core/servicos/configuracao-loja.service';
 
 @Component({
   selector: 'app-home',
@@ -18,6 +20,12 @@ export class HomeComponent {
   private readonly catalogoRepositorio = inject(CatalogoRepositorio);
   private readonly bannerRepositorio = inject(BannerRepositorio);
   private readonly seoService = inject(SeoService);
+  private readonly configuracaoLojaService = inject(ConfiguracaoLojaService);
+
+  readonly nomeLoja = toSignal(
+    this.configuracaoLojaService.obter().pipe(map((configuracao) => configuracao.nomeLoja)),
+    { initialValue: '' }
+  );
 
   constructor() {
     this.seoService.redefinirPadrao();

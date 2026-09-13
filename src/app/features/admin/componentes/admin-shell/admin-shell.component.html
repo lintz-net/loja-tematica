@@ -1,7 +1,7 @@
 <div class="admin-shell">
   <aside class="admin-shell__barra">
     <div class="admin-shell__marca">
-      Vista Nostálgica
+      {{ nomeLoja() }}
       <span>Admin</span>
     </div>
 
@@ -10,6 +10,7 @@
       <a routerLink="/admin/pedidos" routerLinkActive="admin-shell__link--ativo">Pedidos</a>
       <a routerLink="/admin/produtos" routerLinkActive="admin-shell__link--ativo">Produtos</a>
       <a routerLink="/admin/cupons" routerLinkActive="admin-shell__link--ativo">Cupons</a>
+      <a routerLink="/admin/config" routerLinkActive="admin-shell__link--ativo">Configurações</a>
     </nav>
 
     <button type="button" class="admin-shell__sair" (click)="sair()">Sair</button>
