@@ -13,6 +13,7 @@
 }
 
 .galeria-produto__miniatura {
+  position: relative;
   background: var(--cor-fundo-alt);
   border: 2px solid transparent;
   border-radius: 8px;
@@ -24,11 +25,24 @@
   opacity: 0.7;
 }
 
-.galeria-produto__miniatura img {
+.galeria-produto__miniatura img,
+.galeria-produto__miniatura video {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.galeria-produto__icone-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 0.85rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
 }
 
 .galeria-produto__miniatura:hover {
@@ -66,6 +80,12 @@
 
 .galeria-produto__foto.ativa {
   opacity: 1;
+}
+
+// Vídeo quase nunca vem na proporção 4:5 do quadro — manter `contain` (como nas fotos)
+// sobraria tarja cinza; preenche o quadro cortando as bordas em vez de deixar vazio.
+video.galeria-produto__foto {
+  object-fit: cover;
 }
 
 .galeria-produto__lupa {

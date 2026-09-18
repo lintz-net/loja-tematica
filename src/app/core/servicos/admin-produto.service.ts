@@ -16,6 +16,7 @@ interface LinhaProduto {
   categorias: SlugCategoria[];
   imagens: string[];
   imagens_por_cor: Record<string, string[]> | null;
+  videos: string[] | null;
   guia_medidas: FaixaMedida[] | null;
   genero: GeneroProduto | null;
   peso_kg: number | null;
@@ -35,6 +36,7 @@ function linhaParaProduto(linha: LinhaProduto): Produto {
     categorias: linha.categorias,
     imagens: linha.imagens,
     imagensPorCor: linha.imagens_por_cor ?? undefined,
+    videos: linha.videos ?? undefined,
     guiaMedidas: linha.guia_medidas ?? undefined,
     genero: linha.genero ?? undefined,
     pesoKg: linha.peso_kg ?? undefined,
@@ -55,6 +57,7 @@ function produtoParaLinha(produto: Produto): LinhaProduto {
     categorias: produto.categorias,
     imagens: produto.imagens,
     imagens_por_cor: produto.imagensPorCor ?? null,
+    videos: produto.videos ?? null,
     guia_medidas: produto.guiaMedidas ?? null,
     genero: produto.genero ?? null,
     peso_kg: produto.pesoKg ?? null,
@@ -130,7 +133,16 @@ export class AdminProdutoService {
   /** Sobe uma imagem pro Storage e devolve a URL pública, já pronta pra entrar no array
    * `imagens` do produto. */
   enviarImagem(slug: string, arquivo: File): Observable<string> {
-    const caminho = `${slug}/${Date.now()}-${arquivo.name}`;
+    return this.enviarArquivo(`${slug}/${Date.now()}-${arquivo.name}`, arquivo);
+  }
+
+  /** Sobe um vídeo pro mesmo bucket das imagens (sem restrição de mime configurada) e
+   * devolve a URL pública, pronta pra entrar no array `videos` do produto. */
+  enviarVideo(slug: string, arquivo: File): Observable<string> {
+    return this.enviarArquivo(`${slug}/video-${Date.now()}-${arquivo.name}`, arquivo);
+  }
+
+  private enviarArquivo(caminho: string, arquivo: File): Observable<string> {
     const promessa = obterSupabaseClient()
       .storage.from(BUCKET)
       .upload(caminho, arquivo, { upsert: true })
@@ -143,9 +155,10 @@ export class AdminProdutoService {
     return from(promessa);
   }
 
-  /** Apaga o arquivo do Storage de verdade (não só tira do array `imagens` do produto) —
-   * extrai o caminho a partir da URL pública, já que é isso que a API de Storage espera.
-   * Se a URL não for desse bucket (ex.: link externo digitado à mão), não faz nada. */
+  /** Apaga o arquivo do Storage de verdade (não só tira do array `imagens`/`videos` do
+   * produto) — extrai o caminho a partir da URL pública, já que é isso que a API de Storage
+   * espera. Se a URL não for desse bucket (ex.: link externo digitado à mão), não faz nada.
+   * Serve tanto pra imagem quanto pra vídeo, já que ambos vivem no mesmo bucket. */
   excluirImagem(url: string): Observable<void> {
     const marcador = `/${BUCKET}/`;
     const indice = url.indexOf(marcador);

@@ -2,6 +2,7 @@
   <section class="container-pagina detalhe-produto">
     <app-galeria-produto
       [imagens]="produto.imagens"
+      [videos]="produto.videos ?? []"
       [alt]="produto.nome"
       [indiceForcado]="indiceImagemDaCor()"
     />

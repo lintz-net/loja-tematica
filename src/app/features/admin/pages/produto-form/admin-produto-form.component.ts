@@ -66,6 +66,8 @@ export class AdminProdutoFormComponent {
   readonly precoBase = signal(0);
   readonly categoriasSelecionadas = signal<Set<SlugCategoria>>(new Set());
   readonly imagens = signal<string[]>([]);
+  readonly videos = signal<string[]>([]);
+  readonly enviandoVideo = signal(false);
 
   /** Peso/dimensões de uma unidade do produto — usados na cotação de frete (Melhor Envio).
    * Sem isso preenchido, a cotação usa um valor padrão genérico, menos preciso. */
@@ -146,6 +148,7 @@ export class AdminProdutoFormComponent {
       this.precoBase();
       this.categoriasSelecionadas();
       this.imagens();
+      this.videos();
       this.pesoKg();
       this.alturaCm();
       this.larguraCm();
@@ -167,6 +170,7 @@ export class AdminProdutoFormComponent {
     this.precoBase.set(produto.precoBase);
     this.categoriasSelecionadas.set(new Set(produto.categorias));
     this.imagens.set(produto.imagens);
+    this.videos.set(produto.videos ?? []);
     this.pesoKg.set(produto.pesoKg ?? null);
     this.alturaCm.set(produto.alturaCm ?? null);
     this.larguraCm.set(produto.larguraCm ?? null);
@@ -253,6 +257,40 @@ export class AdminProdutoFormComponent {
     this.adminProdutoService.excluirImagem(url).subscribe({
       error: (erro) => console.error('Falha ao excluir imagem do Storage:', erro),
     });
+  }
+
+  removerVideo(url: string): void {
+    this.videos.update((atual) => atual.filter((v) => v !== url));
+    // Fire-and-forget, mesma lógica de removerImagem: falha aqui só deixa um arquivo órfão
+    // no bucket, não deve travar o admin.
+    this.adminProdutoService.excluirImagem(url).subscribe({
+      error: (erro) => console.error('Falha ao excluir vídeo do Storage:', erro),
+    });
+  }
+
+  aoSelecionarVideos(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const arquivos = input.files;
+    if (!arquivos || arquivos.length === 0 || !this.slug()) return;
+
+    this.enviandoVideo.set(true);
+    let restantes = arquivos.length;
+
+    for (const arquivo of Array.from(arquivos)) {
+      this.adminProdutoService.enviarVideo(this.slug(), arquivo).subscribe({
+        next: (url) => {
+          this.videos.update((atual) => [...atual, url]);
+          restantes--;
+          if (restantes === 0) this.enviandoVideo.set(false);
+        },
+        error: () => {
+          this.erro.set(`Falha ao enviar o vídeo "${arquivo.name}".`);
+          restantes--;
+          if (restantes === 0) this.enviandoVideo.set(false);
+        },
+      });
+    }
+    input.value = '';
   }
 
   aoIniciarArraste(indice: number): void {
@@ -425,7 +463,8 @@ export class AdminProdutoFormComponent {
       this.categoriasSelecionadas().size > 0 &&
       this.imagens().length > 0 &&
       this.variantes().length > 0 &&
-      !this.enviandoImagem()
+      !this.enviandoImagem() &&
+      !this.enviandoVideo()
     );
   }
 
@@ -446,6 +485,7 @@ export class AdminProdutoFormComponent {
       precoBase: this.precoBase(),
       categorias: Array.from(this.categoriasSelecionadas()),
       imagens: this.imagens(),
+      videos: this.videos().length > 0 ? this.videos() : undefined,
       imagensPorCor:
         Object.keys(imagensPorCorPreenchido).length > 0 ? imagensPorCorPreenchido : undefined,
       guiaMedidas: this.guiaMedidas().length > 0 ? this.guiaMedidas() : undefined,

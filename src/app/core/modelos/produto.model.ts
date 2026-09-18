@@ -36,6 +36,9 @@ export interface Produto {
    * uma cor com entrada aqui, a galeria do detalhe passa a exibir só essas fotos; sem entrada
    * para a cor, ou sem cor selecionada, a galeria volta a mostrar `imagens` inteira. */
   imagensPorCor?: Record<string, string[]>;
+  /** Vídeos do produto exibidos na galeria do detalhe, depois de todas as fotos — não entram
+   * na listagem/hover/SEO, só na galeria em si. */
+  videos?: string[];
   /** Tabela de medidas para o modal "Guia de medidas". Quando ausente, usa-se a tabela
    * padrão masculina/unissex ou feminina (baby look) da loja, de acordo com `genero`. */
   guiaMedidas?: FaixaMedida[];

@@ -1,14 +1,19 @@
 <div class="galeria-produto">
-  @if (imagens.length > 1) {
+  @if (midias().length > 1) {
     <div class="galeria-produto__miniaturas">
-      @for (img of imagens; track img; let i = $index) {
+      @for (midia of midias(); track midia.url; let i = $index) {
         <button
           type="button"
           class="galeria-produto__miniatura"
           [class.selecionada]="i === indiceAtual()"
           (click)="irPara(i)"
         >
-          <img [src]="img" [alt]="alt + ' - miniatura ' + (i + 1)" loading="lazy" />
+          @if (midia.tipo === 'imagem') {
+            <img [src]="midia.url" [alt]="alt + ' - miniatura ' + (i + 1)" loading="lazy" />
+          } @else {
+            <video [src]="midia.url" muted playsinline preload="metadata"></video>
+            <span class="galeria-produto__icone-play">▶</span>
+          }
         </button>
       }
     </div>
@@ -22,14 +27,25 @@
     (mouseleave)="desativarZoom()"
     (mousemove)="aoMoverMouse($event)"
   >
-    @for (img of imagens; track img; let i = $index) {
-      <img
-        class="galeria-produto__foto"
-        [class.ativa]="i === indiceAtual()"
-        [src]="img"
-        [alt]="alt"
-        loading="lazy"
-      />
+    @for (midia of midias(); track midia.url; let i = $index) {
+      @if (midia.tipo === 'imagem') {
+        <img
+          class="galeria-produto__foto"
+          [class.ativa]="i === indiceAtual()"
+          [src]="midia.url"
+          [alt]="alt"
+          loading="lazy"
+        />
+      } @else {
+        <video
+          class="galeria-produto__foto"
+          [class.ativa]="i === indiceAtual()"
+          [src]="midia.url"
+          controls
+          playsinline
+          preload="metadata"
+        ></video>
+      }
     }
 
     <div
@@ -39,12 +55,12 @@
       [style.backgroundPosition]="posicaoZoom().x + '% ' + posicaoZoom().y + '%'"
     ></div>
 
-    @if (imagens.length > 1) {
+    @if (midias().length > 1) {
       <button
         type="button"
         class="galeria-produto__seta galeria-produto__seta--anterior"
         (click)="anterior()"
-        aria-label="Imagem anterior"
+        aria-label="Item anterior"
       >
         ‹
       </button>
@@ -52,7 +68,7 @@
         type="button"
         class="galeria-produto__seta galeria-produto__seta--proxima"
         (click)="proxima()"
-        aria-label="Próxima imagem"
+        aria-label="Próximo item"
       >
         ›
       </button>

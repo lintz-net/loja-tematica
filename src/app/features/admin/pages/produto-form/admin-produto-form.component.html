@@ -221,6 +221,32 @@
         }
       </fieldset>
 
+      <fieldset class="admin-produto-form__imagens">
+        <legend>Vídeos</legend>
+
+        @if (videos().length > 0) {
+          <div class="admin-produto-form__grade-imagens">
+            @for (url of videos(); track url) {
+              <div class="admin-produto-form__imagem">
+                <video [src]="url" controls muted></video>
+                <button type="button" (click)="removerVideo(url)">Remover</button>
+              </div>
+            }
+          </div>
+        }
+
+        <input type="file" accept="video/*" multiple (change)="aoSelecionarVideos($event)" [disabled]="!slug()" />
+        @if (!slug()) {
+          <p class="admin-produto-form__aviso">Preencha o nome/slug antes de enviar vídeos.</p>
+        }
+        <p class="admin-produto-form__aviso">
+          Prefira vídeos curtos e já comprimidos — arquivos muito grandes podem falhar no envio.
+        </p>
+        @if (enviandoVideo()) {
+          <p>Enviando vídeo…</p>
+        }
+      </fieldset>
+
       <fieldset class="admin-produto-form__tamanhos">
         <legend>Tamanhos</legend>
         @for (tamanho of tamanhosPadrao; track tamanho) {

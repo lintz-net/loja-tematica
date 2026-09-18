@@ -23,6 +23,7 @@ interface LinhaProduto {
   categorias: SlugCategoria[];
   imagens: string[];
   imagens_por_cor: Record<string, string[]> | null;
+  videos: string[] | null;
   guia_medidas: FaixaMedida[] | null;
   genero: GeneroProduto | null;
   peso_kg: number | null;
@@ -53,6 +54,7 @@ function linhaParaProduto(linha: LinhaProduto): Produto {
     categorias: linha.categorias,
     imagens: linha.imagens,
     imagensPorCor: linha.imagens_por_cor ?? undefined,
+    videos: linha.videos ?? undefined,
     guiaMedidas: linha.guia_medidas ?? undefined,
     genero: linha.genero ?? undefined,
     pesoKg: linha.peso_kg ?? undefined,
