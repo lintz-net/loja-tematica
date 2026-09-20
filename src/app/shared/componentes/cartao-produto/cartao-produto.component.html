@@ -4,9 +4,16 @@
     @if (temSegundaImagem()) {
       <img class="cartao-produto__foto cartao-produto__foto--hover" [src]="imagemHover()" [alt]="produto.nome" loading="lazy" />
     }
-    <span class="cartao-produto__etiqueta">R$ {{ produto.precoBase.toFixed(2) }}</span>
+    <span class="cartao-produto__etiqueta">
+      @if (emPromocao()) {
+        <span class="cartao-produto__preco-riscado">R$ {{ produto.precoBase.toFixed(2) }}</span>
+      }
+      R$ {{ precoExibido().toFixed(2) }}
+    </span>
     @if (esgotado()) {
       <span class="cartao-produto__esgotado">Esgotado</span>
+    } @else if (estoqueBaixo()) {
+      <span class="cartao-produto__estoque-baixo">Últimas unidades</span>
     }
     <button
       type="button"
@@ -24,5 +31,13 @@
   <div class="cartao-produto__info">
     <h3>{{ produto.nome }}</h3>
     <p class="cartao-produto__descricao">{{ produto.descricao }}</p>
+    <p class="cartao-produto__parcelamento">
+      ou {{ maxParcelas }}x de R$ {{ valorParcela().toFixed(2) }} sem juros
+    </p>
+    @if (podeComprarRapido()) {
+      <button type="button" class="cartao-produto__comprar-rapido" (click)="comprarRapido($event)">
+        Comprar
+      </button>
+    }
   </div>
 </a>

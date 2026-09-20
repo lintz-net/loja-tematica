@@ -31,6 +31,9 @@ interface LinhaProduto {
   largura_cm: number | null;
   comprimento_cm: number | null;
   variantes: VarianteProduto[];
+  destaque: boolean;
+  ordem_destaque: number | null;
+  preco_promocional: number | null;
 }
 
 function linhaParaCategoria(linha: LinhaCategoria): Categoria {
@@ -62,6 +65,9 @@ function linhaParaProduto(linha: LinhaProduto): Produto {
     larguraCm: linha.largura_cm ?? undefined,
     comprimentoCm: linha.comprimento_cm ?? undefined,
     variantes: linha.variantes,
+    destaque: linha.destaque,
+    ordemDestaque: linha.ordem_destaque ?? undefined,
+    precoPromocional: linha.preco_promocional ?? undefined,
   };
 }
 
@@ -100,5 +106,26 @@ export class CatalogoApiService implements CatalogoRepositorio {
     return this.rest
       .select<LinhaProduto[]>('produtos', `?select=*&slug=eq.${encodeURIComponent(slug)}`)
       .pipe(map((linhas) => (linhas[0] ? linhaParaProduto(linhas[0]) : undefined)));
+  }
+
+  obterProdutosEmDestaque(): Observable<Produto[]> {
+    return this.rest
+      .select<LinhaProduto[]>(
+        'produtos',
+        '?select=*&destaque=eq.true&order=ordem_destaque.asc.nullslast'
+      )
+      .pipe(map((linhas) => linhas.map(linhaParaProduto)));
+  }
+
+  obterProdutosEmPromocao(): Observable<Produto[]> {
+    return this.rest
+      .select<LinhaProduto[]>('produtos', '?select=*&preco_promocional=not.is.null')
+      .pipe(
+        map((linhas) =>
+          linhas
+            .map(linhaParaProduto)
+            .filter((produto) => (produto.precoPromocional ?? Infinity) < produto.precoBase)
+        )
+      );
   }
 }

@@ -4,6 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { CatalogoRepositorio } from '../../../../core/servicos/catalogo.repositorio';
 import { BannerRepositorio } from '../../../../core/servicos/banner.repositorio';
 import { CarrosselComponent } from '../../../../shared/componentes/carrossel/carrossel.component';
+import { CarrosselProdutosComponent } from '../../../../shared/componentes/carrossel-produtos/carrossel-produtos.component';
 import { VistosRecentementeComponent } from '../../../../shared/componentes/vistos-recentemente/vistos-recentemente.component';
 import { SeoService } from '../../../../core/servicos/seo.service';
 import { ConfiguracaoLojaService } from '../../../../core/servicos/configuracao-loja.service';
@@ -11,7 +12,7 @@ import { ConfiguracaoLojaService } from '../../../../core/servicos/configuracao-
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink, CarrosselComponent, VistosRecentementeComponent],
+  imports: [RouterLink, CarrosselComponent, CarrosselProdutosComponent, VistosRecentementeComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
 })
@@ -27,7 +28,15 @@ export class HomeComponent {
     this.seoService.redefinirPadrao();
   }
 
-  readonly banners = toSignal(this.bannerRepositorio.obterBanners(), { initialValue: [] });
+  readonly banners = toSignal(this.bannerRepositorio.obterBanners('home'), { initialValue: [] });
+
+  readonly produtosDestaque = toSignal(this.catalogoRepositorio.obterProdutosEmDestaque(), {
+    initialValue: [],
+  });
+
+  readonly produtosPromocao = toSignal(this.catalogoRepositorio.obterProdutosEmPromocao(), {
+    initialValue: [],
+  });
 
   readonly categorias = toSignal(this.catalogoRepositorio.obterCategorias(), {
     initialValue: [],

@@ -13,6 +13,7 @@ interface LinhaConfiguracaoLoja {
   instagram_url: string | null;
   tiktok_url: string | null;
   cidades_frete_gratis: CidadeFreteGratis[] | null;
+  mensagens_barra_anuncio: string[] | null;
 }
 
 function linhaParaConfiguracao(linha: LinhaConfiguracaoLoja): ConfiguracaoLoja {
@@ -25,6 +26,7 @@ function linhaParaConfiguracao(linha: LinhaConfiguracaoLoja): ConfiguracaoLoja {
     instagramUrl: linha.instagram_url ?? undefined,
     tiktokUrl: linha.tiktok_url ?? undefined,
     cidadesFreteGratis: linha.cidades_frete_gratis ?? [],
+    mensagensBarraAnuncio: linha.mensagens_barra_anuncio ?? [],
   };
 }
 
@@ -46,6 +48,14 @@ export class ConfiguracaoLojaService {
 
   private readonly _configuracao = signal<ConfiguracaoLoja | null>(null);
   readonly configuracao = this._configuracao.asReadonly();
+
+  /** URL de `wa.me` com número/mensagem da loja — usada tanto pelo botão flutuante quanto
+   * pelo item "Contato" do cabeçalho, pra não duplicar essa montagem em dois lugares. */
+  linkWhatsapp(): string {
+    const configuracao = this._configuracao();
+    if (!configuracao) return '';
+    return `https://wa.me/${configuracao.whatsappNumero}?text=${encodeURIComponent(configuracao.whatsappMensagem)}`;
+  }
 
   /** Chamado uma única vez pelo `APP_INITIALIZER`. */
   carregarInicial(): Observable<ConfiguracaoLoja> {
@@ -70,6 +80,7 @@ export class ConfiguracaoLojaService {
         instagram_url: dados.instagramUrl || null,
         tiktok_url: dados.tiktokUrl || null,
         cidades_frete_gratis: dados.cidadesFreteGratis,
+        mensagens_barra_anuncio: dados.mensagensBarraAnuncio,
         atualizado_em: new Date().toISOString(),
       })
       .eq('id', 'loja')

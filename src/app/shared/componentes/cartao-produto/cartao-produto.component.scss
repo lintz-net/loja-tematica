@@ -107,7 +107,8 @@
   color: #ff2d6f;
 }
 
-.cartao-produto__esgotado {
+.cartao-produto__esgotado,
+.cartao-produto__estoque-baixo {
   position: absolute;
   z-index: 1;
   bottom: 12px;
@@ -120,6 +121,43 @@
   text-transform: uppercase;
   padding: 4px 9px;
   border: 1px solid var(--cor-borda-forte);
+}
+
+.cartao-produto__estoque-baixo {
+  color: var(--cor-aviso);
+  border-color: var(--cor-aviso);
+}
+
+.cartao-produto__preco-riscado {
+  display: block;
+  text-decoration: line-through;
+  font-size: 0.68rem;
+  font-weight: 400;
+  opacity: 0.75;
+}
+
+.cartao-produto__parcelamento {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--cor-texto-suave);
+}
+
+.cartao-produto__comprar-rapido {
+  margin-top: 4px;
+  align-self: flex-start;
+  background: var(--cor-primaria);
+  color: var(--cor-primaria-contraste);
+  border: none;
+  border-radius: var(--raio-padrao);
+  padding: 7px 16px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.cartao-produto__comprar-rapido:hover {
+  filter: brightness(1.05);
 }
 
 .cartao-produto__info {

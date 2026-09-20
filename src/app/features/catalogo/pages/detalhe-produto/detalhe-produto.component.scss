@@ -249,7 +249,7 @@
 }
 
 .detalhe-produto__avise-me-erro {
-  color: #b3261e;
+  color: var(--cor-erro);
   font-size: 0.85rem;
   margin-top: 8px;
 }
@@ -285,5 +285,42 @@
 .guia-medidas__nota {
   margin: 14px 0 0;
   font-size: 0.8rem;
+  color: var(--cor-texto-suave);
+}
+
+.detalhe-produto__avaliacoes {
+  padding-block: 32px;
+}
+
+.detalhe-produto__media-avaliacoes {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--cor-texto-suave);
+  margin-left: 8px;
+}
+
+.detalhe-produto__lista-avaliacoes {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detalhe-produto__avaliacao {
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-padrao);
+  padding: 14px 16px;
+}
+
+.detalhe-produto__avaliacao-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.detalhe-produto__avaliacao p {
+  margin: 8px 0 0;
   color: var(--cor-texto-suave);
 }

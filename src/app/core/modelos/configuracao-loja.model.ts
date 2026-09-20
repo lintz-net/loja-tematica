@@ -15,4 +15,7 @@ export interface ConfiguracaoLoja {
   /** Cidades onde a loja entrega/retira pessoalmente — nessas, o checkout pula a cotação do
    * Melhor Envio e oferece frete grátis direto. */
   cidadesFreteGratis: CidadeFreteGratis[];
+  /** Mensagens rotativas da barra de anúncio acima do cabeçalho (frete grátis, parcelamento
+   * sem juros, prazo de entrega etc.) — vazio faz a barra não aparecer. */
+  mensagensBarraAnuncio: string[];
 }

@@ -34,6 +34,22 @@ export class AdminConfigComponent {
   ]);
   readonly novaCidade = signal('');
   readonly novaUf = signal('');
+  readonly mensagensBarraAnuncio = signal<string[]>([
+    ...this.configuracaoAtual.mensagensBarraAnuncio,
+  ]);
+  readonly novaMensagemBarraAnuncio = signal('');
+
+  adicionarMensagemBarraAnuncio(): void {
+    const mensagem = this.novaMensagemBarraAnuncio().trim();
+    if (!mensagem) return;
+
+    this.mensagensBarraAnuncio.update((lista) => [...lista, mensagem]);
+    this.novaMensagemBarraAnuncio.set('');
+  }
+
+  removerMensagemBarraAnuncio(indice: number): void {
+    this.mensagensBarraAnuncio.update((lista) => lista.filter((_, i) => i !== indice));
+  }
 
   adicionarCidadeFreteGratis(): void {
     const cidade = this.novaCidade().trim();
@@ -68,6 +84,7 @@ export class AdminConfigComponent {
       instagramUrl: this.instagramUrl().trim() || undefined,
       tiktokUrl: this.tiktokUrl().trim() || undefined,
       cidadesFreteGratis: this.cidadesFreteGratis(),
+      mensagensBarraAnuncio: this.mensagensBarraAnuncio(),
     };
 
     this.salvando.set(true);

@@ -366,6 +366,20 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'banners',
+        loadComponent: () =>
+          import('./features/admin/pages/banners/admin-banners.component').then(
+            (m) => m.AdminBannersComponent
+          ),
+      },
+      {
+        path: 'avaliacoes',
+        loadComponent: () =>
+          import('./features/admin/pages/avaliacoes/admin-avaliacoes.component').then(
+            (m) => m.AdminAvaliacoesComponent
+          ),
+      },
+      {
         path: 'config',
         loadComponent: () =>
           import('./features/admin/pages/config/admin-config.component').then(

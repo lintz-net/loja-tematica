@@ -1,0 +1,21 @@
+.barra-anuncio {
+  background: var(--cor-primaria);
+  color: var(--cor-primaria-contraste);
+  text-align: center;
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.barra-anuncio__mensagem {
+  animation: barra-anuncio-crossfade 0.4s ease;
+}
+
+@keyframes barra-anuncio-crossfade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

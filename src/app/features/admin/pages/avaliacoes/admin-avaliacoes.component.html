@@ -1,0 +1,91 @@
+<section class="container-pagina admin-avaliacoes">
+  <header class="admin-avaliacoes__cabecalho">
+    <h1>Avaliações</h1>
+    <p class="admin-avaliacoes__ajuda">
+      Cadastro manual de depoimentos reais de clientes (coletados por WhatsApp, e-mail etc.) —
+      não existe formulário público de avaliação. Nunca inventar nome/nota/comentário.
+    </p>
+  </header>
+
+  @if (erro()) {
+    <p class="admin-avaliacoes__erro">{{ erro() }}</p>
+  }
+
+  <form class="admin-avaliacoes__form" (submit)="$event.preventDefault(); criarAvaliacao()">
+    <input
+      type="text"
+      placeholder="Nome do cliente"
+      [value]="novoNomeCliente()"
+      (input)="novoNomeCliente.set($any($event.target).value)"
+    />
+    <select (change)="atualizarNovaNota($any($event.target).value)">
+      @for (n of [5, 4, 3, 2, 1]; track n) {
+        <option [value]="n" [selected]="novaNota() === n">{{ n }} estrela{{ n > 1 ? 's' : '' }}</option>
+      }
+    </select>
+    <select (change)="novoProdutoId.set($any($event.target).value)">
+      <option value="" [selected]="novoProdutoId() === ''">Depoimento geral (sem produto)</option>
+      @for (produto of produtos(); track produto.id) {
+        <option [value]="produto.id" [selected]="novoProdutoId() === produto.id">
+          {{ produto.nome }}
+        </option>
+      }
+    </select>
+    <input
+      type="date"
+      [value]="novaData()"
+      (input)="novaData.set($any($event.target).value)"
+    />
+    <textarea
+      rows="2"
+      placeholder="Comentário (opcional)"
+      [value]="novoComentario()"
+      (input)="novoComentario.set($any($event.target).value)"
+    ></textarea>
+    <button type="submit" class="botao-primario" [disabled]="!podeCriar() || salvando()">
+      {{ salvando() ? 'Criando…' : 'Criar avaliação' }}
+    </button>
+  </form>
+
+  @if (carregando()) {
+    <p>Carregando avaliações…</p>
+  } @else if (avaliacoes().length === 0) {
+    <p>Nenhuma avaliação cadastrada ainda.</p>
+  } @else {
+    <div class="admin-avaliacoes__tabela-wrap">
+      <table class="admin-avaliacoes__tabela">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Nota</th>
+            <th>Produto</th>
+            <th>Comentário</th>
+            <th>Data</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (avaliacao of avaliacoes(); track avaliacao.id) {
+            <tr>
+              <td>{{ avaliacao.nomeCliente }}</td>
+              <td>{{ avaliacao.nota }} ★</td>
+              <td>{{ nomeDoProduto(avaliacao.produtoId) }}</td>
+              <td>{{ avaliacao.comentario || '—' }}</td>
+              <td>{{ avaliacao.criadoEm | date: 'dd/MM/yyyy' }}</td>
+              <td class="admin-avaliacoes__acoes">
+                <button
+                  type="button"
+                  class="admin-avaliacoes__excluir"
+                  [disabled]="idExcluindo() === avaliacao.id"
+                  (click)="remover(avaliacao)"
+                >
+                  Excluir
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

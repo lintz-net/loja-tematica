@@ -1,0 +1,9 @@
+@if (mensagens().length > 0) {
+  <div class="barra-anuncio">
+    @for (mensagem of mensagens(); track mensagem; let i = $index) {
+      @if (i === indiceAtual()) {
+        <span class="barra-anuncio__mensagem">{{ mensagem }}</span>
+      }
+    }
+  </div>
+}

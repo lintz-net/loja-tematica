@@ -7,6 +7,8 @@ import { CatalogoRepositorio } from './core/servicos/catalogo.repositorio';
 import { CatalogoApiService } from './core/servicos/catalogo-api.service';
 import { BannerRepositorio } from './core/servicos/banner.repositorio';
 import { BannerApiService } from './core/servicos/banner-api.service';
+import { AvaliacaoRepositorio } from './core/servicos/avaliacao.repositorio';
+import { AvaliacaoApiService } from './core/servicos/avaliacao-api.service';
 import { ConfiguracaoLojaService } from './core/servicos/configuracao-loja.service';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { provideServiceWorker } from '@angular/service-worker';
@@ -27,6 +29,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withFetch()),
     { provide: CatalogoRepositorio, useClass: CatalogoApiService },
     { provide: BannerRepositorio, useClass: BannerApiService },
+    { provide: AvaliacaoRepositorio, useClass: AvaliacaoApiService },
     /** Busca a identidade da loja (nome, contato, redes sociais) uma única vez, antes do app
      * terminar de inicializar — ver comentário em ConfiguracaoLojaService sobre por que isso
      * importa pra hidratação (NG0506) em vez de cada componente buscar por conta própria. */

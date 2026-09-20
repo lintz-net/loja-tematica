@@ -12,4 +12,9 @@ export abstract class CatalogoRepositorio {
   abstract obterProdutos(): Observable<Produto[]>;
   abstract obterProdutosPorCategoria(slugCategoria: string): Observable<Produto[]>;
   abstract obterProdutoPorSlug(slug: string): Observable<Produto | undefined>;
+  /** Curadoria manual (`produtos.destaque = true`), ordenado por `ordemDestaque` (nulls
+   * por último). */
+  abstract obterProdutosEmDestaque(): Observable<Produto[]>;
+  /** Produtos com `precoPromocional` preenchido e menor que `precoBase`. */
+  abstract obterProdutosEmPromocao(): Observable<Produto[]>;
 }

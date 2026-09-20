@@ -12,6 +12,7 @@ import { mascararCep, mascararDocumento, mascararTelefone } from '../../../../co
 import { normalizarTexto } from '../../../../core/utilitarios/texto.util';
 import { LOGOS_CARTAO } from '../../../../shared/dados/logos-pagamento';
 import { obterLogoTransportadora } from '../../../../shared/dados/logos-transportadora';
+import { MAX_PARCELAS } from '../../../../core/constantes/parcelamento.constantes';
 
 /** Id sintético usado quando a entrega é presencial/grátis (cidade configurada em
  * /admin/config) — nunca enviado como `freteServicoId` do pedido, pra admin não tentar
@@ -32,8 +33,6 @@ const ETAPAS: DefinicaoEtapa[] = [
   { id: 'pagamento', rotulo: 'Pagamento' },
   { id: 'revisao', rotulo: 'Revisão' },
 ];
-
-const MAX_PARCELAS = 6;
 
 @Component({
   selector: 'app-checkout',

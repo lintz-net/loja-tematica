@@ -52,4 +52,13 @@ export interface Produto {
   larguraCm?: number;
   comprimentoCm?: number;
   variantes: VarianteProduto[];
+  /** Curadoria manual de produtos em destaque na home — não é calculado automaticamente
+   * (ex.: mais vendidos), o admin decide quais produtos entram. */
+  destaque: boolean;
+  /** Ordem manual dos produtos em destaque (menor primeiro). Ausente cai no fallback de
+   * ordenação por data de criação, mais recente primeiro. */
+  ordemDestaque?: number | null;
+  /** Quando presente e menor que `precoBase`, o produto entra no carrossel de ofertas da
+   * home e o card exibe o preço base riscado. */
+  precoPromocional?: number | null;
 }

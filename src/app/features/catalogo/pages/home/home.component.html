@@ -20,6 +20,22 @@
   </section>
 }
 
+@if (produtosDestaque().length > 0) {
+  <section class="container-pagina home-secao-produtos">
+    <span class="rotulo">Curadoria</span>
+    <h2 class="home-titulo-secao">Produtos em Destaque</h2>
+    <app-carrossel-produtos [produtos]="produtosDestaque()" />
+  </section>
+}
+
+@if (produtosPromocao().length > 0) {
+  <section class="container-pagina home-secao-produtos">
+    <span class="rotulo">Por tempo limitado</span>
+    <h2 class="home-titulo-secao">Ofertas</h2>
+    <app-carrossel-produtos [produtos]="produtosPromocao()" />
+  </section>
+}
+
 <section id="categorias" class="container-pagina">
   <span class="rotulo">Categorias</span>
   <h2 class="home-titulo-secao">Explore por categoria</h2>

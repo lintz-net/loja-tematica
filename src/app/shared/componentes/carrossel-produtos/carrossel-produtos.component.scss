@@ -1,0 +1,53 @@
+.carrossel-produtos {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.carrossel-produtos__trilho {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scroll-behavior: smooth;
+  padding-block: 4px;
+  // Esconde a barra de rolagem nativa sem tirar a funcionalidade — a navegação visível é
+  // pelas setas/swipe, a barra do sistema só polui visualmente aqui.
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.carrossel-produtos__item {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  width: 230px;
+}
+
+.carrossel-produtos__seta {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--cor-borda);
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.carrossel-produtos__seta:hover {
+  border-color: var(--cor-borda-forte);
+}
+
+// Setas só fazem sentido com espaço/mouse de sobra — em telas largas.
+@media (min-width: 780px) {
+  .carrossel-produtos__seta {
+    display: flex;
+  }
+}

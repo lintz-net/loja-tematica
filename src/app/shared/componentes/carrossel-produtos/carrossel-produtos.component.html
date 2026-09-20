@@ -1,0 +1,27 @@
+<div class="carrossel-produtos">
+  <button
+    type="button"
+    class="carrossel-produtos__seta carrossel-produtos__seta--anterior"
+    (click)="anterior()"
+    aria-label="Produtos anteriores"
+  >
+    ‹
+  </button>
+
+  <div class="carrossel-produtos__trilho" #trilho>
+    @for (produto of produtos; track produto.id) {
+      <div class="carrossel-produtos__item">
+        <app-cartao-produto [produto]="produto" />
+      </div>
+    }
+  </div>
+
+  <button
+    type="button"
+    class="carrossel-produtos__seta carrossel-produtos__seta--proxima"
+    (click)="proximo()"
+    aria-label="Próximos produtos"
+  >
+    ›
+  </button>
+</div>

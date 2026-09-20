@@ -10,9 +10,5 @@ import { ConfiguracaoLojaService } from '../../../core/servicos/configuracao-loj
 export class WhatsappFlutuanteComponent {
   private readonly configuracaoLojaService = inject(ConfiguracaoLojaService);
 
-  readonly linkWhatsapp = computed(() => {
-    const configuracao = this.configuracaoLojaService.configuracao();
-    if (!configuracao) return '';
-    return `https://wa.me/${configuracao.whatsappNumero}?text=${encodeURIComponent(configuracao.whatsappMensagem)}`;
-  });
+  readonly linkWhatsapp = computed(() => this.configuracaoLojaService.linkWhatsapp());
 }

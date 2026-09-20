@@ -24,6 +24,9 @@ interface LinhaProduto {
   largura_cm: number | null;
   comprimento_cm: number | null;
   variantes: VarianteProduto[];
+  destaque: boolean;
+  ordem_destaque: number | null;
+  preco_promocional: number | null;
 }
 
 function linhaParaProduto(linha: LinhaProduto): Produto {
@@ -44,6 +47,9 @@ function linhaParaProduto(linha: LinhaProduto): Produto {
     larguraCm: linha.largura_cm ?? undefined,
     comprimentoCm: linha.comprimento_cm ?? undefined,
     variantes: linha.variantes,
+    destaque: linha.destaque,
+    ordemDestaque: linha.ordem_destaque ?? undefined,
+    precoPromocional: linha.preco_promocional ?? undefined,
   };
 }
 
@@ -65,6 +71,9 @@ function produtoParaLinha(produto: Produto): LinhaProduto {
     largura_cm: produto.larguraCm ?? null,
     comprimento_cm: produto.comprimentoCm ?? null,
     variantes: produto.variantes,
+    destaque: produto.destaque,
+    ordem_destaque: produto.ordemDestaque ?? null,
+    preco_promocional: produto.precoPromocional ?? null,
   };
 }
 

@@ -69,6 +69,19 @@ export class AdminProdutoFormComponent {
   readonly videos = signal<string[]>([]);
   readonly enviandoVideo = signal(false);
 
+  /** Curadoria manual de destaque/promoção na home — ver home.component.ts. */
+  readonly destaque = signal(false);
+  readonly ordemDestaque = signal<number | null>(null);
+  readonly precoPromocional = signal<number | null>(null);
+
+  atualizarOrdemDestaque(valor: string): void {
+    this.ordemDestaque.set(valor ? Number(valor) : null);
+  }
+
+  atualizarPrecoPromocional(valor: string): void {
+    this.precoPromocional.set(valor ? Number(valor) : null);
+  }
+
   /** Peso/dimensões de uma unidade do produto — usados na cotação de frete (Melhor Envio).
    * Sem isso preenchido, a cotação usa um valor padrão genérico, menos preciso. */
   readonly pesoKg = signal<number | null>(null);
@@ -157,6 +170,9 @@ export class AdminProdutoFormComponent {
       this.imagensPorCor();
       this.guiaMedidas();
       this.genero();
+      this.destaque();
+      this.ordemDestaque();
+      this.precoPromocional();
 
       if (this.formPronto) this.sujo.set(true);
     });
@@ -192,6 +208,9 @@ export class AdminProdutoFormComponent {
     this.imagensPorCor.set(produto.imagensPorCor ?? {});
     this.guiaMedidas.set(produto.guiaMedidas ?? []);
     this.genero.set(produto.genero ?? 'unissex');
+    this.destaque.set(produto.destaque);
+    this.ordemDestaque.set(produto.ordemDestaque ?? null);
+    this.precoPromocional.set(produto.precoPromocional ?? null);
   }
 
   atualizarNome(valor: string): void {
@@ -457,6 +476,7 @@ export class AdminProdutoFormComponent {
   }
 
   podeSalvar(): boolean {
+    const precoPromocional = this.precoPromocional();
     return (
       this.nome().trim().length > 0 &&
       this.slug().trim().length > 0 &&
@@ -464,7 +484,8 @@ export class AdminProdutoFormComponent {
       this.imagens().length > 0 &&
       this.variantes().length > 0 &&
       !this.enviandoImagem() &&
-      !this.enviandoVideo()
+      !this.enviandoVideo() &&
+      (precoPromocional === null || precoPromocional < this.precoBase())
     );
   }
 
@@ -494,6 +515,9 @@ export class AdminProdutoFormComponent {
       alturaCm: this.alturaCm() ?? undefined,
       larguraCm: this.larguraCm() ?? undefined,
       comprimentoCm: this.comprimentoCm() ?? undefined,
+      destaque: this.destaque(),
+      ordemDestaque: this.destaque() ? this.ordemDestaque() ?? undefined : undefined,
+      precoPromocional: this.precoPromocional() ?? undefined,
       variantes: this.variantes().map(
         (v): VarianteProduto => ({
           id: v.id,

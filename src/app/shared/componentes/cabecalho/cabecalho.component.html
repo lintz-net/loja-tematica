@@ -3,8 +3,8 @@
     <button
       type="button"
       class="cabecalho__hamburguer"
-      title="Categorias"
-      aria-label="Abrir menu de categorias"
+      title="Menu"
+      aria-label="Abrir menu"
       [attr.aria-expanded]="menuMobileAberto()"
       (click)="abrirMenuMobile()"
     >
@@ -18,12 +18,49 @@
     </a>
 
     <nav class="cabecalho__navegacao">
-      @for (categoria of categorias(); track categoria.id) {
-        <a [routerLink]="['/categoria', categoria.slug]" routerLinkActive="ativo">
-          {{ categoria.nome }}
-        </a>
-      }
+      <a routerLink="/" routerLinkActive="ativo" [routerLinkActiveOptions]="{ exact: true }">
+        Início
+      </a>
+
+      <div
+        class="cabecalho__item-mega-menu"
+        (mouseenter)="abrirMegaMenu()"
+        (mouseleave)="fecharMegaMenuComAtraso()"
+      >
+        <button type="button" class="cabecalho__botao-mega-menu" [attr.aria-expanded]="megaMenuAberto()">
+          Produtos
+        </button>
+
+        @if (megaMenuAberto()) {
+          <div class="cabecalho__mega-menu">
+            <div class="cabecalho__mega-menu-categorias">
+              @for (categoria of categorias(); track categoria.id) {
+                <a [routerLink]="['/categoria', categoria.slug]">{{ categoria.nome }}</a>
+              }
+            </div>
+            @if (bannerMegaMenu(); as banner) {
+              <a class="cabecalho__mega-menu-banner" [routerLink]="banner.link ?? null">
+                <img [src]="banner.imagemUrl" [alt]="banner.alt" loading="lazy" />
+              </a>
+            }
+          </div>
+        }
+      </div>
+
+      <a routerLink="/como-comprar" routerLinkActive="ativo">Como Comprar</a>
+      <a routerLink="/quem-somos" routerLinkActive="ativo">Quem Somos</a>
+      <a routerLink="/trocas-devolucoes" routerLinkActive="ativo">Trocas e Devoluções</a>
+      <button type="button" class="cabecalho__link-contato" (click)="abrirWhatsapp()">Contato</button>
     </nav>
+
+    <input
+      type="text"
+      class="cabecalho__busca-inline"
+      placeholder="Buscar produtos…"
+      [value]="termoBuscaInline()"
+      (input)="atualizarBuscaInline($any($event.target).value)"
+      (focus)="atualizarBuscaInline(termoBuscaInline())"
+    />
 
     <div class="cabecalho__acoes">
       <button
@@ -51,6 +88,7 @@
           <circle cx="12" cy="8" r="3.6" />
           <path d="M4.5 20c1.4-4 4-6 7.5-6s6.1 2 7.5 6" stroke-linecap="round" />
         </svg>
+        <span class="cabecalho__acao-texto">{{ autenticado() ? 'Minha conta' : 'Entrar / Cadastre-se' }}</span>
       </a>
       <button type="button" class="cabecalho__icone cabecalho__icone--carrinho" title="Carrinho" aria-label="Carrinho" (click)="alternarCarrinho()">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -61,6 +99,9 @@
         @if (quantidadeTotalItens() > 0) {
           <span class="cabecalho__badge">{{ quantidadeTotalItens() }}</span>
         }
+        <span class="cabecalho__acao-texto">
+          Carrinho @if (valorTotalCarrinho() > 0) { · R$ {{ valorTotalCarrinho().toFixed(2) }} }
+        </span>
       </button>
     </div>
   </div>
@@ -77,18 +118,25 @@
   [class.menu-mobile--aberto]="menuMobileAberto()"
   role="dialog"
   aria-modal="true"
-  aria-label="Menu de categorias"
+  aria-label="Menu"
 >
   <header class="menu-mobile__cabecalho">
-    <h2>Categorias</h2>
+    <h2>Menu</h2>
     <button type="button" class="menu-mobile__fechar" (click)="fecharMenuMobile()" aria-label="Fechar menu">✕</button>
   </header>
 
   <nav class="menu-mobile__navegacao">
+    <a routerLink="/" routerLinkActive="ativo" [routerLinkActiveOptions]="{ exact: true }">Início</a>
+
     @for (categoria of categorias(); track categoria.id) {
       <a [routerLink]="['/categoria', categoria.slug]" routerLinkActive="ativo">
         {{ categoria.nome }}
       </a>
     }
+
+    <a routerLink="/como-comprar" routerLinkActive="ativo">Como Comprar</a>
+    <a routerLink="/quem-somos" routerLinkActive="ativo">Quem Somos</a>
+    <a routerLink="/trocas-devolucoes" routerLinkActive="ativo">Trocas e Devoluções</a>
+    <button type="button" class="menu-mobile__link-contato" (click)="abrirWhatsapp()">Contato</button>
   </nav>
 </aside>

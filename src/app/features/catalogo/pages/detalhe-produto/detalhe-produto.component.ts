@@ -1,12 +1,13 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map, switchMap, tap } from 'rxjs';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { map, of, switchMap, tap } from 'rxjs';
 import { CatalogoRepositorio } from '../../../../core/servicos/catalogo.repositorio';
 import { CarrinhoService } from '../../../../core/servicos/carrinho.service';
 import { FavoritosService } from '../../../../core/servicos/favoritos.service';
 import { VistosRecentementeService } from '../../../../core/servicos/vistos-recentemente.service';
 import { AvisoEstoqueService } from '../../../../core/servicos/aviso-estoque.service';
+import { AvaliacaoRepositorio } from '../../../../core/servicos/avaliacao.repositorio';
 import { SeoService } from '../../../../core/servicos/seo.service';
 import { FaixaMedida } from '../../../../core/modelos/produto.model';
 import { corParaEstiloSwatch } from '../../../../core/utilitarios/cor.util';
@@ -34,6 +35,7 @@ export class DetalheProdutoComponent {
   private readonly favoritosService = inject(FavoritosService);
   private readonly vistosRecentementeService = inject(VistosRecentementeService);
   private readonly avisoEstoqueService = inject(AvisoEstoqueService);
+  private readonly avaliacaoRepositorio = inject(AvaliacaoRepositorio);
   private readonly seoService = inject(SeoService);
 
   private readonly slugProduto$ = this.route.paramMap.pipe(
@@ -56,6 +58,21 @@ export class DetalheProdutoComponent {
 
   private readonly categorias = toSignal(this.catalogoRepositorio.obterCategorias(), {
     initialValue: [],
+  });
+
+  readonly avaliacoes = toSignal(
+    toObservable(this.produto).pipe(
+      switchMap((produto) =>
+        produto ? this.avaliacaoRepositorio.obterAvaliacoesPorProduto(produto.id) : of([])
+      )
+    ),
+    { initialValue: [] }
+  );
+
+  readonly mediaAvaliacoes = computed(() => {
+    const avaliacoes = this.avaliacoes();
+    if (avaliacoes.length === 0) return 0;
+    return avaliacoes.reduce((soma, a) => soma + a.nota, 0) / avaliacoes.length;
   });
 
   /** Nome de exibição da categoria (não o slug cru, ex.: "decoracao-e-organizacao") — cai de

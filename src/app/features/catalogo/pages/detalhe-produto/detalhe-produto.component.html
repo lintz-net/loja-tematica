@@ -140,6 +140,30 @@
     </div>
   </section>
 
+  @if (avaliacoes().length > 0) {
+    <section class="container-pagina detalhe-produto__avaliacoes">
+      <h2 class="home-titulo-secao">
+        Avaliações
+        <span class="detalhe-produto__media-avaliacoes">
+          {{ mediaAvaliacoes().toFixed(1) }} ★ ({{ avaliacoes().length }})
+        </span>
+      </h2>
+      <ul class="detalhe-produto__lista-avaliacoes">
+        @for (avaliacao of avaliacoes(); track avaliacao.id) {
+          <li class="detalhe-produto__avaliacao">
+            <div class="detalhe-produto__avaliacao-cabecalho">
+              <strong>{{ avaliacao.nomeCliente }}</strong>
+              <span>{{ avaliacao.nota }} ★</span>
+            </div>
+            @if (avaliacao.comentario) {
+              <p>{{ avaliacao.comentario }}</p>
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
   <section class="container-pagina">
     <app-vistos-recentemente [excluirProdutoId]="produto.id" />
   </section>

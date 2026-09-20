@@ -30,8 +30,9 @@
   gap: 22px;
   flex: 1;
   min-width: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
+  // Sem overflow/scroll aqui (ao contrário de quando isto listava categorias dinâmicas): os
+  // itens fixos de hoje não crescem sem limite, e overflow cortaria o mega-menu "Produtos",
+  // que é posicionado absoluto dentro desta nav.
   white-space: nowrap;
   font-family: var(--fonte-mono);
   font-size: 0.72rem;
@@ -65,6 +66,112 @@
   color: var(--cor-acento-secundario);
 }
 
+.cabecalho__item-mega-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.cabecalho__botao-mega-menu {
+  background: none;
+  border: none;
+  padding: 4px 0;
+  font: inherit;
+  color: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.cabecalho__botao-mega-menu:hover {
+  color: var(--cor-acento-secundario);
+}
+
+.cabecalho__link-contato {
+  background: none;
+  border: none;
+  padding: 4px 0;
+  font: inherit;
+  color: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.cabecalho__link-contato:hover {
+  color: var(--cor-acento-secundario);
+}
+
+.cabecalho__mega-menu {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 420px;
+  display: flex;
+  gap: 20px;
+  background: var(--cor-fundo);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-padrao);
+  box-shadow: 0 16px 32px rgba(23, 20, 26, 0.14);
+  padding: 20px;
+  text-transform: none;
+  letter-spacing: normal;
+  font-family: var(--fonte-base);
+}
+
+.cabecalho__mega-menu-categorias {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(120px, 1fr));
+  gap: 10px 24px;
+  flex: 1;
+}
+
+.cabecalho__mega-menu-categorias a {
+  font-size: 0.9rem;
+  color: var(--cor-texto);
+  white-space: nowrap;
+}
+
+.cabecalho__mega-menu-categorias a:hover {
+  color: var(--cor-acento-secundario);
+}
+
+.cabecalho__mega-menu-banner {
+  flex: 0 0 200px;
+  display: block;
+  border-radius: var(--raio-padrao);
+  overflow: hidden;
+}
+
+.cabecalho__mega-menu-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cabecalho__busca-inline {
+  flex-shrink: 1;
+  min-width: 0;
+  width: 200px;
+  padding: 8px 12px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-padrao);
+  background: var(--cor-fundo-alt);
+  font-size: 0.85rem;
+}
+
+.cabecalho__acao-texto {
+  display: inline-block;
+  margin-left: 6px;
+  font-family: var(--fonte-base);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  white-space: nowrap;
+}
+
 .cabecalho__acoes {
   display: flex;
   gap: 16px;
@@ -75,6 +182,7 @@
 .cabecalho__icone {
   position: relative;
   display: flex;
+  align-items: center;
   color: var(--cor-texto-suave);
   transition: opacity 0.15s ease;
 }
@@ -85,6 +193,8 @@
 
 .cabecalho__icone--busca {
   color: var(--cor-acento-secundario);
+  // O input inline (desktop) substitui essa lupa — some acima do breakpoint mobile.
+  display: none;
 }
 
 .cabecalho__icone--favoritos {
@@ -140,6 +250,18 @@
 
   .cabecalho__logo {
     flex: 1;
+  }
+
+  .cabecalho__busca-inline {
+    display: none;
+  }
+
+  .cabecalho__icone--busca {
+    display: flex;
+  }
+
+  .cabecalho__acao-texto {
+    display: none;
   }
 }
 
@@ -221,4 +343,17 @@
 
 .menu-mobile__navegacao a.ativo {
   color: var(--cor-texto);
+}
+
+.menu-mobile__link-contato {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 14px 8px;
+  border-bottom: 1px solid var(--cor-borda);
+  font: inherit;
+  color: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
 }

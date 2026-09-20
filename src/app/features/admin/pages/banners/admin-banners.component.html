@@ -1,0 +1,87 @@
+<section class="container-pagina admin-banners">
+  <header class="admin-banners__cabecalho">
+    <h1>Banners</h1>
+  </header>
+
+  @if (erro()) {
+    <p class="admin-banners__erro">{{ erro() }}</p>
+  }
+
+  <form class="admin-banners__form" (submit)="$event.preventDefault(); criarBanner()">
+    <label>
+      Imagem
+      <input type="file" accept="image/*" (change)="aoSelecionarImagem($event)" />
+      @if (enviandoImagem()) {
+        <span>Enviando…</span>
+      }
+      @if (novaImagemUrl()) {
+        <img class="admin-banners__preview" [src]="novaImagemUrl()" alt="Prévia do banner" />
+      }
+    </label>
+    <input
+      type="text"
+      placeholder="Texto alternativo (alt)"
+      [value]="novoAlt()"
+      (input)="novoAlt.set($any($event.target).value)"
+    />
+    <input
+      type="text"
+      placeholder="Link (opcional, ex: /categoria/geek)"
+      [value]="novoLink()"
+      (input)="novoLink.set($any($event.target).value)"
+    />
+    <select (change)="atualizarNovoDestino($any($event.target).value)">
+      <option value="home" [selected]="novoDestino() === 'home'">Carrossel da home</option>
+      <option value="menu" [selected]="novoDestino() === 'menu'">Mega-menu "Produtos"</option>
+    </select>
+    <input
+      type="number"
+      placeholder="Ordem"
+      [value]="novaOrdem()"
+      (input)="atualizarNovaOrdem($any($event.target).value)"
+    />
+    <button type="submit" class="botao-primario" [disabled]="!podeCriar() || salvando()">
+      {{ salvando() ? 'Criando…' : 'Criar banner' }}
+    </button>
+  </form>
+
+  @if (carregando()) {
+    <p>Carregando banners…</p>
+  } @else if (banners().length === 0) {
+    <p>Nenhum banner cadastrado ainda.</p>
+  } @else {
+    <div class="admin-banners__tabela-wrap">
+      <table class="admin-banners__tabela">
+        <thead>
+          <tr>
+            <th>Imagem</th>
+            <th>Alt</th>
+            <th>Destino</th>
+            <th>Ordem</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (banner of banners(); track banner.id) {
+            <tr>
+              <td><img class="admin-banners__miniatura" [src]="banner.imagemUrl" [alt]="banner.alt" /></td>
+              <td>{{ banner.alt }}</td>
+              <td>{{ banner.destino === 'home' ? 'Home' : 'Mega-menu' }}</td>
+              <td>{{ banner.ordem }}</td>
+              <td class="admin-banners__acoes">
+                <button
+                  type="button"
+                  class="admin-banners__excluir"
+                  [disabled]="idExcluindo() === banner.id"
+                  (click)="remover(banner)"
+                >
+                  Excluir
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
