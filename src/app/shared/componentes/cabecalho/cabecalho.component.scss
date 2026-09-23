@@ -7,13 +7,16 @@
   border-bottom: 1px solid var(--cor-borda);
 }
 
-.cabecalho__conteudo {
+// Linha 1: logo + busca + conta/carrinho. Linha 2 (`.cabecalho__navegacao`, abaixo): só o
+// menu — duas linhas fixas no desktop, não só quando falta espaço, pra logo+busca+ações nunca
+// disputarem largura com o menu (era a causa do menu ficar coberto pela busca).
+.cabecalho__linha-superior {
   max-width: 1200px;
   margin: 0 auto;
   padding: 16px 20px;
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 20px;
 }
 
 .cabecalho__logo {
@@ -25,11 +28,13 @@
 }
 
 .cabecalho__navegacao {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 10px 20px;
+  border-top: 1px solid var(--cor-borda);
   display: flex;
   flex-wrap: nowrap;
   gap: 22px;
-  flex: 1;
-  min-width: 0;
   // Sem overflow/scroll aqui (ao contrário de quando isto listava categorias dinâmicas): os
   // itens fixos de hoje não crescem sem limite, e overflow cortaria o mega-menu "Produtos",
   // que é posicionado absoluto dentro desta nav.
@@ -151,9 +156,9 @@
 }
 
 .cabecalho__busca-inline {
-  flex-shrink: 1;
-  min-width: 0;
-  width: 200px;
+  flex: 1 1 auto;
+  min-width: 120px;
+  max-width: 480px;
   padding: 8px 12px;
   border: 1px solid var(--cor-borda);
   border-radius: var(--raio-padrao);
@@ -236,7 +241,7 @@
 // Abaixo de ~780px a navegação de categorias vira uma tirinha rolável horizontal e
 // disputa espaço com os ícones de ação — troca por hambúrguer + drawer nesse ponto.
 @media (max-width: 780px) {
-  .cabecalho__conteudo {
+  .cabecalho__linha-superior {
     gap: 14px;
   }
 

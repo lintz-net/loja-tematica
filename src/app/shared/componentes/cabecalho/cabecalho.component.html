@@ -1,5 +1,5 @@
 <header class="cabecalho">
-  <div class="cabecalho__conteudo">
+  <div class="cabecalho__linha-superior">
     <button
       type="button"
       class="cabecalho__hamburguer"
@@ -17,46 +17,12 @@
       {{ nomeLoja() }}
     </a>
 
-    <nav class="cabecalho__navegacao">
-      <a routerLink="/" routerLinkActive="ativo" [routerLinkActiveOptions]="{ exact: true }">
-        Início
-      </a>
-
-      <div
-        class="cabecalho__item-mega-menu"
-        (mouseenter)="abrirMegaMenu()"
-        (mouseleave)="fecharMegaMenuComAtraso()"
-      >
-        <button type="button" class="cabecalho__botao-mega-menu" [attr.aria-expanded]="megaMenuAberto()">
-          Produtos
-        </button>
-
-        @if (megaMenuAberto()) {
-          <div class="cabecalho__mega-menu">
-            <div class="cabecalho__mega-menu-categorias">
-              @for (categoria of categorias(); track categoria.id) {
-                <a [routerLink]="['/categoria', categoria.slug]">{{ categoria.nome }}</a>
-              }
-            </div>
-            @if (bannerMegaMenu(); as banner) {
-              <a class="cabecalho__mega-menu-banner" [routerLink]="banner.link ?? null">
-                <img [src]="banner.imagemUrl" [alt]="banner.alt" loading="lazy" />
-              </a>
-            }
-          </div>
-        }
-      </div>
-
-      <a routerLink="/como-comprar" routerLinkActive="ativo">Como Comprar</a>
-      <a routerLink="/quem-somos" routerLinkActive="ativo">Quem Somos</a>
-      <a routerLink="/trocas-devolucoes" routerLinkActive="ativo">Trocas e Devoluções</a>
-      <button type="button" class="cabecalho__link-contato" (click)="abrirWhatsapp()">Contato</button>
-    </nav>
-
     <input
       type="text"
       class="cabecalho__busca-inline"
       placeholder="Buscar produtos…"
+      name="busca-produtos-cabecalho"
+      autocomplete="off"
       [value]="termoBuscaInline()"
       (input)="atualizarBuscaInline($any($event.target).value)"
       (focus)="atualizarBuscaInline(termoBuscaInline())"
@@ -105,6 +71,42 @@
       </button>
     </div>
   </div>
+
+  <nav class="cabecalho__navegacao">
+    <a routerLink="/" routerLinkActive="ativo" [routerLinkActiveOptions]="{ exact: true }">
+      Início
+    </a>
+
+    <div
+      class="cabecalho__item-mega-menu"
+      (mouseenter)="abrirMegaMenu()"
+      (mouseleave)="fecharMegaMenuComAtraso()"
+    >
+      <button type="button" class="cabecalho__botao-mega-menu" [attr.aria-expanded]="megaMenuAberto()">
+        Produtos
+      </button>
+
+      @if (megaMenuAberto()) {
+        <div class="cabecalho__mega-menu">
+          <div class="cabecalho__mega-menu-categorias">
+            @for (categoria of categorias(); track categoria.id) {
+              <a [routerLink]="['/categoria', categoria.slug]">{{ categoria.nome }}</a>
+            }
+          </div>
+          @if (bannerMegaMenu(); as banner) {
+            <a class="cabecalho__mega-menu-banner" [routerLink]="banner.link ?? null">
+              <img [src]="banner.imagemUrl" [alt]="banner.alt" loading="lazy" />
+            </a>
+          }
+        </div>
+      }
+    </div>
+
+    <a routerLink="/como-comprar" routerLinkActive="ativo">Como Comprar</a>
+    <a routerLink="/quem-somos" routerLinkActive="ativo">Quem Somos</a>
+    <a routerLink="/trocas-devolucoes" routerLinkActive="ativo">Trocas e Devoluções</a>
+    <button type="button" class="cabecalho__link-contato" (click)="abrirWhatsapp()">Contato</button>
+  </nav>
 </header>
 
 <div
