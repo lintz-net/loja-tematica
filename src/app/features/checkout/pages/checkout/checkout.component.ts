@@ -179,6 +179,9 @@ export class CheckoutComponent implements OnDestroy {
 
   readonly pedidoFinalizado = signal(false);
   readonly numeroPedido = signal('');
+  // Carrinho é limpo assim que o pedido é criado — depois disso `valorTotal()` (derivado do
+  // carrinho) recalcularia pra 0, então o valor do pedido finalizado fica guardado aqui.
+  readonly valorTotalFinalizado = signal(0);
   readonly finalizandoPedido = signal(false);
   readonly erroFinalizacao = signal<string | null>(null);
 
@@ -431,6 +434,10 @@ export class CheckoutComponent implements OnDestroy {
     this.finalizandoPedido.set(true);
     this.erroFinalizacao.set(null);
 
+    // Capturado antes de limpar o carrinho — depois disso `this.valorTotal()` (derivado do
+    // carrinho) recalcularia pra 0, o que já quebrou a criação do Pix (valor não positivo).
+    const valorTotalPedido = this.valorTotal();
+
     const itensPedido: ItemPedido[] = this.itens().map((item) => ({
       produtoNome: item.produto.nome,
       produtoSlug: item.produto.slug,
@@ -460,7 +467,7 @@ export class CheckoutComponent implements OnDestroy {
         formaPagamento: this.formaPagamento(),
         parcelas: this.formaPagamento() === 'cartao' ? this.parcelas() : 1,
         valorFrete: this.valorFrete(),
-        valorTotal: this.valorTotal(),
+        valorTotal: valorTotalPedido,
         // Sem freteServicoId pra entrega local — não é um serviço real do Melhor Envio, não
         // há etiqueta pra comprar (ver podeComprarEtiqueta em admin-pedidos.component.ts).
         freteServicoId:
@@ -474,10 +481,11 @@ export class CheckoutComponent implements OnDestroy {
       .subscribe({
         next: (pedido) => {
           this.numeroPedido.set(pedido.codigo);
+          this.valorTotalFinalizado.set(valorTotalPedido);
           this.carrinhoService.limparCarrinho();
 
           if (this.formaPagamento() === 'pix') {
-            this.gerarPagamentoPix(pedido.codigo);
+            this.gerarPagamentoPix(pedido.codigo, valorTotalPedido);
             return;
           }
 
@@ -496,11 +504,11 @@ export class CheckoutComponent implements OnDestroy {
   /** Gera a cobrança Pix pro pedido recém-criado e começa a aguardar a confirmação. Se a
    * geração falhar, o pedido continua registrado (status_pagamento 'pendente') — o cliente
    * pode tentar de novo pela tela de acompanhamento, então aqui só mostramos o erro. */
-  private gerarPagamentoPix(codigoPedido: string): void {
+  private gerarPagamentoPix(codigoPedido: string, valorTotal: number): void {
     this.pedidoService
       .criarPagamentoPix({
         codigoPedido,
-        valorTotal: this.valorTotal(),
+        valorTotal,
         emailCliente: this.email(),
         nomeCliente: this.nome(),
         documentoCliente: this.documento(),

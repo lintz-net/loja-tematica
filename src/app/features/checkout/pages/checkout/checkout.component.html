@@ -3,7 +3,7 @@
     <span class="rotulo">Pedido {{ numeroPedido() }}</span>
     <h1>Escaneie o QR code pra pagar com Pix</h1>
     <p>
-      Valor: <strong>R$ {{ valorTotal().toFixed(2) }}</strong> — assim que o pagamento for
+      Valor: <strong>R$ {{ valorTotalFinalizado().toFixed(2) }}</strong> — assim que o pagamento for
       confirmado, esta página avança automaticamente.
     </p>
     @if (pixQrCodeBase64()) {

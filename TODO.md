@@ -2,25 +2,26 @@
 
 ## 🔴 Bloqueadores pra produção
 
-- **Pagamento real (Mercado Pago)** — backend pronto e deployado: migration
-  (`status_pagamento`, `eventos_webhook_mercado_pago`), Edge Functions
-  `mercado-pago-criar-pagamento`/`mercado-pago-webhook`, e o checkout já chama tudo isso de
-  verdade (tela de QR code Pix + polling até aprovação). Testado ponta a ponta e **bloqueado
-  pelo Mercado Pago**. Histórico: `POST /v1/payments` devolvia sempre `500 internal_error`
-  genérico (Pix e cartão de teste); corrigido o `address_pending` da conta, mas o 500
-  persistiu. Suporte identificou que era uma instabilidade pontual do ambiente de testes e
-  pediu um novo teste com cartão Visa/APRO — refeito em 2026-09-17: **o 500 não ocorreu
-  mais**, mas surgiu um erro novo. Testado com um comprador de teste existente → `400`
-  código `2034` "Invalid users involved"; testado de novo criando um comprador via
-  `POST /users/test_user` (e-mail gerado por eles mesmos) → ainda assim `403` código `4390`
-  "Payer email forbidden" (X-Request-Id `fdf08df4-27bb-4316-80f3-3e394826df4c`, 18:06:48 UTC).
-  Como o comprador foi gerado pela própria API deles, aponta pra alguma configuração da
-  aplicação/conta bloqueando qualquer comprador de teste, não pros dados enviados. Resposta
-  com esses detalhes já enviada ao chamado em aberto, aguardando retorno. PSP escolhido:
-  Mercado Pago, Pix primeiro (sem tokenização de cartão), cartão depois — Efí e Stripe
-  cogitados como alternativas caso o suporte não resolva. Nunca processar número de cartão no
-  nosso backend/frontend — usar o SDK de tokenização do Mercado Pago quando for a vez do
-  cartão real (a opção "Cartão" no checkout está desabilitada por ora, só Pix é real).
+- ~~**Pagamento real (Mercado Pago)**~~ — **resolvido em 2026-09-22**. Backend completo:
+  migration (`status_pagamento`, `eventos_webhook_mercado_pago`), Edge Functions
+  `mercado-pago-criar-pagamento`/`mercado-pago-webhook`, checkout com tela de QR code Pix +
+  polling até aprovação. O `403 Payer email forbidden` reportado no chamado era esperado: o
+  suporte do Mercado Pago confirmou que `payer.email` de um usuário de teste
+  (`POST /users/test_user`, domínio `@testuser.com`) nunca é aceito em Checkout API — usar
+  e-mail comum no teste. Ao testar de novo com e-mail comum, apareceu um `400`
+  `transaction_amount must be positive` que **era bug nosso**: em `checkout.component.ts`,
+  `finalizarPedido()` limpava o carrinho (`carrinhoService.limparCarrinho()`) antes de
+  `gerarPagamentoPix()` ler `this.valorTotal()` — como esse total é derivado do carrinho, já
+  lia 0 nesse ponto. Corrigido capturando `valorTotalPedido` antes de limpar o carrinho e
+  passando esse valor adiante (também corrigido o mesmo problema no signal
+  `valorTotalFinalizado`, usado pra exibir o valor na tela do QR code). Testado ponta a ponta
+  com cartão de teste Visa/APRO → Pix gerado com valor correto. `mercado-pago-criar-pagamento`
+  também ganhou log do header `x-request-id` do Mercado Pago em erros, pra facilitar chamado de
+  suporte se aparecer instabilidade de novo (já visto: `500 internal_server_error`
+  `communication_error` intermitente, mesma classe do problema antigo — não é bug nosso).
+  Cartão de crédito continua fora (opção desabilitada no checkout, só Pix é real) — nunca
+  processar número de cartão no nosso backend/frontend, usar o SDK de tokenização do Mercado
+  Pago quando for a vez.
 - **Domínio próprio** (`vistanostalgica.com.br`) — registro/DNS adiado por decisão do
   usuário, sem pressa. `environment.prod.ts` já está pronto com a URL certa, só falta
   registrar o domínio e apontar o DNS pro Netlify (painel do Netlify → domínio do site →

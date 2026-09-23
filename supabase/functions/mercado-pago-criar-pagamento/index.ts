@@ -97,7 +97,11 @@ Deno.serve(async (req: Request) => {
 
   if (!respostaMp.ok) {
     const detalhe = await respostaMp.text();
-    console.error(`Mercado Pago recusou a criação do pagamento (${respostaMp.status}):`, detalhe);
+    const requestId = respostaMp.headers.get('x-request-id');
+    console.error(
+      `Mercado Pago recusou a criação do pagamento (${respostaMp.status}, x-request-id: ${requestId}):`,
+      detalhe
+    );
     return respostaJson({ error: 'Não foi possível gerar o Pix.' }, 502);
   }
 
