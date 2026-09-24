@@ -44,3 +44,10 @@ Thumbs.db
 # Estado local da CLI do Supabase (project-ref, pooler-url) — não é portátil entre
 # projetos/clones e não deveria ter sido versionado.
 supabase/.temp/
+
+# Saída do scraper de importação (scripts/importar-ozklo/) — imagens baixadas e o catálogo
+# raspado são dado de execução local, não código; catalogo.json também pode conter preço/
+# estoque real do fornecedor, não é pra versionar.
+scripts/importar-ozklo/__pycache__/
+scripts/importar-ozklo/catalogo.json
+scripts/importar-ozklo/imagens_produtos_ozklo/

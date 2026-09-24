@@ -22,6 +22,24 @@
   Cartão de crédito continua fora (opção desabilitada no checkout, só Pix é real) — nunca
   processar número de cartão no nosso backend/frontend, usar o SDK de tokenização do Mercado
   Pago quando for a vez.
+- **Instabilidade recorrente `500 internal_error` no Mercado Pago (2026-09-24)** — mesmo
+  padrão já visto e reportado no chamado antigo (histórico acima), voltou a acontecer:
+  `POST /v1/payments` (Pix) falhou duas vezes seguidas com `{"error":null,"message":
+  "internal_error","status":500}`, X-Request-Id `f634b3d2-280e-499f-9e8b-c2fbdc1b0970` e
+  `80094a1d-8f80-4b8f-bce5-c14b94814463`. Confirmado não relacionado a nenhuma mudança feita
+  no mesmo dia (cadastro da assinatura secreta do webhook afeta só `mercado-pago-webhook`,
+  função separada da que criou o pagamento). Reabrir chamado de suporte com esses dois IDs se
+  persistir.
+- **Webhook do Mercado Pago cadastrado** (2026-09-24) — URL
+  `https://tmrtyotlvrznavjorkay.supabase.co/functions/v1/mercado-pago-webhook` registrada no
+  Painel do Desenvolvedor (modo de teste), evento "Pagamentos (legacy)", e a assinatura
+  secreta configurada como `MERCADO_PAGO_WEBHOOK_SECRET` na Edge Function (ativa a validação
+  de assinatura no código, antes inativa por falta da secret). Teste de ponta a ponta
+  (simular notificação → aprovação real) não deu pra validar: Pix de teste não pode ser pago
+  por um app de banco real (não usa rede bancária de verdade), e como o webhook nunca confia
+  no corpo da notificação — sempre reconsulta o pagamento real na API deles — simular a
+  notificação só re-testaria nosso código reagindo a um pagamento que segue "pending" pra
+  sempre. Validação completa de aprovação real só é possível em produção.
 - **Domínio próprio** (`vistanostalgica.com.br`) — registro/DNS adiado por decisão do
   usuário, sem pressa. `environment.prod.ts` já está pronto com a URL certa, só falta
   registrar o domínio e apontar o DNS pro Netlify (painel do Netlify → domínio do site →
@@ -41,9 +59,17 @@
   no Sandbox. Migrar exige: trocar o secret `AMBIENTE_MELHOR_ENVIO`, reautorizar o OAuth no
   ambiente de produção, e recadastrar o webhook lá (cadastro é por aplicativo/ambiente, não
   é automático).
-- **Peso/dimensões dos 128 produtos migrados do mock** — colunas ainda em branco, a cotação
-  de frete usa valor genérico (0,3kg, 20×5×25cm) até o admin preencher os reais. Risco de
-  frete cobrado errado (a mais ou a menos) pro cliente.
+- **Peso/dimensões em branco pra todo o catálogo** — a cotação de frete usa valor genérico
+  (0,3kg, 20×5×25cm) até o admin preencher os reais. Risco de frete cobrado errado (a mais ou
+  a menos) pro cliente. Afeta os 139 produtos importados da OZKLO (ver item abaixo) e também
+  valia pros 128 produtos antigos do mock, hoje substituídos por eles (catálogo trocado
+  inteiro em 2026-09-24 — ver "Importação do catálogo da OZKLO"). Confirmado por scraping
+  (2026-09-24): peso/dimensões não são expostos de forma confiável em nenhuma página de
+  produto da OZKLO (o peso só aparece, por acaso, no JSON-LD de *outros* produtos que
+  aparecem no carrossel de relacionados de uma página — nunca no do próprio produto sendo
+  visto; sem endpoint ou atributo sistemático pra raspar). Não dá pra resolver via scraping.
+  Opções: pedir a planilha de peso/dimensões direto pro fornecedor, ou preencher manualmente
+  no admin aos poucos.
 - **Revisão jurídica/contábil da declaração de conteúdo (DC-e)** — usada no lugar de nota
   fiscal nas etiquetas (MVP). DC-e é oficialmente pra envios sem fins comerciais; usar pra
   venda é solução técnica temporária, fora das regras do Melhor Envio. Conversar com contador
@@ -60,6 +86,55 @@
 - **Rodar `docs/supabase/migration-016-cidades-frete-gratis.sql`** no SQL Editor do Supabase
   (produção) — adiciona a coluna `cidades_frete_gratis` em `configuracao_loja`. Sem isso, o
   admin não consegue salvar em `/admin/config` (a nova seção de cidades quebra o update).
+
+## Importação do catálogo da OZKLO (2026-09-24)
+
+- **Loja pivotou pra ser revendedora autorizada da OZKLO** — catálogo antigo (128 produtos
+  mock, temas música/futebol/geek/automotivo/cinema/humor) apagado por decisão do usuário
+  (`migration-024-reset-catalogo-para-ozklo.sql`, junto com pedidos/envios/eventos de
+  webhook — dados de teste). Catálogo atual é 100% produtos da OZKLO.
+- **Scripts em `scripts/importar-ozklo/`**: `scraper.py` (Playwright, baixa imagens + extrai
+  nome/descrição/categoria/preço/variantes de cada produto pra `catalogo.json`) e
+  `importar.py` (upsert numa tabela de staging por `url_origem`, sobe imagens pro Storage,
+  cria produto novo ou atualiza só o que mudou em produto já vinculado — nunca sobrescreve
+  nome/descrição/slug/categoria de um produto já existente). Rodar em `--dry-run` primeiro
+  (default), confirmar com `--confirmar`. `MAPA_CATEGORIAS` no topo do `importar.py` traduz
+  categoria da OZKLO -> slug da nossa: só o que é tema de verdade (Geek/Automotivo/Música via
+  "Bandas"/Personagens) é mapeado — tipo de peça/corte (Unisex/Feminina/Polos/Básicas/
+  Bermudas/Plus Size) não tem equivalente no nosso modelo (tema), fica sem categoria de
+  propósito.
+- **Categoria nova "Personagens"** criada (`migration-022-categoria-personagens.sql`) — a
+  OZKLO tem essa como categoria própria, não existia nenhuma equivalente antes.
+- **Tabela de staging** (`migration-023-staging-produtos-ozklo.sql`,
+  `staging_produtos_ozklo`) — permite reraspagem idempotente (chave estável é `url_origem`,
+  não o nome do produto) e vínculo manual a um produto já existente via SQL
+  (`update staging_produtos_ozklo set produto_id = '...' where url_origem = '...'`) pra
+  evitar duplicata semântica (mesmo produto físico, nome diferente na loja) — ver comentário
+  no topo do `importar.py` pra sintaxe exata.
+- **Extração de dado real** (depois de duas iterações corrigindo bugs — ver histórico do
+  arquivo se precisar entender por quê): usa `window.LS.product`/`window.LS.variants` (estado
+  do tema Tiendanube/Nuvemshop da própria loja, sempre do produto certo da página — os blocos
+  JSON-LD `@type: Product` da página são ambíguos, incluem produtos do carrossel de
+  relacionados, não só o produto atual) pra nome, preço, preço promocional, e variantes com
+  cor/tamanho/estoque/SKU reais (não aproximados). Descrição vem do maior bloco `.user-content`
+  do DOM. Categoria sugerida vem do único bloco JSON-LD `@type: WebPage` (breadcrumb, esse não
+  é ambíguo). `imagens_por_cor` é montado casando `image_url` de cada variante com a foto já
+  baixada da galeria (mesmo arquivo, só muda o protocolo da URL).
+- **Peso/dimensões não capturados** — ver item na seção de bloqueadores acima, não dá pra
+  raspar de forma confiável.
+- **Estoque é o real da OZKLO** no momento da raspagem (campo `stock` de
+  `window.LS.variants`), não um valor aproximado — mas como é o estoque *deles*, pode ficar
+  desatualizado entre raspagens; reraspar e reimportar sincroniza automaticamente (variantes
+  casadas por SKU).
+- **28 produtos ficaram sem categoria** (nenhuma das sugeridas pela OZKLO bateu no
+  `MAPA_CATEGORIAS`) — a maioria legitimamente não tem tema (bermudas, básicas), mas pelo
+  menos 7 têm nome de personagem que a própria OZKLO não categorizou como "Personagens"
+  (`camiseta-street-fighter`, `camiseta-top-gun`, `camiseta-bandeira-brasil`,
+  `camiseta-meninas-super-poderosas`, `camiseta-pantera-cor-de-rosa`,
+  `camiseta-paty-maionese-baby-look`, `camiseta-snoopy-baby-look`) — decisão do usuário foi
+  deixar sem categoria e ajustar manualmente no admin depois, não corrigido automaticamente.
+- **Credencial de admin foi colada em texto puro no chat** durante a importação (pra rodar os
+  scripts) — recomendado trocar a senha de `/admin/login` depois, por precaução.
 
 ## Entrega presencial / frete grátis por cidade
 
