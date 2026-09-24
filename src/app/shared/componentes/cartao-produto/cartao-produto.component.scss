@@ -44,12 +44,14 @@
     transition: opacity 0.25s ease, transform 0.4s ease;
   }
 
-  .cartao-produto:hover .cartao-produto__foto--principal {
+  // Escopado em --tem-hover: sem uma segunda foto pra revelar por trás, desaparecer a
+  // principal no hover só faria a imagem sumir em vez de trocar.
+  .cartao-produto--tem-hover:hover .cartao-produto__foto--principal {
     opacity: 0;
     transform: scale(1.06);
   }
 
-  .cartao-produto:hover .cartao-produto__foto--hover {
+  .cartao-produto--tem-hover:hover .cartao-produto__foto--hover {
     opacity: 1;
     transform: scale(1.06);
   }

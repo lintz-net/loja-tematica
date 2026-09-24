@@ -1,4 +1,4 @@
-<a class="cartao-produto" [routerLink]="['/produto', produto.slug]">
+<a class="cartao-produto" [class.cartao-produto--tem-hover]="temSegundaImagem()" [routerLink]="['/produto', produto.slug]">
   <div class="cartao-produto__imagem">
     <img class="cartao-produto__foto cartao-produto__foto--principal" [src]="imagemPrincipal()" [alt]="produto.nome" loading="lazy" />
     @if (temSegundaImagem()) {
