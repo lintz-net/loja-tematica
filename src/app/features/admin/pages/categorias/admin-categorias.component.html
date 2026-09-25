@@ -1,0 +1,111 @@
+<section class="container-pagina admin-categorias">
+  <header class="admin-categorias__cabecalho">
+    <h1>Categorias</h1>
+  </header>
+
+  @if (erro()) {
+    <p class="admin-categorias__erro">{{ erro() }}</p>
+  }
+
+  <form class="admin-categorias__form" (submit)="$event.preventDefault(); criar()">
+    <input
+      type="text"
+      placeholder="Nome (ex: Personagens)"
+      [value]="novoNome()"
+      (input)="atualizarNovoNome($any($event.target).value)"
+    />
+    <input
+      type="text"
+      placeholder="slug"
+      [value]="novoSlug()"
+      (input)="atualizarNovoSlug($any($event.target).value)"
+    />
+    <input type="color" title="Cor do tema" [value]="novaCorTema()" (input)="novaCorTema.set($any($event.target).value)" />
+    <input
+      type="text"
+      placeholder="Ícone (emoji, ex: 🎭)"
+      maxlength="4"
+      [value]="novoIcone()"
+      (input)="novoIcone.set($any($event.target).value)"
+    />
+    <input
+      type="text"
+      placeholder="Descrição curta"
+      [value]="novaDescricao()"
+      (input)="novaDescricao.set($any($event.target).value)"
+    />
+    <button type="submit" class="botao-primario" [disabled]="!podeCriar()">
+      {{ salvando() && !idEmEdicao() ? 'Criando…' : 'Criar categoria' }}
+    </button>
+  </form>
+  <p class="admin-categorias__ajuda">
+    Só cria a linha na tabela <code>categorias</code> — os textos padrão de página institucional
+    e a paleta de cores por categoria (<code>src/app/temas/temas.scss</code>) continuam sendo
+    ajustados no código, se quiser um visual dedicado pra ela.
+  </p>
+
+  @if (carregando()) {
+    <p>Carregando categorias…</p>
+  } @else if (categorias().length === 0) {
+    <p>Nenhuma categoria cadastrada ainda.</p>
+  } @else {
+    <div class="admin-categorias__tabela-wrap">
+      <table class="admin-categorias__tabela">
+        <thead>
+          <tr>
+            <th>Ícone</th>
+            <th>Nome</th>
+            <th>Slug</th>
+            <th>Cor</th>
+            <th>Descrição</th>
+            <th>Produtos</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (categoria of categorias(); track categoria.id) {
+            @if (idEmEdicao() === categoria.id) {
+              <tr class="admin-categorias__linha-edicao">
+                <td>
+                  <input type="text" maxlength="4" [value]="edIcone()" (input)="edIcone.set($any($event.target).value)" />
+                </td>
+                <td><input type="text" [value]="edNome()" (input)="edNome.set($any($event.target).value)" /></td>
+                <td><input type="text" [value]="edSlug()" (input)="edSlug.set($any($event.target).value)" /></td>
+                <td><input type="color" [value]="edCorTema()" (input)="edCorTema.set($any($event.target).value)" /></td>
+                <td><input type="text" [value]="edDescricao()" (input)="edDescricao.set($any($event.target).value)" /></td>
+                <td>{{ quantidadeProdutos(categoria) }}</td>
+                <td class="admin-categorias__acoes">
+                  <button type="button" class="botao-secundario" [disabled]="salvando()" (click)="salvarEdicao(categoria)">
+                    Salvar
+                  </button>
+                  <button type="button" class="botao-secundario" (click)="cancelarEdicao()">Cancelar</button>
+                </td>
+              </tr>
+            } @else {
+              <tr>
+                <td>{{ categoria.icone }}</td>
+                <td>{{ categoria.nome }}</td>
+                <td>{{ categoria.slug }}</td>
+                <td><span class="admin-categorias__cor" [style.background]="categoria.corTema"></span></td>
+                <td>{{ categoria.descricaoCurta }}</td>
+                <td>{{ quantidadeProdutos(categoria) }}</td>
+                <td class="admin-categorias__acoes">
+                  <button type="button" class="botao-secundario" (click)="iniciarEdicao(categoria)">Editar</button>
+                  <button
+                    type="button"
+                    class="admin-categorias__excluir"
+                    [disabled]="idExcluindo() === categoria.id"
+                    [title]="quantidadeProdutos(categoria) > 0 ? 'Em uso — tire a categoria dos produtos antes' : ''"
+                    (click)="excluir(categoria)"
+                  >
+                    Excluir
+                  </button>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

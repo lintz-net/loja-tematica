@@ -369,6 +369,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'categorias',
+        loadComponent: () =>
+          import('./features/admin/pages/categorias/admin-categorias.component').then(
+            (m) => m.AdminCategoriasComponent
+          ),
+      },
+      {
         path: 'cupons',
         loadComponent: () =>
           import('./features/admin/pages/cupons/admin-cupons.component').then(
