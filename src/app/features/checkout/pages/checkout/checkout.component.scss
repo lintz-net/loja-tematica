@@ -256,8 +256,16 @@
   border-bottom: 1px solid var(--cor-borda);
 }
 
-.checkout__revisao-bloco:last-of-type {
-  border-bottom: none;
+// A regra antiga era `.checkout__revisao-bloco:last-of-type { border-bottom: none }`, mas
+// nunca funcionou: .checkout__navegacao é um <div> irmão logo depois dos blocos de revisão,
+// então "o último div do tipo" na árvore é ele, não o bloco de Pagamento — nenhum elemento
+// batia nesse seletor. A borda de baixo do Pagamento nunca era removida, e ficava colada com
+// a borda de cima de .checkout__navegacao logo abaixo (duas linhas bem próximas, uma de cada
+// bloco). Seletor de irmão adjacente resolve certo, tirando a borda de cima do navegacao em
+// vez de tentar tirar a de baixo do bloco — só se aplica quando a revisão é o passo atual (só
+// aí um .checkout__revisao-bloco fica imediatamente antes de .checkout__navegacao no DOM).
+.checkout__revisao-bloco + .checkout__navegacao {
+  border-top: none;
 }
 
 .checkout__revisao-bloco p {

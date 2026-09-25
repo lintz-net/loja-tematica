@@ -22,6 +22,31 @@
   Cartão de crédito continua fora (opção desabilitada no checkout, só Pix é real) — nunca
   processar número de cartão no nosso backend/frontend, usar o SDK de tokenização do Mercado
   Pago quando for a vez.
+- **Retomada de pagamento Pix sem duplicar pedido, implementada (2026-09-24)** —
+  `/checkout/:codigoRetomada` (`checkout.component.ts`, `modoRetomada`) reaproveita a etapa de
+  revisão do checkout normal em modo leitura (stepper e "Editar" escondidos, frete sintetizado
+  a partir do que já está salvo no pedido) pra deixar o cliente pagar de novo um Pix que
+  falhou/expirou, sem passar de novo por `criarPedido` — só chama `criarPagamentoPix` pro
+  mesmo `codigoPedido`. Link de entrada em `/pedido/:codigo` ("Tentar pagar de novo",
+  `podeRetomarPagamento`) e no botão "Tentar novamente" da tela de erro do checkout. Coberto
+  por `checkout.component.spec.ts` (só a parte de `modoRetomada`, 100%) e
+  `pedido.component.spec.ts` (100%) — primeiros testes unitários do projeto.
+  - **Risco não resolvido, não testável sem API real**: a chamada de retomada usa a mesma
+    `X-Idempotency-Key` (o `codigoPedido`) que a criação original — não temos certeza do que o
+    Mercado Pago devolve se essa chave já corresponder a um pagamento **expirado ou recusado**
+    (o pagamento morto de volta, sem QR novo válido? um pagamento novo de verdade?). Se for o
+    primeiro caso, o cliente fica num loop sem conseguir pagar esse pedido nunca mais. Só dá
+    pra confirmar testando contra a API de verdade (não o sandbox instável) — não implementado
+    nenhuma mitigação client-side por falta dessa confirmação.
+  - **Quando implementar cartão de verdade**: replicar o mesmo padrão (tela de retomada em
+    modo leitura + retry sem recriar pedido) pro cartão — hoje só existe pra Pix.
+- **`pedido.component.ts` usa `route.snapshot.paramMap` (não reativo)** — mesma classe de bug
+  encontrada e corrigida em `checkout.component.ts` (ver item de retomada acima: se o Angular
+  Router reaproveitar a instância do componente ao navegar entre duas URLs `/pedido/:codigo`
+  diferentes sem reload de página inteira, o snapshot fica travado no primeiro pedido
+  carregado). Não corrigido aqui por estar fora do escopo da sessão que achou o problema —
+  replicar o fix (trocar pra `route.paramMap` observable) se isso for confirmado como cenário
+  real de navegação no app.
 - **Instabilidade recorrente `500 internal_error` no Mercado Pago (2026-09-24)** — mesmo
   padrão já visto e reportado no chamado antigo (histórico acima), voltou a acontecer:
   `POST /v1/payments` (Pix) falhou duas vezes seguidas com `{"error":null,"message":

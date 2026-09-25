@@ -297,6 +297,16 @@ export const routes: Routes = [
       ),
   },
   {
+    // Retomar pagamento de um pedido já criado (Pix falhou/expirou) — mesmo componente, cai
+    // direto na etapa de revisão em modo leitura, sem recriar o pedido. Ver modoRetomada em
+    // checkout.component.ts.
+    path: 'checkout/:codigoRetomada',
+    loadComponent: () =>
+      import('./features/checkout/pages/checkout/checkout.component').then(
+        (m) => m.CheckoutComponent
+      ),
+  },
+  {
     path: 'pedido/:codigo',
     loadComponent: () =>
       import('./features/pedido/pages/pedido/pedido.component').then((m) => m.PedidoComponent),

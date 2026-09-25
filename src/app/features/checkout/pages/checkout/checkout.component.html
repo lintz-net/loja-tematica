@@ -1,4 +1,8 @@
-@if (aguardandoPix()) {
+@if (carregandoRetomada()) {
+  <section class="container-pagina checkout-sucesso">
+    <p>Carregando pedido…</p>
+  </section>
+} @else if (aguardandoPix()) {
   <section class="container-pagina checkout-sucesso">
     <span class="rotulo">Pedido {{ numeroPedido() }}</span>
     <h1>Escaneie o QR code pra pagar com Pix</h1>
@@ -45,27 +49,41 @@
   <section class="container-pagina checkout-sucesso">
     <h1>Não foi possível finalizar o pedido</h1>
     <p>{{ erroFinalizacao() }}</p>
-    <button type="button" class="botao-primario" (click)="finalizarPedido()">Tentar novamente</button>
+    <div class="checkout-sucesso__acoes">
+      <button type="button" class="botao-primario" (click)="tentarNovamente()">Tentar novamente</button>
+      @if (numeroPedido()) {
+        <a class="botao-secundario" [routerLink]="['/pedido', numeroPedido()]">Acompanhar pedido</a>
+      }
+    </div>
+    @if (numeroPedido()) {
+      <p class="checkout__ajuda checkout__ajuda--pequena">
+        Também dá pra encontrar esse pedido depois em
+        <a routerLink="/conta">Minha conta → Meus pedidos</a>, entrando com o e-mail
+        {{ email() }}.
+      </p>
+    }
   </section>
 } @else {
   <section class="container-pagina checkout">
-    <h1>Finalizar pedido</h1>
+    <h1>{{ modoRetomada() ? 'Pagamento do pedido ' + numeroPedido() : 'Finalizar pedido' }}</h1>
 
-    <nav class="checkout-passos" aria-label="Etapas da compra">
-      @for (etapa of etapas; track etapa.id; let indice = $index) {
-        <button
-          type="button"
-          class="checkout-passos__item"
-          [class.ativo]="etapa.id === etapaAtual()"
-          [class.concluido]="indice < indiceEtapaAtual()"
-          [disabled]="indice > indiceEtapaAtual()"
-          (click)="irParaEtapa(etapa.id)"
-        >
-          <span class="checkout-passos__numero">{{ indice + 1 }}</span>
-          <span class="checkout-passos__rotulo">{{ etapa.rotulo }}</span>
-        </button>
-      }
-    </nav>
+    @if (!modoRetomada()) {
+      <nav class="checkout-passos" aria-label="Etapas da compra">
+        @for (etapa of etapas; track etapa.id; let indice = $index) {
+          <button
+            type="button"
+            class="checkout-passos__item"
+            [class.ativo]="etapa.id === etapaAtual()"
+            [class.concluido]="indice < indiceEtapaAtual()"
+            [disabled]="indice > indiceEtapaAtual()"
+            (click)="irParaEtapa(etapa.id)"
+          >
+            <span class="checkout-passos__numero">{{ indice + 1 }}</span>
+            <span class="checkout-passos__rotulo">{{ etapa.rotulo }}</span>
+          </button>
+        }
+      </nav>
+    }
 
     <div class="checkout__grade">
       <div class="checkout__formulario">
@@ -371,9 +389,11 @@
             <div class="checkout__revisao-bloco">
               <div class="checkout__revisao-cabecalho">
                 <span class="rotulo">Contato</span>
-                <button type="button" class="checkout__revisao-editar" (click)="irParaEtapa('contato')">
-                  Editar
-                </button>
+                @if (!modoRetomada()) {
+                  <button type="button" class="checkout__revisao-editar" (click)="irParaEtapa('contato')">
+                    Editar
+                  </button>
+                }
               </div>
               <p>{{ nome() }} · {{ email() }} · {{ telefone() }} · {{ documento() }}</p>
             </div>
@@ -381,9 +401,11 @@
             <div class="checkout__revisao-bloco">
               <div class="checkout__revisao-cabecalho">
                 <span class="rotulo">Endereço</span>
-                <button type="button" class="checkout__revisao-editar" (click)="irParaEtapa('endereco')">
-                  Editar
-                </button>
+                @if (!modoRetomada()) {
+                  <button type="button" class="checkout__revisao-editar" (click)="irParaEtapa('endereco')">
+                    Editar
+                  </button>
+                }
               </div>
               <p>
                 {{ endereco() }}, {{ numero() }}
@@ -397,9 +419,11 @@
             <div class="checkout__revisao-bloco">
               <div class="checkout__revisao-cabecalho">
                 <span class="rotulo">Frete</span>
-                <button type="button" class="checkout__revisao-editar" (click)="irParaEtapa('frete')">
-                  Editar
-                </button>
+                @if (!modoRetomada()) {
+                  <button type="button" class="checkout__revisao-editar" (click)="irParaEtapa('frete')">
+                    Editar
+                  </button>
+                }
               </div>
               <p>
                 {{ freteSelecionado()?.nome }} — {{ freteSelecionado()?.prazo }} —
@@ -410,9 +434,11 @@
             <div class="checkout__revisao-bloco">
               <div class="checkout__revisao-cabecalho">
                 <span class="rotulo">Pagamento</span>
-                <button type="button" class="checkout__revisao-editar" (click)="irParaEtapa('pagamento')">
-                  Editar
-                </button>
+                @if (!modoRetomada()) {
+                  <button type="button" class="checkout__revisao-editar" (click)="irParaEtapa('pagamento')">
+                    Editar
+                  </button>
+                }
               </div>
               <p class="checkout__revisao-pagamento">
                 {{ formaPagamentoRotulo() }}
@@ -425,7 +451,7 @@
         }
 
         <div class="checkout__navegacao">
-          @if (indiceEtapaAtual() > 0) {
+          @if (!modoRetomada() && indiceEtapaAtual() > 0) {
             <button type="button" class="botao-secundario" (click)="voltar()">Voltar</button>
           }
           @if (etapaAtual() !== 'revisao') {
@@ -437,9 +463,15 @@
               type="button"
               class="botao-primario"
               [disabled]="finalizandoPedido()"
-              (click)="finalizarPedido()"
+              (click)="modoRetomada() ? tentarNovamente() : finalizarPedido()"
             >
-              {{ finalizandoPedido() ? 'Enviando pedido…' : 'Confirmar e finalizar pedido' }}
+              {{
+                finalizandoPedido()
+                  ? 'Enviando…'
+                  : modoRetomada()
+                    ? 'Pagar agora'
+                    : 'Confirmar e finalizar pedido'
+              }}
             </button>
           }
         </div>
@@ -447,11 +479,20 @@
 
       <div class="checkout__resumo">
         <h3>Resumo do pedido</h3>
-        @for (item of itens(); track item.variante.id) {
-          <div class="checkout__resumo-item">
-            <span>{{ item.produto.nome }} ({{ item.quantidade }}x)</span>
-            <span>R$ {{ ((item.variante.precoOverride ?? item.produto.precoBase) * item.quantidade).toFixed(2) }}</span>
-          </div>
+        @if (modoRetomada()) {
+          @for (item of pedidoRetomado()!.itens; track item.produtoSlug) {
+            <div class="checkout__resumo-item">
+              <span>{{ item.produtoNome }} ({{ item.quantidade }}x)</span>
+              <span>R$ {{ (item.precoUnitario * item.quantidade).toFixed(2) }}</span>
+            </div>
+          }
+        } @else {
+          @for (item of itens(); track item.variante.id) {
+            <div class="checkout__resumo-item">
+              <span>{{ item.produto.nome }} ({{ item.quantidade }}x)</span>
+              <span>R$ {{ ((item.variante.precoOverride ?? item.produto.precoBase) * item.quantidade).toFixed(2) }}</span>
+            </div>
+          }
         }
         <div class="checkout__resumo-linha">
           <span>Subtotal</span>
@@ -471,7 +512,7 @@
         </div>
         @if (valorDesconto() > 0) {
           <div class="checkout__resumo-linha checkout__resumo-linha--desconto">
-            <span>Desconto ({{ cupomAplicado()?.codigo }})</span>
+            <span>Desconto ({{ modoRetomada() ? pedidoRetomado()?.cupomCodigo : cupomAplicado()?.codigo }})</span>
             <span>- R$ {{ valorDesconto().toFixed(2) }}</span>
           </div>
         }

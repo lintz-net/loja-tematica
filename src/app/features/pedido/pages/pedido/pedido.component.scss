@@ -111,6 +111,13 @@
   font-weight: 600;
 }
 
+.pedido__pagamento {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
 .pedido__total {
   display: flex;
   justify-content: space-between;

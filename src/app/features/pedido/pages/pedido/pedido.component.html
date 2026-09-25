@@ -31,6 +31,22 @@
       }
     </ol>
 
+    @if (podeRetomarPagamento()) {
+      <div class="pedido__secao pedido__pagamento">
+        <h2>Pagamento</h2>
+        <p class="pedido__envio-aviso">
+          {{
+            pedido()!.statusPagamento === 'recusado'
+              ? 'Pagamento recusado.'
+              : 'Ainda não foi possível confirmar o pagamento desse pedido.'
+          }}
+        </p>
+        <a class="botao-primario" [routerLink]="['/checkout', pedido()!.codigo]">
+          Tentar pagar de novo
+        </a>
+      </div>
+    }
+
     @if (envio(); as envio) {
       <div class="pedido__secao">
         <h2>Envio</h2>

@@ -1,12 +1,13 @@
 import { Component, computed, inject, OnDestroy, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CarrinhoService } from '../../../../core/servicos/carrinho.service';
 import { PedidoService } from '../../../../core/servicos/pedido.service';
 import { FreteService, OpcaoFrete } from '../../../../core/servicos/frete.service';
 import { CepService } from '../../../../core/servicos/cep.service';
 import { CupomService, CupomValido } from '../../../../core/servicos/cupom.service';
 import { ConfiguracaoLojaService } from '../../../../core/servicos/configuracao-loja.service';
-import { ItemPedido } from '../../../../core/modelos/pedido.model';
+import { ItemPedido, Pedido } from '../../../../core/modelos/pedido.model';
 import { imagemDaVariante } from '../../../../core/utilitarios/imagem-produto.util';
 import { mascararCep, mascararDocumento, mascararTelefone } from '../../../../core/utilitarios/mascara.util';
 import { normalizarTexto } from '../../../../core/utilitarios/texto.util';
@@ -49,9 +50,29 @@ export class CheckoutComponent implements OnDestroy {
   private readonly cupomService = inject(CupomService);
   private readonly configuracaoLojaService = inject(ConfiguracaoLojaService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
+  /** Retomada de pagamento de um pedido já criado (Pix falhou/expirou) — chegou aqui via
+   * /checkout/:codigoRetomada (link de "Tentar novamente"). Pula direto pra etapa de revisão
+   * em modo leitura (sem stepper, sem "Editar"): o pedido já existe no banco, então o botão
+   * final chama só `tentarNovamente()` (gera Pix de novo pro MESMO pedido), nunca
+   * `finalizarPedido()` — que criaria um pedido novo vazio, já que o carrinho real está
+   * vazio nesse fluxo. */
+  readonly modoRetomada = signal(false);
+  readonly carregandoRetomada = signal(false);
+  readonly pedidoRetomado = signal<Pedido | null>(null);
 
   readonly itens = this.carrinhoService.itensCarrinho;
-  readonly subtotal = this.carrinhoService.valorTotal;
+
+  private readonly subtotalRetomada = computed(() => {
+    const pedido = this.pedidoRetomado();
+    if (!pedido) return 0;
+    return pedido.valorTotal - pedido.valorFrete + (pedido.valorDesconto ?? 0);
+  });
+
+  readonly subtotal = computed(() =>
+    this.modoRetomada() ? this.subtotalRetomada() : this.carrinhoService.valorTotal()
+  );
 
   readonly etapas = ETAPAS;
 
@@ -171,7 +192,11 @@ export class CheckoutComponent implements OnDestroy {
   readonly cupomAplicado = signal<CupomValido | null>(null);
   readonly validandoCupom = signal(false);
   readonly erroCupom = signal<string | null>(null);
-  readonly valorDesconto = computed(() => this.cupomAplicado()?.desconto ?? 0);
+  readonly valorDesconto = computed(() =>
+    this.modoRetomada()
+      ? (this.pedidoRetomado()?.valorDesconto ?? 0)
+      : (this.cupomAplicado()?.desconto ?? 0)
+  );
 
   readonly valorTotal = computed(() =>
     Math.max(0, this.subtotal() + this.valorFrete() - this.valorDesconto())
@@ -195,6 +220,93 @@ export class CheckoutComponent implements OnDestroy {
     'pendente'
   );
   private polling: ReturnType<typeof setInterval> | null = null;
+
+  constructor() {
+    // Observable, não snapshot: se o usuário navegar de /checkout/A pra /checkout/B sem
+    // reload de página inteira (mesma config de rota, só o parâmetro muda), o Angular Router
+    // reaproveita esta MESMA instância do componente — um snapshot lido só na construção
+    // ficaria travado no pedido errado (o primeiro que carregou). takeUntilDestroyed evita
+    // vazar a subscription quando o componente for destruído de verdade.
+    this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const codigoRetomada = params.get('codigoRetomada');
+      if (codigoRetomada) {
+        this.iniciarRetomada(codigoRetomada);
+      }
+    });
+  }
+
+  private iniciarRetomada(codigoRetomada: string): void {
+    this.modoRetomada.set(true);
+    this.carregandoRetomada.set(true);
+    this.pararPolling(); // corta polling de uma retomada anterior, se a instância foi reaproveitada
+
+    this.pedidoService.obterPorCodigo(codigoRetomada).subscribe({
+      next: (pedido) => {
+        // Nada pra retomar: pedido não existe, já foi pago/cancelado, ou é de cartão (só Pix
+        // tem esse fluxo hoje) — manda pra tela de acompanhamento em vez de mostrar um
+        // formulário de pagamento que não serve pra nada nesses casos.
+        const podeRetomar =
+          pedido &&
+          pedido.formaPagamento === 'pix' &&
+          (pedido.statusPagamento === 'pendente' || pedido.statusPagamento === 'recusado');
+
+        if (!podeRetomar) {
+          this.router.navigate(['/pedido', codigoRetomada]);
+          return;
+        }
+
+        this.pedidoRetomado.set(pedido);
+        this.numeroPedido.set(pedido.codigo);
+        this.valorTotalFinalizado.set(pedido.valorTotal);
+
+        this.nome.set(pedido.nomeCliente);
+        this.email.set(pedido.emailCliente);
+        this.telefone.set(pedido.telefoneCliente);
+        this.documento.set(pedido.documentoCliente ?? '');
+        this.endereco.set(pedido.endereco.endereco);
+        this.numero.set(pedido.endereco.numero);
+        this.complemento.set(pedido.endereco.complemento ?? '');
+        this.bairro.set(pedido.endereco.bairro);
+        this.cidade.set(pedido.endereco.cidade);
+        this.uf.set(pedido.endereco.uf);
+        this.cep.set(pedido.endereco.cep);
+        this.formaPagamento.set('pix');
+
+        // Sintetiza uma única "opção de frete" com os dados já gravados no pedido — assim o
+        // computed `freteSelecionado`/`valorFrete` (e o bloco de revisão, sem edição nenhuma
+        // aqui) resolvem sozinhos, sem precisar de uma cotação nova nem de duplicar template.
+        // Sem transportadora/serviço (ex.: entrega local grátis, sem freteServicoId salvo) —
+        // rótulo genérico em vez de mostrar um "—" solto dos dois lados.
+        this.opcoesFrete.set([
+          {
+            id: 'retomada',
+            nome:
+              pedido.freteTransportadora && pedido.freteServicoNome
+                ? `${pedido.freteTransportadora} — ${pedido.freteServicoNome}`
+                : 'Entrega combinada',
+            prazo: pedido.fretePrazoDias ? `${pedido.fretePrazoDias} dias úteis` : '',
+            preco: pedido.valorFrete,
+            transportadora: pedido.freteTransportadora ?? '',
+            servico: pedido.freteServicoNome ?? '',
+            prazoDias: pedido.fretePrazoDias ?? 0,
+          },
+        ]);
+        this.freteSelecionadoId.set('retomada');
+
+        this.etapaAtual.set('revisao');
+        this.carregandoRetomada.set(false);
+
+        // O pagamento pode ter sido aprovado (ou recusado de novo) por trás enquanto o
+        // cliente só estava olhando esta tela, antes de clicar em "Pagar agora" — sem isso,
+        // um "aprovado" silencioso deixaria a tela presa na revisão pedindo pra pagar de novo
+        // um pedido que já foi pago. iniciarPollingPagamento já lida com o caso 'aprovado'
+        // (troca pra tela de sucesso sozinha); outros status só param o polling, mesma
+        // limitação que a tela de "aguardando Pix" normal já tem.
+        this.iniciarPollingPagamento(pedido.codigo);
+      },
+      error: () => this.router.navigate(['/pedido', codigoRetomada]),
+    });
+  }
 
   atualizarNome(valor: string): void {
     this.nome.set(valor);
@@ -524,10 +636,24 @@ export class CheckoutComponent implements OnDestroy {
         error: () => {
           this.finalizandoPedido.set(false);
           this.erroFinalizacao.set(
-            'Pedido registrado, mas não foi possível gerar o Pix agora. Acompanhe o pedido em "Meus pedidos" pra tentar de novo.'
+            'Pedido registrado, mas não foi possível gerar o Pix agora. Clique em "Tentar novamente" pra gerar o Pix desse mesmo pedido.'
           );
         },
       });
+  }
+
+  /** Botão "Tentar novamente" da tela de erro — se o pedido já foi criado (só a geração do
+   * Pix falhou), tenta gerar o Pix de novo pro MESMO pedido, sem recriar nada. O carrinho já
+   * foi limpo nesse ponto, então chamar finalizarPedido() de novo criaria um pedido vazio. Só
+   * cai em finalizarPedido() quando o pedido em si não chegou a ser criado. */
+  tentarNovamente(): void {
+    if (this.numeroPedido()) {
+      this.erroFinalizacao.set(null);
+      this.finalizandoPedido.set(true);
+      this.gerarPagamentoPix(this.numeroPedido(), this.valorTotalFinalizado());
+      return;
+    }
+    this.finalizarPedido();
   }
 
   private iniciarPollingPagamento(codigoPedido: string): void {
