@@ -16,6 +16,37 @@
   margin-bottom: 16px;
 }
 
+.admin-produtos__filtros {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.admin-produtos__filtro {
+  background: var(--cor-fundo-alt);
+  border: 1px solid var(--cor-borda);
+  color: var(--cor-texto-suave);
+  padding: 8px 14px;
+  border-radius: var(--raio-padrao);
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  &.ativo {
+    background: var(--cor-primaria);
+    color: var(--cor-primaria-contraste);
+    border-color: var(--cor-primaria);
+  }
+}
+
+.admin-produtos__select-categoria {
+  padding: 6px 8px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-padrao);
+  font-size: 0.85rem;
+  color: var(--cor-erro);
+  white-space: normal;
+}
+
 .admin-produtos__tabela-wrap {
   overflow-x: auto;
 }
