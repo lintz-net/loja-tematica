@@ -43,3 +43,23 @@ export function mascararDocumento(valor: string): string {
     .replace(/(\d{4})(\d{1,2})$/, '$1-$2')
     .slice(0, 18);
 }
+
+/** Agrupa de 4 em 4 dígitos ("0000 0000 0000 0000") — cobre bandeiras de 16 dígitos (a
+ * maioria) e ainda fica legível pras de 15 (Amex, só não bate no agrupamento 4-6-5 oficial
+ * delas) — suficiente pra digitação, o Mercado Pago valida o número de verdade. */
+export function mascararNumeroCartao(valor: string): string {
+  const digitos = valor.replace(/\D/g, '').slice(0, 19);
+  return digitos.replace(/(\d{4})(?=\d)/g, '$1 ');
+}
+
+/** MM/AA — barra entra sozinha depois do 2º dígito. */
+export function mascararValidadeCartao(valor: string): string {
+  const digitos = valor.replace(/\D/g, '').slice(0, 4);
+  if (digitos.length <= 2) return digitos;
+  return `${digitos.slice(0, 2)}/${digitos.slice(2)}`;
+}
+
+/** CVV — só dígitos, até 4 (Amex usa 4; as demais bandeiras usam 3). */
+export function mascararCvv(valor: string): string {
+  return valor.replace(/\D/g, '').slice(0, 4);
+}

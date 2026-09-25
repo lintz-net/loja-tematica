@@ -110,6 +110,15 @@
   font-size: 0.78rem;
 }
 
+// A margem negativa de .checkout__ajuda--pequena pressupõe que o elemento anterior é sempre
+// um input puro (com margin-bottom de 12px a compensar) — quebra quando vem depois de um
+// .checkout__linha que pode ter mensagem de erro no meio (o texto de erro fica sem esse
+// espaço reservado, e sobrepõe o parágrafo seguinte). Este aqui vem logo depois do bloco de
+// validade/CVV, então usa margem positiva normal em vez de tentar colar no campo anterior.
+.checkout__ajuda--cartao {
+  margin-top: 8px;
+}
+
 .checkout__formulario input {
   width: 100%;
   background: var(--cor-fundo);
@@ -137,8 +146,28 @@
   flex: 0 0 64px;
 }
 
-.checkout__campo-cvv {
+// Wrapper de um campo + sua mensagem de erro embaixo, quando o campo mora dentro de um
+// .checkout__linha (senão o <p> de erro vira um terceiro item da linha, em vez de ficar
+// embaixo do input a que se refere).
+.checkout__campo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.checkout__campo--cvv {
   flex: 0 0 90px;
+}
+
+.checkout__erro-campo {
+  color: var(--cor-erro);
+  font-size: 0.78rem;
+  margin: 4px 0 0;
+}
+
+.checkout__campo--invalido {
+  border-color: var(--cor-erro) !important;
 }
 
 .checkout__cartao {

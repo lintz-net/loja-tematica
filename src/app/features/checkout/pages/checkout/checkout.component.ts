@@ -11,7 +11,19 @@ import { CupomService, CupomValido } from '../../../../core/servicos/cupom.servi
 import { ConfiguracaoLojaService } from '../../../../core/servicos/configuracao-loja.service';
 import { ItemPedido, Pedido } from '../../../../core/modelos/pedido.model';
 import { imagemDaVariante } from '../../../../core/utilitarios/imagem-produto.util';
-import { mascararCep, mascararDocumento, mascararTelefone } from '../../../../core/utilitarios/mascara.util';
+import {
+  mascararCep,
+  mascararCvv,
+  mascararDocumento,
+  mascararNumeroCartao,
+  mascararTelefone,
+  mascararValidadeCartao,
+} from '../../../../core/utilitarios/mascara.util';
+import {
+  validarDocumento,
+  validarNumeroCartao,
+  validarValidadeCartao,
+} from '../../../../core/utilitarios/validacao.util';
 import { normalizarTexto } from '../../../../core/utilitarios/texto.util';
 import { LOGOS_CARTAO } from '../../../../shared/dados/logos-pagamento';
 import { obterLogoTransportadora } from '../../../../shared/dados/logos-transportadora';
@@ -90,12 +102,18 @@ export class CheckoutComponent implements OnDestroy {
   /** CPF ou CNPJ — exigido pelo Melhor Envio como documento do destinatário na compra da
    * etiqueta (fora daqui, não é usado pra nada no checkout em si). */
   readonly documento = signal('');
+  readonly documentoTocado = signal(false);
+  readonly erroDocumento = computed(() => {
+    if (!this.documentoTocado()) return null;
+    if (!this.documento().trim()) return 'Informe o CPF ou CNPJ.';
+    return validarDocumento(this.documento()) ? null : 'CPF/CNPJ inválido — confira os dígitos.';
+  });
   readonly contatoValido = computed(
     () =>
       this.nome().trim().length > 1 &&
       /\S+@\S+\.\S+/.test(this.email()) &&
       this.telefone().replace(/\D/g, '').length >= 8 &&
-      [11, 14].includes(this.documento().replace(/\D/g, '').length)
+      validarDocumento(this.documento())
   );
 
   // Passo 5 — endereço de entrega
@@ -157,14 +175,57 @@ export class CheckoutComponent implements OnDestroy {
   readonly cpfCnpjCartao = signal('');
   readonly parcelas = signal(1);
 
+  // "Tocado" (blur) por campo — mensagem de erro só aparece depois que o cliente saiu do
+  // campo, nunca enquanto ele ainda está no meio de digitar (senão fica irritante).
+  readonly numeroCartaoTocado = signal(false);
+  readonly nomeCartaoTocado = signal(false);
+  readonly validadeCartaoTocada = signal(false);
+  readonly cvvCartaoTocado = signal(false);
+  readonly cpfCnpjCartaoTocado = signal(false);
+
+  readonly erroNumeroCartao = computed(() => {
+    if (!this.numeroCartaoTocado()) return null;
+    if (!this.numeroCartao().trim()) return 'Informe o número do cartão.';
+    return validarNumeroCartao(this.numeroCartao()) ? null : 'Número de cartão inválido — confira os dígitos.';
+  });
+
+  readonly erroNomeCartao = computed(() => {
+    if (!this.nomeCartaoTocado()) return null;
+    return this.nomeCartao().trim().length > 1 ? null : 'Informe o nome impresso no cartão.';
+  });
+
+  readonly erroValidadeCartao = computed(() => {
+    if (!this.validadeCartaoTocada()) return null;
+    const valor = this.validadeCartao().trim();
+    if (!valor) return 'Informe a validade.';
+    if (!/^\d{2}\/\d{2}$/.test(valor)) return 'Validade incompleta (MM/AA).';
+    return validarValidadeCartao(valor) ? null : 'Cartão vencido ou validade inválida.';
+  });
+
+  readonly erroCvvCartao = computed(() => {
+    if (!this.cvvCartaoTocado()) return null;
+    const valor = this.cvvCartao().trim();
+    if (!valor) return 'Informe o CVV.';
+    return /^\d{3,4}$/.test(valor) ? null : 'CVV inválido.';
+  });
+
+  readonly erroCpfCnpjCartao = computed(() => {
+    if (!this.cpfCnpjCartaoTocado()) return null;
+    if (!this.cpfCnpjCartao().trim()) return 'Informe o CPF ou CNPJ do portador.';
+    return validarDocumento(this.cpfCnpjCartao()) ? null : 'CPF/CNPJ inválido — confira os dígitos.';
+  });
+
+  /** Validação de verdade, não só formato: Luhn no número do cartão, MM/AA não vencido, e
+   * dígito verificador real do CPF/CNPJ (ver validacao.util.ts) — pega erro de digitação que
+   * só checar tamanho/regex deixaria passar até chegar na recusa do Mercado Pago. */
   readonly pagamentoValido = computed(() => {
     if (this.formaPagamento() !== 'cartao') return true;
     return (
-      this.numeroCartao().replace(/\D/g, '').length >= 12 &&
+      validarNumeroCartao(this.numeroCartao()) &&
       this.nomeCartao().trim().length > 1 &&
-      /^\d{2}\/\d{2}$/.test(this.validadeCartao().trim()) &&
+      validarValidadeCartao(this.validadeCartao()) &&
       /^\d{3,4}$/.test(this.cvvCartao().trim()) &&
-      this.cpfCnpjCartao().replace(/\D/g, '').length >= 11
+      validarDocumento(this.cpfCnpjCartao())
     );
   });
 
@@ -303,6 +364,17 @@ export class CheckoutComponent implements OnDestroy {
     });
   }
 
+  /** Bloqueia letra/símbolo já na digitação, pros campos numéricos (CEP, telefone, CPF/CNPJ,
+   * cartão) — a máscara já limpa o que não é dígito ao processar o valor, mas isso só
+   * acontece DEPOIS do caractere entrar no campo; bloquear no keydown evita a letra aparecer
+   * e sumir na hora seguinte, mais sólido visualmente. Deixa passar teclas de controle
+   * (Backspace, setas, Tab, Ctrl+C/V etc.) — só barra caractere de verdade que não é dígito. */
+  bloquearNaoNumerico(evento: KeyboardEvent): void {
+    if (evento.ctrlKey || evento.metaKey || evento.altKey) return;
+    if (evento.key.length > 1) return; // teclas de controle (Backspace, ArrowLeft, Tab...)
+    if (!/\d/.test(evento.key)) evento.preventDefault();
+  }
+
   atualizarNome(valor: string): void {
     this.nome.set(valor);
   }
@@ -371,23 +443,25 @@ export class CheckoutComponent implements OnDestroy {
   }
 
   atualizarNumeroCartao(valor: string): void {
-    this.numeroCartao.set(valor);
+    this.numeroCartao.set(mascararNumeroCartao(valor));
   }
 
   atualizarNomeCartao(valor: string): void {
-    this.nomeCartao.set(valor);
+    // Maiúsculas porque é assim que o cartão vem impresso, e é o que o Mercado Pago espera
+    // no cardholderName — evita rejeição silenciosa por diferença de caixa.
+    this.nomeCartao.set(valor.toUpperCase());
   }
 
   atualizarValidadeCartao(valor: string): void {
-    this.validadeCartao.set(valor);
+    this.validadeCartao.set(mascararValidadeCartao(valor));
   }
 
   atualizarCvvCartao(valor: string): void {
-    this.cvvCartao.set(valor);
+    this.cvvCartao.set(mascararCvv(valor));
   }
 
   atualizarCpfCnpjCartao(valor: string): void {
-    this.cpfCnpjCartao.set(valor);
+    this.cpfCnpjCartao.set(mascararDocumento(valor));
   }
 
   atualizarCodigoCupom(valor: string): void {

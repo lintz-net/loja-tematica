@@ -118,13 +118,20 @@
             />
             <input
               type="text"
+              inputmode="numeric"
               name="documento"
               autocomplete="off"
               placeholder="CPF ou CNPJ"
               maxlength="18"
               [value]="documento()"
+              [class.checkout__campo--invalido]="erroDocumento()"
               (input)="atualizarDocumento($any($event.target).value)"
+              (keydown)="bloquearNaoNumerico($event)"
+              (blur)="documentoTocado.set(true)"
             />
+            @if (erroDocumento()) {
+              <p class="checkout__erro-campo">{{ erroDocumento() }}</p>
+            }
             <p class="checkout__ajuda checkout__ajuda--pequena">
               Necessário pra emissão da etiqueta de envio.
             </p>
@@ -142,6 +149,7 @@
               maxlength="9"
               [value]="cep()"
               (input)="atualizarCep($any($event.target).value)"
+              (keydown)="bloquearNaoNumerico($event)"
             />
             @if (buscandoCep()) {
               <p class="checkout__ajuda checkout__ajuda--pequena">Buscando endereço…</p>
@@ -305,52 +313,88 @@
                   name="cc-number"
                   autocomplete="cc-number"
                   placeholder="Número do cartão"
+                  maxlength="23"
                   [value]="numeroCartao()"
+                  [class.checkout__campo--invalido]="erroNumeroCartao()"
                   (input)="atualizarNumeroCartao($any($event.target).value)"
+                  (keydown)="bloquearNaoNumerico($event)"
+                  (blur)="numeroCartaoTocado.set(true)"
                 />
+                @if (erroNumeroCartao()) {
+                  <p class="checkout__erro-campo">{{ erroNumeroCartao() }}</p>
+                }
                 <input
                   type="text"
                   name="cc-name"
                   autocomplete="cc-name"
                   placeholder="Nome impresso no cartão"
                   [value]="nomeCartao()"
+                  [class.checkout__campo--invalido]="erroNomeCartao()"
                   (input)="atualizarNomeCartao($any($event.target).value)"
+                  (blur)="nomeCartaoTocado.set(true)"
                 />
+                @if (erroNomeCartao()) {
+                  <p class="checkout__erro-campo">{{ erroNomeCartao() }}</p>
+                }
                 <div class="checkout__linha">
-                  <input
-                    type="text"
-                    name="cc-exp"
-                    autocomplete="cc-exp"
-                    placeholder="Vencimento (MM/AA)"
-                    maxlength="5"
-                    [value]="validadeCartao()"
-                    (input)="atualizarValidadeCartao($any($event.target).value)"
-                  />
-                  <input
-                    type="text"
-                    inputmode="numeric"
-                    name="cc-csc"
-                    autocomplete="cc-csc"
-                    placeholder="CVV"
-                    maxlength="4"
-                    class="checkout__campo-cvv"
-                    [value]="cvvCartao()"
-                    (input)="atualizarCvvCartao($any($event.target).value)"
-                  />
+                  <div class="checkout__campo">
+                    <input
+                      type="text"
+                      inputmode="numeric"
+                      name="cc-exp"
+                      autocomplete="cc-exp"
+                      placeholder="Vencimento (MM/AA)"
+                      maxlength="5"
+                      [value]="validadeCartao()"
+                      [class.checkout__campo--invalido]="erroValidadeCartao()"
+                      (input)="atualizarValidadeCartao($any($event.target).value)"
+                      (keydown)="bloquearNaoNumerico($event)"
+                      (blur)="validadeCartaoTocada.set(true)"
+                    />
+                    @if (erroValidadeCartao()) {
+                      <p class="checkout__erro-campo">{{ erroValidadeCartao() }}</p>
+                    }
+                  </div>
+                  <div class="checkout__campo checkout__campo--cvv">
+                    <input
+                      type="text"
+                      inputmode="numeric"
+                      name="cc-csc"
+                      autocomplete="cc-csc"
+                      placeholder="CVV"
+                      maxlength="4"
+                      [value]="cvvCartao()"
+                      [class.checkout__campo--invalido]="erroCvvCartao()"
+                      (input)="atualizarCvvCartao($any($event.target).value)"
+                      (keydown)="bloquearNaoNumerico($event)"
+                      (blur)="cvvCartaoTocado.set(true)"
+                    />
+                    @if (erroCvvCartao()) {
+                      <p class="checkout__erro-campo">{{ erroCvvCartao() }}</p>
+                    }
+                  </div>
                 </div>
 
-                <p class="checkout__ajuda checkout__ajuda--pequena">
+                <p class="checkout__ajuda checkout__ajuda--pequena checkout__ajuda--cartao">
                   À vista, sem juros — R$ {{ valorTotal().toFixed(2) }}.
                 </p>
 
                 <input
                   type="text"
+                  inputmode="numeric"
                   name="documento-cartao"
                   autocomplete="off"
                   placeholder="CPF ou CNPJ do portador do cartão"
+                  maxlength="18"
                   [value]="cpfCnpjCartao()"
+                  [class.checkout__campo--invalido]="erroCpfCnpjCartao()"
                   (input)="atualizarCpfCnpjCartao($any($event.target).value)"
+                  (keydown)="bloquearNaoNumerico($event)"
+                  (blur)="cpfCnpjCartaoTocado.set(true)"
                 />
+                @if (erroCpfCnpjCartao()) {
+                  <p class="checkout__erro-campo">{{ erroCpfCnpjCartao() }}</p>
+                }
 
                 <div class="checkout__bandeiras">
                   <span class="rotulo">Cartões aceitos</span>
