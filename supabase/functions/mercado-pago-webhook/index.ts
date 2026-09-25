@@ -6,6 +6,7 @@
 
 import {
   STATUS_MP_PARA_STATUS_PAGAMENTO,
+  avancarStatusParaConfirmado,
   chamarMercadoPago,
   corsHeaders,
   restSupabase,
@@ -134,6 +135,9 @@ Deno.serve(async (req: Request) => {
         body: JSON.stringify({ status_pagamento: statusPagamento }),
       }
     );
+    if (statusPagamento === 'aprovado') {
+      await avancarStatusParaConfirmado(pagamento.external_reference);
+    }
   }
 
   return respostaOk();

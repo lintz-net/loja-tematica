@@ -51,6 +51,20 @@ export const STATUS_MP_PARA_STATUS_PAGAMENTO: Record<string, string> = {
   pending: 'pendente',
 };
 
+/** Avança `pedidos.status` (logística: recebido/confirmado/enviado/entregue — independente
+ * de `status_pagamento`) de 'recebido' pra 'confirmado' quando o pagamento é aprovado. O
+ * filtro `status=eq.recebido` garante que só avança, nunca regride: se o admin já tiver
+ * movido o pedido pra 'enviado'/'entregue' manualmente antes do pagamento confirmar (raro,
+ * mas possível), essa chamada não bate no filtro e não faz nada. Chamado tanto pelo webhook
+ * do Pix (assíncrono) quanto pela resposta síncrona do cartão. */
+export async function avancarStatusParaConfirmado(codigoPedido: string): Promise<void> {
+  await restSupabase(`pedidos?codigo=eq.${encodeURIComponent(codigoPedido)}&status=eq.recebido`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({ status: 'confirmado' }),
+  });
+}
+
 export function corsHeaders(): Record<string, string> {
   return {
     'Access-Control-Allow-Origin': '*',

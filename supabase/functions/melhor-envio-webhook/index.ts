@@ -106,12 +106,44 @@ Deno.serve(async (req: Request) => {
     };
     if (data.tracking) atualizacao['codigo_rastreio'] = data.tracking;
 
-    await restSupabase(`envios?id_melhor_envio=eq.${data.id}`, {
-      method: 'PATCH',
-      headers: { Prefer: 'return=minimal' },
-      body: JSON.stringify(atualizacao),
-    });
+    // `return=representation` pra já vir com o codigo_pedido de volta — evita uma segunda
+    // consulta só pra descobrir qual pedido avançar de status logo abaixo.
+    const envioAtualizado = await restSupabase<Array<{ codigo_pedido: string }>>(
+      `envios?id_melhor_envio=eq.${data.id}`,
+      {
+        method: 'PATCH',
+        headers: { Prefer: 'return=representation' },
+        body: JSON.stringify(atualizacao),
+      }
+    );
+
+    const codigoPedido = envioAtualizado?.[0]?.codigo_pedido;
+    if (codigoPedido) {
+      if (statusEnvio === 'postado') {
+        await avancarStatusPedido(codigoPedido, 'enviado', ['recebido', 'confirmado']);
+      } else if (statusEnvio === 'entregue') {
+        await avancarStatusPedido(codigoPedido, 'entregue', ['recebido', 'confirmado', 'enviado']);
+      }
+    }
   }
 
   return respostaOk();
 });
+
+/** Avança `pedidos.status` (logística) só pra frente — o filtro `status=in.(...)` garante que
+ * nunca regride um status que já esteja mais adiantado (ex.: admin já marcou 'entregue' na
+ * mão antes do webhook confirmar 'postado', por qualquer motivo — não desfaz isso). */
+async function avancarStatusPedido(
+  codigoPedido: string,
+  novoStatus: string,
+  apartirDe: string[]
+): Promise<void> {
+  await restSupabase(
+    `pedidos?codigo=eq.${encodeURIComponent(codigoPedido)}&status=in.(${apartirDe.join(',')})`,
+    {
+      method: 'PATCH',
+      headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({ status: novoStatus }),
+    }
+  );
+}

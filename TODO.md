@@ -2,6 +2,21 @@
 
 ## 🔴 Bloqueadores pra produção
 
+- **Status do pedido (logística) automatizado, implementado em 2026-09-25** —
+  `pedidos.status` (recebido/confirmado/enviado/entregue, mostrado na barra de cima de
+  `/pedido/:codigo`) antes só mudava manualmente pelo admin em `/admin/pedidos`. Agora avança
+  sozinho em três pontos, sempre só pra frente (nunca regride um status que já esteja mais
+  adiantado — cada chamada usa um filtro `status=in.(...)` restrito aos status anteriores):
+  - Pagamento aprovado (Pix via `mercado-pago-webhook`, cartão via resposta síncrona de
+    `mercado-pago-criar-pagamento-cartao`) → `recebido` vira `confirmado`
+    (`avancarStatusParaConfirmado`, `_shared/mercado-pago.ts`, compartilhado pelas duas).
+  - Evento `order.posted` do Melhor Envio → `enviado`.
+  - Evento `order.delivered` do Melhor Envio → `entregue`.
+  Testado ponta a ponta: pagamento por cartão aprovado (titular APRO) fez o pedido
+  `VT-H8SOSZ` aparecer como "Confirmado" em `/pedido/:codigo` sem nenhuma ação manual.
+  Envio (`posted`/`delivered`) não testado ainda contra webhook real do Melhor Envio nesta
+  sessão — a lógica é nova, testar na próxima etiqueta comprada de verdade.
+
 - ~~**Pagamento real (Mercado Pago)**~~ — **resolvido em 2026-09-22**. Backend completo:
   migration (`status_pagamento`, `eventos_webhook_mercado_pago`), Edge Functions
   `mercado-pago-criar-pagamento`/`mercado-pago-webhook`, checkout com tela de QR code Pix +
