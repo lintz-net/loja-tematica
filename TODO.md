@@ -14,8 +14,12 @@
   - Evento `order.delivered` do Melhor Envio → `entregue`.
   Testado ponta a ponta: pagamento por cartão aprovado (titular APRO) fez o pedido
   `VT-H8SOSZ` aparecer como "Confirmado" em `/pedido/:codigo` sem nenhuma ação manual.
-  Envio (`posted`/`delivered`) não testado ainda contra webhook real do Melhor Envio nesta
-  sessão — a lógica é nova, testar na próxima etiqueta comprada de verdade.
+  **Falta testar a parte de envio** (`posted`/`delivered`) — a lógica é nova, precisa validar
+  contra o sandbox de verdade. Dá pra testar: comprar uma etiqueta de teste pra algum pedido
+  em `/admin/pedidos` (sandbox, sem custo real) e acompanhar `/pedido/:codigo` — o sandbox já
+  simulou esses eventos de verdade antes neste projeto (`created`/`released`/`ready-to-print`/
+  `posted`/`delivered` já dispararam em investigação anterior, ver nota mais abaixo sobre
+  `order.received`), mas não é instantâneo como o pagamento, leva um tempo até progredir.
 
 - ~~**Pagamento real (Mercado Pago)**~~ — **resolvido em 2026-09-22**. Backend completo:
   migration (`status_pagamento`, `eventos_webhook_mercado_pago`), Edge Functions
