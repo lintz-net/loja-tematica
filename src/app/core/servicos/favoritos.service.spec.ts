@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, PLATFORM_ID } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { FavoritosService } from './favoritos.service';
@@ -141,6 +141,31 @@ describe('FavoritosService', () => {
 
       expect(service.quantidadeFavoritos()).toBe(0);
       expect(catalogoRepositorioSpy.obterProdutos).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('SSR (servidor)', () => {
+    it('não toca no localStorage ao restaurar nem ao salvar quando não está no browser', () => {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        imports: [HostVazioComponent],
+        providers: [
+          { provide: CatalogoRepositorio, useValue: catalogoRepositorioSpy },
+          { provide: PLATFORM_ID, useValue: 'server' },
+        ],
+      });
+      const setItemSpy = spyOn(Storage.prototype, 'setItem').and.callThrough();
+      const f = TestBed.createComponent(HostVazioComponent);
+      const s = TestBed.inject(FavoritosService);
+      f.detectChanges();
+
+      expect(catalogoRepositorioSpy.obterProdutos).not.toHaveBeenCalled();
+      expect(s.quantidadeFavoritos()).toBe(0);
+
+      s.alternar(criarProduto());
+      f.detectChanges();
+
+      expect(setItemSpy).not.toHaveBeenCalledWith(CHAVE_ARMAZENAMENTO, jasmine.any(String));
     });
   });
 });

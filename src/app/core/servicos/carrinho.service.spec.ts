@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, PLATFORM_ID } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { CarrinhoService } from './carrinho.service';
@@ -250,6 +250,32 @@ describe('CarrinhoService', () => {
 
       expect(service2.itensCarrinho()).toEqual([]);
       expect(catalogoRepositorioSpy.obterProdutos).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('SSR (servidor)', () => {
+    it('não toca no localStorage ao restaurar nem ao salvar quando não está no browser', () => {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        imports: [HostVazioComponent],
+        providers: [
+          { provide: CatalogoRepositorio, useValue: catalogoRepositorioSpy },
+          { provide: PLATFORM_ID, useValue: 'server' },
+        ],
+      });
+      const setItemSpy = spyOn(Storage.prototype, 'setItem').and.callThrough();
+      const fixture2 = TestBed.createComponent(HostVazioComponent);
+      const service2 = TestBed.inject(CarrinhoService);
+      fixture2.detectChanges();
+
+      expect(catalogoRepositorioSpy.obterProdutos).not.toHaveBeenCalled();
+      expect(service2.itensCarrinho()).toEqual([]);
+
+      const produto = criarProduto();
+      service2.adicionarItem(produto, produto.variantes[0], 1);
+      fixture2.detectChanges();
+
+      expect(setItemSpy).not.toHaveBeenCalledWith(CHAVE_ARMAZENAMENTO, jasmine.any(String));
     });
   });
 });

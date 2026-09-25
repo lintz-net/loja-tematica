@@ -186,4 +186,20 @@ describe('AdminBannersComponent', () => {
       expect(fixture.componentInstance.erro()).toContain('Não foi possível excluir o banner');
     });
   });
+
+  describe('atualizarNovoDestino / atualizarNovaOrdem', () => {
+    it('atualizam os signals do formulário', () => {
+      const fixture = configurar();
+      const comp = fixture.componentInstance;
+
+      comp.atualizarNovoDestino('menu');
+      expect(comp.novoDestino()).toBe('menu');
+
+      comp.atualizarNovaOrdem('3');
+      expect(comp.novaOrdem()).toBe(3);
+
+      comp.atualizarNovaOrdem('abc');
+      expect(comp.novaOrdem()).toBe(0);
+    });
+  });
 });

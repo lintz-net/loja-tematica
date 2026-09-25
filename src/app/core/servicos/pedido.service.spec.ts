@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { PedidoService } from './pedido.service';
 import { SupabaseRestService } from './supabase-rest.service';
+import { SupabaseClienteService } from './supabase.client';
 import { Pedido } from '../modelos/pedido.model';
 
 function dadosPedidoBase(): Omit<Pedido, 'codigo' | 'criadoEm' | 'status'> {
@@ -36,7 +37,7 @@ function dadosPedidoBase(): Omit<Pedido, 'codigo' | 'criadoEm' | 'status'> {
   };
 }
 
-function linhaPedidoCrua() {
+function linhaPedidoCrua(sobrescritas: Record<string, unknown> = {}) {
   return {
     codigo: 'VT-ABC123',
     criado_em: '2026-09-25T12:00:00.000Z',
@@ -64,6 +65,7 @@ function linhaPedidoCrua() {
     frete_prazo_dias: null,
     cupom_codigo: null,
     valor_desconto: null,
+    ...sobrescritas,
   };
 }
 
@@ -71,11 +73,33 @@ describe('PedidoService', () => {
   let service: PedidoService;
   let restSpy: jasmine.SpyObj<SupabaseRestService>;
   let fetchSpy: jasmine.Spy;
+  let clienteFake: { from: jasmine.Spy };
+  let tabelaFake: jasmine.SpyObj<{
+    select: jasmine.Spy;
+    update: jasmine.Spy;
+    eq: jasmine.Spy;
+    order: jasmine.Spy;
+    single: jasmine.Spy;
+  }>;
 
   beforeEach(() => {
     restSpy = jasmine.createSpyObj('SupabaseRestService', ['insert', 'rpc', 'select']);
+
+    tabelaFake = jasmine.createSpyObj('tabela', ['select', 'update', 'eq', 'order', 'single']);
+    tabelaFake.select.and.returnValue(tabelaFake);
+    tabelaFake.update.and.returnValue(tabelaFake);
+    tabelaFake.eq.and.returnValue(tabelaFake);
+    tabelaFake.order.and.returnValue(tabelaFake);
+
+    clienteFake = { from: jasmine.createSpy('from').and.returnValue(tabelaFake) };
+    const supabaseClienteSpy = jasmine.createSpyObj('SupabaseClienteService', ['obterCliente']);
+    supabaseClienteSpy.obterCliente.and.returnValue(clienteFake as never);
+
     TestBed.configureTestingModule({
-      providers: [{ provide: SupabaseRestService, useValue: restSpy }],
+      providers: [
+        { provide: SupabaseRestService, useValue: restSpy },
+        { provide: SupabaseClienteService, useValue: supabaseClienteSpy },
+      ],
     });
     service = TestBed.inject(PedidoService);
 
@@ -288,6 +312,68 @@ describe('PedidoService', () => {
       service.obterPorCodigo('CODIGO-INEXISTENTE').subscribe((pedido) => {
         expect(pedido).toBeNull();
         done();
+      });
+    });
+  });
+
+  describe('listarTodos', () => {
+    it('busca via cliente completo, ordenado por data (desc), e mapeia as linhas', (done) => {
+      tabelaFake.order.and.returnValue(Promise.resolve({ data: [linhaPedidoCrua()], error: null }));
+
+      service.listarTodos().subscribe((pedidos) => {
+        expect(clienteFake.from).toHaveBeenCalledWith('pedidos');
+        expect(pedidos).toEqual([jasmine.objectContaining({ codigo: 'VT-ABC123' })]);
+        done();
+      });
+    });
+
+    it('propaga o erro quando a listagem falha', (done) => {
+      tabelaFake.order.and.returnValue(Promise.resolve({ data: null, error: new Error('falhou') }));
+
+      service.listarTodos().subscribe({
+        error: (erro) => {
+          expect(erro.message).toBe('falhou');
+          done();
+        },
+      });
+    });
+  });
+
+  describe('listarMeusPedidos', () => {
+    it('delega pra listarTodos (a RLS que filtra pro cliente logado)', (done) => {
+      tabelaFake.order.and.returnValue(Promise.resolve({ data: [linhaPedidoCrua()], error: null }));
+
+      service.listarMeusPedidos().subscribe((pedidos) => {
+        expect(pedidos.length).toBe(1);
+        done();
+      });
+    });
+  });
+
+  describe('atualizarStatus', () => {
+    it('atualiza o status pelo código e devolve o pedido mapeado', (done) => {
+      tabelaFake.single.and.returnValue(
+        Promise.resolve({ data: linhaPedidoCrua({ status: 'confirmado' }), error: null })
+      );
+
+      service.atualizarStatus('VT-ABC123', 'confirmado').subscribe((pedido) => {
+        expect(tabelaFake.update).toHaveBeenCalledWith({ status: 'confirmado' });
+        expect(tabelaFake.eq).toHaveBeenCalledWith('codigo', 'VT-ABC123');
+        expect(pedido.status).toBe('confirmado');
+        done();
+      });
+    });
+
+    it('propaga o erro quando a atualização falha', (done) => {
+      tabelaFake.single.and.returnValue(
+        Promise.resolve({ data: null, error: new Error('falhou') })
+      );
+
+      service.atualizarStatus('VT-ABC123', 'confirmado').subscribe({
+        error: (erro) => {
+          expect(erro.message).toBe('falhou');
+          done();
+        },
       });
     });
   });

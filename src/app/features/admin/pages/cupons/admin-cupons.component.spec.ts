@@ -208,4 +208,17 @@ describe('AdminCuponsComponent', () => {
       ).toBeFalse();
     });
   });
+
+  describe('atualizarNovoTipoDesconto / atualizarNovaDataExpiracao', () => {
+    it('atualizam os signals do formulário', () => {
+      const fixture = configurar();
+      const comp = fixture.componentInstance;
+
+      comp.atualizarNovoTipoDesconto('valor_fixo');
+      expect(comp.novoTipoDesconto()).toBe('valor_fixo');
+
+      comp.atualizarNovaDataExpiracao('2026-12-31');
+      expect(comp.novaDataExpiracao()).toBe('2026-12-31');
+    });
+  });
 });
