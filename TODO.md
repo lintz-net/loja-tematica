@@ -2,6 +2,18 @@
 
 ## 🔴 Bloqueadores pra produção
 
+- **Compliance PCI do pagamento por cartão — decisão consciente, pendência real** — o
+  pagamento por cartão foi implementado como **Checkout API** (formulário de cartão no nosso
+  próprio site, tokenizado via SDK.js do Mercado Pago antes de qualquer coisa chegar no
+  backend — ver `checkout.component.ts`/`mercado-pago-sdk.service.ts`), não como
+  **Checkout Pro** (redirect pra página deles). Mesmo o número do cartão nunca tocando nosso
+  backend, hospedar o formulário no nosso domínio classifica a loja num nível de certificação
+  PCI DSS mais exigente (**SAQ A-EP**, não o SAQ A mais simples do Checkout Pro) — precisa
+  preencher esse questionário de autoavaliação formalmente com o Mercado Pago antes de operar
+  cartão de verdade em produção com volume real. Decisão discutida e confirmada com o usuário
+  em 2026-09-25: manter o Checkout API por causa da UX (cliente nunca sai do site), aceitando
+  essa obrigação extra de compliance conscientemente — Checkout Pro (mais simples, SAQ A) foi
+  oferecido como alternativa e recusado.
 - **Status do pedido (logística) automatizado, implementado em 2026-09-25** —
   `pedidos.status` (recebido/confirmado/enviado/entregue, mostrado na barra de cima de
   `/pedido/:codigo`) antes só mudava manualmente pelo admin em `/admin/pedidos`. Agora avança
