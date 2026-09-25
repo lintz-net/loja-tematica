@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { from, map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { obterSupabaseClient } from './supabase.client';
+import { SupabaseClienteService } from './supabase.client';
 import { SupabaseRestService } from './supabase-rest.service';
 
 export type StatusEnvio =
@@ -52,6 +52,7 @@ function linhaParaEnvio(linha: LinhaEnvio): Envio {
 @Injectable({ providedIn: 'root' })
 export class EnvioService {
   private readonly rest = inject(SupabaseRestService);
+  private readonly supabaseCliente = inject(SupabaseClienteService);
 
   /** Rastreio público por código de pedido — usa a função `obter_envio_por_codigo_pedido`
    * (RPC, SECURITY DEFINER) em vez de select direto: a policy de select da tabela é restrita
@@ -68,7 +69,7 @@ export class EnvioService {
    * trava indefinidamente em Node < 22 esperando WebSocket nativo. Devolve uma função pra
    * cancelar a inscrição. */
   escutarMudancas(codigoPedido: string, aoMudar: (envio: Envio) => void): () => void {
-    const canal = obterSupabaseClient()
+    const canal = this.supabaseCliente.obterCliente()
       .channel(`envio-${codigoPedido}`)
       .on(
         'postgres_changes',
@@ -83,13 +84,13 @@ export class EnvioService {
       .subscribe();
 
     return () => {
-      obterSupabaseClient().removeChannel(canal);
+      this.supabaseCliente.obterCliente().removeChannel(canal);
     };
   }
 
   /** Um envio por pedido, indexado pelo código — usado pra cruzar com a lista de pedidos. */
   listarTodos(): Observable<Map<string, Envio>> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .from('envios')
       .select()
       .then(({ data, error }) => {

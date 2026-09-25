@@ -2,7 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { from, map, Observable, tap } from 'rxjs';
 import { CidadeFreteGratis, ConfiguracaoLoja } from '../modelos/configuracao-loja.model';
 import { SupabaseRestService } from './supabase-rest.service';
-import { obterSupabaseClient } from './supabase.client';
+import { SupabaseClienteService } from './supabase.client';
 
 interface LinhaConfiguracaoLoja {
   nome_loja: string;
@@ -45,6 +45,7 @@ function linhaParaConfiguracao(linha: LinhaConfiguracaoLoja): ConfiguracaoLoja {
 @Injectable({ providedIn: 'root' })
 export class ConfiguracaoLojaService {
   private readonly rest = inject(SupabaseRestService);
+  private readonly supabaseCliente = inject(SupabaseClienteService);
 
   private readonly _configuracao = signal<ConfiguracaoLoja | null>(null);
   readonly configuracao = this._configuracao.asReadonly();
@@ -69,7 +70,7 @@ export class ConfiguracaoLojaService {
 
   /** Só usado em `/admin/config`, atrás de login — RLS restringe update a admin autenticado. */
   atualizar(dados: ConfiguracaoLoja): Observable<ConfiguracaoLoja> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .from('configuracao_loja')
       .update({
         nome_loja: dados.nomeLoja,

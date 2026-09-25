@@ -3,7 +3,7 @@ import { from, map, Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Pedido } from '../modelos/pedido.model';
 import { SupabaseRestService } from './supabase-rest.service';
-import { obterSupabaseClient } from './supabase.client';
+import { SupabaseClienteService } from './supabase.client';
 
 /** Linha da tabela `pedidos` no Supabase (snake_case, como no Postgres). */
 interface LinhaPedido {
@@ -81,6 +81,7 @@ function linhaParaPedido(linha: LinhaPedido): Pedido {
 @Injectable({ providedIn: 'root' })
 export class PedidoService {
   private readonly rest = inject(SupabaseRestService);
+  private readonly supabaseCliente = inject(SupabaseClienteService);
 
   /** Insert via REST (não pelo cliente `@supabase/supabase-js`, que sempre traz
    * GoTrue+Realtime junto e trava em Node < 22 — ver supabase-rest.service.ts). Não pede
@@ -215,7 +216,7 @@ export class PedidoService {
    * roda no browser (nunca durante SSR), então não sofre do travamento do Realtime em Node.
    * A policy de select da tabela exige role 'authenticated', obtida da sessão logada. */
   listarTodos(): Observable<Pedido[]> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .from('pedidos')
       .select()
       .order('criado_em', { ascending: false })
@@ -236,7 +237,7 @@ export class PedidoService {
 
   /** Mesma observação de `listarTodos` — só roda no browser, autenticado. */
   atualizarStatus(codigo: string, status: Pedido['status']): Observable<Pedido> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .from('pedidos')
       .update({ status })
       .eq('codigo', codigo)

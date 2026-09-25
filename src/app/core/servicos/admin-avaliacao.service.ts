@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { from, Observable } from 'rxjs';
 import { Avaliacao } from '../modelos/avaliacao.model';
-import { obterSupabaseClient } from './supabase.client';
+import { SupabaseClienteService } from './supabase.client';
 
 interface LinhaAvaliacao {
   id: string;
@@ -38,8 +38,10 @@ function avaliacaoParaLinha(avaliacao: Omit<Avaliacao, 'id'>): Omit<LinhaAvaliac
  * Supabase, com sessão, pra satisfazer a policy restrita a admin via `eh_admin()`). */
 @Injectable({ providedIn: 'root' })
 export class AdminAvaliacaoService {
+  private readonly supabaseCliente = inject(SupabaseClienteService);
+
   listarTodas(): Observable<Avaliacao[]> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .from('avaliacoes')
       .select()
       .order('criado_em', { ascending: false })
@@ -52,7 +54,7 @@ export class AdminAvaliacaoService {
   }
 
   criar(avaliacao: Omit<Avaliacao, 'id'>): Observable<Avaliacao> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .from('avaliacoes')
       .insert(avaliacaoParaLinha(avaliacao))
       .select()
@@ -66,7 +68,7 @@ export class AdminAvaliacaoService {
   }
 
   atualizar(id: string, avaliacao: Omit<Avaliacao, 'id'>): Observable<Avaliacao> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .from('avaliacoes')
       .update(avaliacaoParaLinha(avaliacao))
       .eq('id', id)
@@ -81,7 +83,7 @@ export class AdminAvaliacaoService {
   }
 
   remover(id: string): Observable<void> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .from('avaliacoes')
       .delete()
       .eq('id', id)

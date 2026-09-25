@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { from, Observable } from 'rxjs';
 import { Cupom, TipoDescontoCupom } from '../modelos/cupom.model';
-import { obterSupabaseClient } from './supabase.client';
+import { SupabaseClienteService } from './supabase.client';
 
 interface LinhaCupom {
   codigo: string;
@@ -28,8 +28,10 @@ function linhaParaCupom(linha: LinhaCupom): Cupom {
  * CupomService). */
 @Injectable({ providedIn: 'root' })
 export class AdminCupomService {
+  private readonly supabaseCliente = inject(SupabaseClienteService);
+
   listarTodos(): Observable<Cupom[]> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .from('cupons')
       .select()
       .order('criado_em', { ascending: false })
@@ -47,7 +49,7 @@ export class AdminCupomService {
     valorDesconto: number;
     expiraEm?: string;
   }): Observable<Cupom> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .from('cupons')
       .insert({
         codigo: cupom.codigo.toUpperCase(),
@@ -66,7 +68,7 @@ export class AdminCupomService {
   }
 
   alternarAtivo(codigo: string, ativo: boolean): Observable<Cupom> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .from('cupons')
       .update({ ativo })
       .eq('codigo', codigo)
@@ -81,7 +83,7 @@ export class AdminCupomService {
   }
 
   excluir(codigo: string): Observable<void> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .from('cupons')
       .delete()
       .eq('codigo', codigo)

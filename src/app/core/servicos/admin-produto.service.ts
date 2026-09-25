@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { from, Observable, of } from 'rxjs';
 import { FaixaMedida, GeneroProduto, Produto, VarianteProduto } from '../modelos/produto.model';
 import { SlugCategoria } from '../modelos/categoria.model';
-import { obterSupabaseClient } from './supabase.client';
+import { SupabaseClienteService } from './supabase.client';
 
 const BUCKET = 'produtos';
 
@@ -84,8 +84,10 @@ function produtoParaLinha(produto: Produto): LinhaProduto {
  * 'authenticated', obtida da sessão logada do admin. */
 @Injectable({ providedIn: 'root' })
 export class AdminProdutoService {
+  private readonly supabaseCliente = inject(SupabaseClienteService);
+
   obterPorId(id: string): Observable<Produto | undefined> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .from('produtos')
       .select()
       .eq('id', id)
@@ -99,7 +101,7 @@ export class AdminProdutoService {
   }
 
   criar(produto: Produto): Observable<Produto> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .from('produtos')
       .insert(produtoParaLinha(produto))
       .select()
@@ -113,7 +115,7 @@ export class AdminProdutoService {
   }
 
   atualizar(produto: Produto): Observable<Produto> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .from('produtos')
       .update(produtoParaLinha(produto))
       .eq('id', produto.id)
@@ -128,7 +130,7 @@ export class AdminProdutoService {
   }
 
   excluir(id: string): Observable<void> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .from('produtos')
       .delete()
       .eq('id', id)
@@ -152,12 +154,12 @@ export class AdminProdutoService {
   }
 
   private enviarArquivo(caminho: string, arquivo: File): Observable<string> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .storage.from(BUCKET)
       .upload(caminho, arquivo, { upsert: true })
       .then(({ error }) => {
         if (error) throw error;
-        const { data } = obterSupabaseClient().storage.from(BUCKET).getPublicUrl(caminho);
+        const { data } = this.supabaseCliente.obterCliente().storage.from(BUCKET).getPublicUrl(caminho);
         return data.publicUrl;
       });
 
@@ -174,7 +176,7 @@ export class AdminProdutoService {
     if (indice === -1) return of(undefined);
 
     const caminho = decodeURIComponent(url.slice(indice + marcador.length));
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .storage.from(BUCKET)
       .remove([caminho])
       .then(({ error }) => {

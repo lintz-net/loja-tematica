@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { from, Observable } from 'rxjs';
 import { Categoria } from '../modelos/categoria.model';
-import { obterSupabaseClient } from './supabase.client';
+import { SupabaseClienteService } from './supabase.client';
 
 /** Linha da tabela `categorias` no Supabase (snake_case). */
 interface LinhaCategoria {
@@ -41,8 +41,10 @@ function categoriaParaLinha(categoria: Omit<Categoria, 'id'>): Omit<LinhaCategor
  * sessão, pra satisfazer a policy de insert/update/delete restrita a admin via `eh_admin()`). */
 @Injectable({ providedIn: 'root' })
 export class AdminCategoriaService {
+  private readonly supabaseCliente = inject(SupabaseClienteService);
+
   criar(categoria: Categoria): Observable<Categoria> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .from('categorias')
       .insert({ id: categoria.id, ...categoriaParaLinha(categoria) })
       .select()
@@ -56,7 +58,7 @@ export class AdminCategoriaService {
   }
 
   atualizar(categoria: Categoria): Observable<Categoria> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .from('categorias')
       .update(categoriaParaLinha(categoria))
       .eq('id', categoria.id)
@@ -75,7 +77,7 @@ export class AdminCategoriaService {
    * É `AdminCategoriasComponent` quem bloqueia excluir categoria com produto vinculado, antes
    * de chamar isto, pra não deixar produto apontando pra uma categoria que não existe mais. */
   excluir(id: string): Observable<void> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .from('categorias')
       .delete()
       .eq('id', id)

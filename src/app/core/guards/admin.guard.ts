@@ -1,10 +1,11 @@
 import { isPlatformBrowser } from '@angular/common';
 import { PLATFORM_ID, inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { obterSupabaseClient } from '../servicos/supabase.client';
+import { SupabaseClienteService } from '../servicos/supabase.client';
 
 export const adminGuard: CanActivateFn = async () => {
   const router = inject(Router);
+  const supabaseCliente = inject(SupabaseClienteService);
 
   /** No servidor (prerender) não há sessão de browser pra checar — trata como não
    * autenticado, igual a qualquer visitante sem login. */
@@ -14,7 +15,7 @@ export const adminGuard: CanActivateFn = async () => {
 
   const {
     data: { session },
-  } = await obterSupabaseClient().auth.getSession();
+  } = await supabaseCliente.obterCliente().auth.getSession();
 
   if (!session) return router.createUrlTree(['/admin/login']);
 
@@ -22,7 +23,7 @@ export const adminGuard: CanActivateFn = async () => {
    * pessoa pode ter uma sessão autenticada válida sem ser admin. `eh_admin()` (RPC,
    * SECURITY DEFINER) checa a tabela `admins` do lado do banco; ver
    * docs/supabase/migration-010-controle-admin.sql. */
-  const { data: souAdmin, error } = await obterSupabaseClient().rpc('eh_admin');
+  const { data: souAdmin, error } = await supabaseCliente.obterCliente().rpc('eh_admin');
   if (!error && souAdmin === true) return true;
 
   return router.createUrlTree(['/admin/login']);

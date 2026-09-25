@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { from, Observable } from 'rxjs';
 import { Banner, DestinoBanner } from '../modelos/banner.model';
-import { obterSupabaseClient } from './supabase.client';
+import { SupabaseClienteService } from './supabase.client';
 
 const BUCKET = 'banners';
 
@@ -42,8 +42,10 @@ function bannerParaLinha(banner: Omit<Banner, 'id'>): Omit<LinhaBanner, 'id'> {
  * a admin via `eh_admin()`). */
 @Injectable({ providedIn: 'root' })
 export class AdminBannerService {
+  private readonly supabaseCliente = inject(SupabaseClienteService);
+
   listar(): Observable<Banner[]> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .from('banners')
       .select()
       .order('ordem', { ascending: true })
@@ -56,7 +58,7 @@ export class AdminBannerService {
   }
 
   criar(banner: Omit<Banner, 'id'>): Observable<Banner> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .from('banners')
       .insert(bannerParaLinha(banner))
       .select()
@@ -70,7 +72,7 @@ export class AdminBannerService {
   }
 
   atualizar(id: string, banner: Omit<Banner, 'id'>): Observable<Banner> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .from('banners')
       .update(bannerParaLinha(banner))
       .eq('id', id)
@@ -85,7 +87,7 @@ export class AdminBannerService {
   }
 
   remover(id: string): Observable<void> {
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .from('banners')
       .delete()
       .eq('id', id)
@@ -99,12 +101,12 @@ export class AdminBannerService {
   /** Sobe uma imagem de banner pro Storage e devolve a URL pública. */
   enviarImagem(arquivo: File): Observable<string> {
     const caminho = `${Date.now()}-${arquivo.name}`;
-    const promessa = obterSupabaseClient()
+    const promessa = this.supabaseCliente.obterCliente()
       .storage.from(BUCKET)
       .upload(caminho, arquivo, { upsert: true })
       .then(({ error }) => {
         if (error) throw error;
-        const { data } = obterSupabaseClient().storage.from(BUCKET).getPublicUrl(caminho);
+        const { data } = this.supabaseCliente.obterCliente().storage.from(BUCKET).getPublicUrl(caminho);
         return data.publicUrl;
       });
 
