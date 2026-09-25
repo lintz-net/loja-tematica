@@ -11,6 +11,9 @@ camadas:
          migration-023) -> ATUALIZA só o que mudou (preço, estoque/sku das variantes, imagens
          novas) — nunca sobrescreve nome/descrição/categoria/slug, que podem ter sido
          editados a mão no admin depois da importação.
+  3. Produto vinculado que sumiu do catálogo da OZKLO nesta rodada (scraper.py sempre varre
+     tudo, então "não apareceu" = "não existe mais lá") -> marcado como ESGOTADO (estoque de
+     toda variante zerado), nunca apagado — reversível, mantém histórico/avaliações.
 
 Rodar em --dry-run por padrão (mostra o que faria, não grava nada — nem na staging). Só grava
 de verdade com --confirmar.
@@ -47,9 +50,11 @@ CATALOGO_JSON = "catalogo.json"
 # o texto solto em categoriasSugeridas no catalogo.json (confira lá antes de preencher aqui).
 #
 # A OZKLO categoriza por corte/tipo de peça (Unisex/Feminina/Polos/Básicas/Bermudas/Plus
-# Size), a loja categoriza por tema (Música/Futebol/Geek/Automotivo/Cinema/Humor/Personagens)
-# — são eixos diferentes, não dá pra mapear tudo automaticamente. Tipo de peça/corte fica de
-# fora de propósito (Polos/Básicas/Bermudas/Plus Size/Unisex/Feminina não são tema).
+# Size), a loja categoriza majoritariamente por tema (Música/Futebol/Geek/Automotivo/Cinema/
+# Humor/Personagens) — eixos diferentes, não dá pra mapear tudo automaticamente. "Bermuda" e
+# "Camiseta" (criadas depois, 2026-09-24) são exceção: são tipo de peça mesmo, sem tema, mas
+# viraram categoria própria assim mesmo por decisão do usuário. "Polos"/"Plus Size"/"Unisex"/
+# "Feminina" continuam sem mapeamento de propósito.
 #
 # Rode antes: docs/supabase/migration-022-categoria-personagens.sql (cria a categoria
 # "Personagens" — ainda não existia antes desta importação).
@@ -58,6 +63,8 @@ MAPA_CATEGORIAS = {
     "Automotivos": "automotivo",
     "Bandas": "musica",
     "Personagens": "personagens",
+    "Bermudas": "bermuda",
+    "Básicas": "camiseta",
 }
 
 
@@ -279,6 +286,66 @@ def enviar_imagens_produto(headers_auth, produto):
     return urls
 
 
+def marcar_produtos_sumidos(headers_auth, urls_vistas_nesta_raspagem, dry_run):
+    """scraper.py sempre varre o catálogo inteiro (não só uma amostra) — então qualquer
+    produto já vinculado na staging cuja url_origem NÃO apareceu nesta rodada saiu do
+    catálogo da OZKLO. Marca como esgotado (zera quantidadeEstoque de toda variante) em vez
+    de apagar: reversível se ele voltar a existir lá, mantém histórico/avaliações."""
+    resp = requests.get(
+        f"{SUPABASE_URL}/rest/v1/staging_produtos_ozklo",
+        headers=headers_auth,
+        params={"produto_id": "not.is.null", "select": "url_origem,produto_id"},
+        timeout=30,
+    )
+    resp.raise_for_status()
+    vinculados = resp.json()
+
+    sumidos = [v for v in vinculados if v["url_origem"] not in urls_vistas_nesta_raspagem]
+    if not sumidos:
+        return 0
+
+    marcados = 0
+    for item in sumidos:
+        produto_id = item["produto_id"]
+        resp = requests.get(
+            f"{SUPABASE_URL}/rest/v1/produtos",
+            headers=headers_auth,
+            params={"id": f"eq.{produto_id}", "select": "id,nome,variantes"},
+            timeout=20,
+        )
+        resp.raise_for_status()
+        linhas = resp.json()
+        if not linhas:
+            continue  # produto já foi excluído manualmente — nada a fazer
+        produto = linhas[0]
+
+        ja_esgotado = all(v["quantidadeEstoque"] == 0 for v in produto["variantes"])
+        if ja_esgotado:
+            continue
+
+        print(f"\n--- {produto['nome']} ({produto_id}) — sumiu do catálogo da OZKLO ---")
+        if dry_run:
+            print("   [SIMULADO] Seria marcado como esgotado (estoque de todas as variantes -> 0).")
+            marcados += 1
+            continue
+
+        variantes_esgotadas = [{**v, "quantidadeEstoque": 0} for v in produto["variantes"]]
+        resp = requests.patch(
+            f"{SUPABASE_URL}/rest/v1/produtos?id=eq.{produto_id}",
+            headers={**headers_auth, "Content-Type": "application/json", "Prefer": "return=minimal"},
+            json={"variantes": variantes_esgotadas},
+            timeout=30,
+        )
+        if not resp.ok:
+            print(f"   [ERRO] Falha ao marcar como esgotado: {resp.status_code} {resp.text}")
+            continue
+
+        print("   [OK] Marcado como esgotado.")
+        marcados += 1
+
+    return marcados
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--confirmar", action="store_true", help="Grava de verdade no Supabase (sem isso, só simula).")
@@ -401,10 +468,14 @@ def main():
             print(f"   [ERRO] Falha ao processar {produto['id']}: {e}")
             contagem["falhas"] += 1
 
+    urls_vistas = {produto["urlOrigem"] for produto in catalogo}
+    marcados_esgotados = marcar_produtos_sumidos(headers_auth, urls_vistas, dry_run=not args.confirmar)
+
     print(f"\n{'=' * 60}")
     modo = "Confirmado" if args.confirmar else "Dry-run (nada gravado)"
     print(f"{modo}: {contagem['criados']} criados, {contagem['atualizados']} atualizados, "
-          f"{contagem['sem_mudanca']} sem mudança, {contagem['falhas']} falhas.")
+          f"{contagem['sem_mudanca']} sem mudança, {contagem['falhas']} falhas, "
+          f"{marcados_esgotados} marcados como esgotados (sumiram do catálogo da OZKLO).")
     if avisos_categoria:
         print(f"\nCategorias da OZKLO sem mapeamento em MAPA_CATEGORIAS (produto entra sem "
               f"categoria): {', '.join(sorted(avisos_categoria))}")
