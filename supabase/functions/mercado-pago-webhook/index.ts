@@ -4,7 +4,12 @@
 // nosso access_token, que é a fonte da verdade. A página do checkout escuta a mudança via
 // polling em `obter_pedido_por_codigo` (RPC pública já existente).
 
-import { chamarMercadoPago, corsHeaders, restSupabase } from '../_shared/mercado-pago.ts';
+import {
+  STATUS_MP_PARA_STATUS_PAGAMENTO,
+  chamarMercadoPago,
+  corsHeaders,
+  restSupabase,
+} from '../_shared/mercado-pago.ts';
 
 // Secret opcional: só existe depois de cadastrar a URL do webhook no painel do Mercado Pago
 // (Suas integrações → Webhooks → Chave secreta). Enquanto não configurado, seguimos sem
@@ -12,17 +17,6 @@ import { chamarMercadoPago, corsHeaders, restSupabase } from '../_shared/mercado
 // autenticada à API deles, então um POST forjado não consegue aprovar pagamento nenhum, só
 // nos faz reconsultar um pagamento que já existe de verdade no Mercado Pago.
 const WEBHOOK_SECRET = Deno.env.get('MERCADO_PAGO_WEBHOOK_SECRET');
-
-const STATUS_MP_PARA_STATUS_PAGAMENTO: Record<string, string> = {
-  approved: 'aprovado',
-  rejected: 'recusado',
-  cancelled: 'cancelado',
-  refunded: 'cancelado',
-  charged_back: 'recusado',
-  in_process: 'pendente',
-  in_mediation: 'pendente',
-  pending: 'pendente',
-};
 
 interface PagamentoMercadoPago {
   id: number;

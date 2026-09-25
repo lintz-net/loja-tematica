@@ -290,11 +290,10 @@
               </button>
               <button
                 type="button"
-                disabled
-                title="Pagamento por cartão ainda não está disponível"
                 [class.selecionado]="formaPagamento() === 'cartao'"
+                (click)="selecionarFormaPagamento('cartao')"
               >
-                Cartão (em breve)
+                Cartão de crédito
               </button>
             </div>
 
@@ -340,13 +339,9 @@
                   />
                 </div>
 
-                <select class="checkout__parcelas" (change)="atualizarParcelas($any($event.target).value)">
-                  @for (opcao of opcoesParcelas(); track opcao.numero) {
-                    <option [value]="opcao.numero" [selected]="opcao.numero === parcelas()">
-                      {{ opcao.numero }}x de R$ {{ opcao.valorParcela.toFixed(2) }} sem juros
-                    </option>
-                  }
-                </select>
+                <p class="checkout__ajuda checkout__ajuda--pequena">
+                  À vista, sem juros — R$ {{ valorTotal().toFixed(2) }}.
+                </p>
 
                 <input
                   type="text"
@@ -356,15 +351,6 @@
                   [value]="cpfCnpjCartao()"
                   (input)="atualizarCpfCnpjCartao($any($event.target).value)"
                 />
-
-                <label class="checkout__checkbox">
-                  <input
-                    type="checkbox"
-                    [checked]="salvarCartao()"
-                    (change)="alternarSalvarCartao($any($event.target).checked)"
-                  />
-                  Manter salvo para próximas compras
-                </label>
 
                 <div class="checkout__bandeiras">
                   <span class="rotulo">Cartões aceitos</span>

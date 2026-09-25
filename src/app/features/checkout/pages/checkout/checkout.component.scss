@@ -147,33 +147,6 @@
   border-top: 1px solid var(--cor-borda);
 }
 
-.checkout__parcelas {
-  width: 100%;
-  background: var(--cor-fundo);
-  border: 1px solid var(--cor-borda);
-  color: var(--cor-texto);
-  padding: 10px 12px;
-  border-radius: var(--raio-padrao);
-  margin-bottom: 12px;
-  font-family: inherit;
-  font-size: 0.9rem;
-}
-
-.checkout__checkbox {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  color: var(--cor-texto-suave);
-  margin-bottom: 18px;
-}
-
-.checkout__checkbox input {
-  width: auto;
-  margin: 0;
-  accent-color: var(--cor-primaria);
-}
-
 .checkout__bandeiras .rotulo {
   margin-bottom: 10px;
 }

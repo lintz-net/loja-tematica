@@ -39,6 +39,12 @@ interface RespostaPagamentoPix {
   expiraEm: string;
 }
 
+export interface RespostaPagamentoCartao {
+  idPagamento: string;
+  status: string;
+  statusDetail: string;
+}
+
 function gerarCodigoPedido(): string {
   const sufixo = Date.now().toString(36).toUpperCase().slice(-6);
   return `VT-${sufixo}`;
@@ -156,6 +162,40 @@ export class PedidoService {
         throw new Error(`Falha ao criar pagamento Pix (${resposta.status})`);
       }
       return (await resposta.json()) as RespostaPagamentoPix;
+    });
+
+    return from(promessa);
+  }
+
+  /** `token` vem da SDK.js do Mercado Pago (tokenização no navegador) — número/CVV do
+   * cartão nunca passam por aqui. Diferente do Pix, a resposta já vem com o status final
+   * (approved/rejected/in_process) na hora, não é assíncrona via webhook. */
+  criarPagamentoCartao(dados: {
+    codigoPedido: string;
+    valorTotal: number;
+    emailCliente: string;
+    nomeCliente: string;
+    documentoCliente?: string;
+    token: string;
+    paymentMethodId: string;
+    issuerId?: string;
+  }): Observable<RespostaPagamentoCartao> {
+    const promessa = fetch(
+      `${environment.supabaseUrl}/functions/v1/mercado-pago-criar-pagamento-cartao`,
+      {
+        method: 'POST',
+        headers: {
+          apikey: environment.supabaseKey,
+          Authorization: `Bearer ${environment.supabaseKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dados),
+      }
+    ).then(async (resposta) => {
+      if (!resposta.ok) {
+        throw new Error(`Falha ao criar pagamento por cartão (${resposta.status})`);
+      }
+      return (await resposta.json()) as RespostaPagamentoCartao;
     });
 
     return from(promessa);

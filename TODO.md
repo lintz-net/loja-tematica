@@ -19,9 +19,36 @@
   também ganhou log do header `x-request-id` do Mercado Pago em erros, pra facilitar chamado de
   suporte se aparecer instabilidade de novo (já visto: `500 internal_server_error`
   `communication_error` intermitente, mesma classe do problema antigo — não é bug nosso).
-  Cartão de crédito continua fora (opção desabilitada no checkout, só Pix é real) — nunca
-  processar número de cartão no nosso backend/frontend, usar o SDK de tokenização do Mercado
-  Pago quando for a vez.
+  Cartão de crédito: ver item próprio abaixo (implementado em 2026-09-25).
+- **Pagamento por cartão de crédito, implementado (2026-09-25)** — só à vista (1x) por
+  decisão de escopo; parcelamento fica pra depois. `MercadoPagoSdkService` carrega a SDK.js
+  do Mercado Pago (`https://sdk.mercadopago.com/js/v2`) sob demanda, só quando o cliente
+  escolhe cartão — número/CVV nunca chegam no nosso backend, só o token de uso único gerado
+  no navegador (`mp.createCardToken`). Nova Edge Function
+  `mercado-pago-criar-pagamento-cartao` cobra com esse token; diferente do Pix, a resposta já
+  vem com o status final na hora (approved/rejected/in_process), então `status_pagamento` é
+  atualizado direto ali, sem esperar o webhook. `STATUS_MP_PARA_STATUS_PAGAMENTO` (o mapa de
+  status do Mercado Pago pros nossos) foi movido pra `_shared/mercado-pago.ts`, reaproveitado
+  também pelo webhook. Removido o checkbox "Manter salvo para próximas compras" que existia
+  na UI — não tinha implementação nenhuma por trás, era enganoso deixar visível.
+  - **Idempotency key é aleatória por tentativa** (`crypto.randomUUID()`), não fixa por
+    `codigoPedido` como no Pix — decisão deliberada: o token é de uso único, então uma nova
+    tentativa depois de recusada é uma cobrança nova de verdade (não um retry de clique
+    duplo). Fixar a key aqui correria o mesmo risco já registrado no item de retomada do Pix
+    abaixo (Mercado Pago podendo devolver a resposta antiga em vez de processar o token novo).
+  - **Não enviado**: nenhum dado de "device fingerprint"/antifraude (a lib de segurança do
+    Mercado Pago, `mercadopago.com/v2/security.js`, que eles recomendam incluir pra melhorar
+    taxa de aprovação e reduzir risco de fraude). Considerar adicionar depois.
+  - **Retomada de pagamento** (`/checkout/:codigoRetomada`) continua só pra Pix — cartão
+    recusado hoje só permite tentar de novo inline na mesma sessão do checkout (token novo a
+    cada clique em "Tentar novamente"), não tem uma URL separada pra voltar depois. Replicar o
+    padrão da retomada Pix pro cartão fica pra depois, exige token novo (não dá pra guardar
+    token de uma sessão passada, expira e é de uso único).
+  - **Testado ponta a ponta em 2026-09-25**: cartão de teste Mastercard/APRO → pagamento
+    aprovado na hora, `status_pagamento` e `id_pagamento_mercado_pago` gravados certos no
+    pedido (confirmado direto no banco via `obter_pedido_por_codigo`). Cartão titular OTHE →
+    recusado como esperado, tela de erro certa ("Pagamento recusado pelo cartão", botões
+    "Tentar novamente"/"Acompanhar pedido" + dica de "Minha conta → Meus pedidos").
 - **Retomada de pagamento Pix sem duplicar pedido, implementada (2026-09-24)** —
   `/checkout/:codigoRetomada` (`checkout.component.ts`, `modoRetomada`) reaproveita a etapa de
   revisão do checkout normal em modo leitura (stepper e "Editar" escondidos, frete sintetizado
@@ -38,8 +65,6 @@
     primeiro caso, o cliente fica num loop sem conseguir pagar esse pedido nunca mais. Só dá
     pra confirmar testando contra a API de verdade (não o sandbox instável) — não implementado
     nenhuma mitigação client-side por falta dessa confirmação.
-  - **Quando implementar cartão de verdade**: replicar o mesmo padrão (tela de retomada em
-    modo leitura + retry sem recriar pedido) pro cartão — hoje só existe pra Pix.
 - **`pedido.component.ts` usa `route.snapshot.paramMap` (não reativo)** — mesma classe de bug
   encontrada e corrigida em `checkout.component.ts` (ver item de retomada acima: se o Angular
   Router reaproveitar a instância do componente ao navegar entre duas URLs `/pedido/:codigo`

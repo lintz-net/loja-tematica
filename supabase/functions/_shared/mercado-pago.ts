@@ -37,6 +37,20 @@ export async function chamarMercadoPago(caminho: string, init?: RequestInit): Pr
   });
 }
 
+/** Status de pagamento do Mercado Pago -> status_pagamento nosso (`pedidos.status_pagamento`).
+ * Usado tanto na criação síncrona (cartão, resposta já vem com o status final na hora) quanto
+ * no webhook (Pix, que só aprova depois, de forma assíncrona) — mesma tabela, uma fonte só. */
+export const STATUS_MP_PARA_STATUS_PAGAMENTO: Record<string, string> = {
+  approved: 'aprovado',
+  rejected: 'recusado',
+  cancelled: 'cancelado',
+  refunded: 'cancelado',
+  charged_back: 'recusado',
+  in_process: 'pendente',
+  in_mediation: 'pendente',
+  pending: 'pendente',
+};
+
 export function corsHeaders(): Record<string, string> {
   return {
     'Access-Control-Allow-Origin': '*',

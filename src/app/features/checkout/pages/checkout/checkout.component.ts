@@ -1,8 +1,10 @@
 import { Component, computed, inject, OnDestroy, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { firstValueFrom } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CarrinhoService } from '../../../../core/servicos/carrinho.service';
 import { PedidoService } from '../../../../core/servicos/pedido.service';
+import { MercadoPagoSdkService } from '../../../../core/servicos/mercado-pago-sdk.service';
 import { FreteService, OpcaoFrete } from '../../../../core/servicos/frete.service';
 import { CepService } from '../../../../core/servicos/cep.service';
 import { CupomService, CupomValido } from '../../../../core/servicos/cupom.service';
@@ -13,7 +15,6 @@ import { mascararCep, mascararDocumento, mascararTelefone } from '../../../../co
 import { normalizarTexto } from '../../../../core/utilitarios/texto.util';
 import { LOGOS_CARTAO } from '../../../../shared/dados/logos-pagamento';
 import { obterLogoTransportadora } from '../../../../shared/dados/logos-transportadora';
-import { MAX_PARCELAS } from '../../../../core/constantes/parcelamento.constantes';
 
 /** Id sintético usado quando a entrega é presencial/grátis (cidade configurada em
  * /admin/config) — nunca enviado como `freteServicoId` do pedido, pra admin não tentar
@@ -49,6 +50,7 @@ export class CheckoutComponent implements OnDestroy {
   private readonly cepService = inject(CepService);
   private readonly cupomService = inject(CupomService);
   private readonly configuracaoLojaService = inject(ConfiguracaoLojaService);
+  private readonly mercadoPagoSdk = inject(MercadoPagoSdkService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
@@ -138,7 +140,9 @@ export class CheckoutComponent implements OnDestroy {
     () => this.opcoesFrete().find((opcao) => opcao.id === this.freteSelecionadoId()) ?? null
   );
 
-  // Passo 7 — pagamento (integração real de cobrança fica pra depois — hoje é só simulação visual)
+  // Passo 7 — pagamento. Cartão cobra de verdade via SDK.js do Mercado Pago (tokenização no
+  // navegador — número/CVV nunca chegam no nosso backend), só à vista por enquanto
+  // (parcelamento fica pra uma próxima etapa, ver TODO.md).
   readonly formaPagamento = signal<'cartao' | 'pix'>('pix');
   readonly bandeirasAceitas = LOGOS_CARTAO;
 
@@ -152,15 +156,6 @@ export class CheckoutComponent implements OnDestroy {
   readonly cvvCartao = signal('');
   readonly cpfCnpjCartao = signal('');
   readonly parcelas = signal(1);
-  readonly salvarCartao = signal(false);
-
-  readonly opcoesParcelas = computed(() => {
-    const total = this.valorTotal();
-    return Array.from({ length: MAX_PARCELAS }, (_, indice) => {
-      const numero = indice + 1;
-      return { numero, valorParcela: total / numero };
-    });
-  });
 
   readonly pagamentoValido = computed(() => {
     if (this.formaPagamento() !== 'cartao') return true;
@@ -395,14 +390,6 @@ export class CheckoutComponent implements OnDestroy {
     this.cpfCnpjCartao.set(valor);
   }
 
-  atualizarParcelas(valor: string): void {
-    this.parcelas.set(Number(valor));
-  }
-
-  alternarSalvarCartao(valor: boolean): void {
-    this.salvarCartao.set(valor);
-  }
-
   atualizarCodigoCupom(valor: string): void {
     this.codigoCupom.set(valor.toUpperCase());
     this.erroCupom.set(null);
@@ -601,8 +588,7 @@ export class CheckoutComponent implements OnDestroy {
             return;
           }
 
-          this.pedidoFinalizado.set(true);
-          this.finalizandoPedido.set(false);
+          this.pagarComCartao(pedido.codigo, valorTotalPedido);
         },
         error: () => {
           this.finalizandoPedido.set(false);
@@ -642,18 +628,90 @@ export class CheckoutComponent implements OnDestroy {
       });
   }
 
-  /** Botão "Tentar novamente" da tela de erro — se o pedido já foi criado (só a geração do
-   * Pix falhou), tenta gerar o Pix de novo pro MESMO pedido, sem recriar nada. O carrinho já
-   * foi limpo nesse ponto, então chamar finalizarPedido() de novo criaria um pedido vazio. Só
-   * cai em finalizarPedido() quando o pedido em si não chegou a ser criado. */
+  /** Botão "Tentar novamente" da tela de erro — se o pedido já foi criado (só o pagamento
+   * falhou), tenta cobrar de novo o MESMO pedido, sem recriar nada. O carrinho já foi limpo
+   * nesse ponto, então chamar finalizarPedido() de novo criaria um pedido vazio. Só cai em
+   * finalizarPedido() quando o pedido em si não chegou a ser criado. Cartão gera um token
+   * novo a cada tentativa (o token é de uso único) — os campos continuam preenchidos com o
+   * que o cliente digitou, ele só precisa corrigir o que causou a recusa e tentar de novo. */
   tentarNovamente(): void {
     if (this.numeroPedido()) {
       this.erroFinalizacao.set(null);
       this.finalizandoPedido.set(true);
-      this.gerarPagamentoPix(this.numeroPedido(), this.valorTotalFinalizado());
+      if (this.formaPagamento() === 'cartao') {
+        this.pagarComCartao(this.numeroPedido(), this.valorTotalFinalizado());
+      } else {
+        this.gerarPagamentoPix(this.numeroPedido(), this.valorTotalFinalizado());
+      }
       return;
     }
     this.finalizarPedido();
+  }
+
+  /** Tokeniza o cartão via SDK.js do Mercado Pago (número/CVV nunca chegam no nosso
+   * backend, só o token de uso único) e cobra o pedido já criado. Diferente do Pix, a
+   * resposta já vem com o status final na hora — 'approved' fecha o pedido, qualquer outro
+   * status vira erro com convite pra tentar de novo (cartão diferente, ou corrigir os dados). */
+  private async pagarComCartao(codigoPedido: string, valorTotal: number): Promise<void> {
+    try {
+      const mp = await this.mercadoPagoSdk.carregar();
+      const numeroLimpo = this.numeroCartao().replace(/\D/g, '');
+      const bin = numeroLimpo.slice(0, 6);
+
+      const metodos = await mp.getPaymentMethods({ bin });
+      const paymentMethodId = metodos.results[0]?.id;
+      if (!paymentMethodId) {
+        throw new Error('Não reconhecemos a bandeira desse cartão.');
+      }
+
+      const issuers = await mp.getIssuers({ paymentMethodId, bin });
+      const issuerId = issuers[0]?.id;
+
+      const [mes, ano] = this.validadeCartao().trim().split('/');
+      const documentoLimpo = this.cpfCnpjCartao().replace(/\D/g, '');
+
+      const token = await mp.createCardToken({
+        cardNumber: numeroLimpo,
+        cardholderName: this.nomeCartao().trim(),
+        cardExpirationMonth: mes,
+        cardExpirationYear: `20${ano}`,
+        securityCode: this.cvvCartao().trim(),
+        identificationType: documentoLimpo.length === 14 ? 'CNPJ' : 'CPF',
+        identificationNumber: documentoLimpo,
+      });
+
+      const pagamento = await firstValueFrom(
+        this.pedidoService.criarPagamentoCartao({
+          codigoPedido,
+          valorTotal,
+          emailCliente: this.email(),
+          nomeCliente: this.nome(),
+          documentoCliente: this.documento(),
+          token: token.id,
+          paymentMethodId,
+          issuerId,
+        })
+      );
+
+      this.finalizandoPedido.set(false);
+
+      if (pagamento.status === 'approved') {
+        this.pedidoFinalizado.set(true);
+        return;
+      }
+
+      this.erroFinalizacao.set(
+        pagamento.status === 'rejected'
+          ? 'Pagamento recusado pelo cartão. Confira os dados ou tente outro cartão.'
+          : 'Pagamento em análise pela operadora do cartão. Clique em "Tentar novamente" em alguns instantes, ou acompanhe o pedido.'
+      );
+    } catch (erro) {
+      console.error('Falha ao processar pagamento por cartão:', erro);
+      this.finalizandoPedido.set(false);
+      this.erroFinalizacao.set(
+        'Não foi possível processar o cartão. Confira o número, validade e CVV, e tente de novo.'
+      );
+    }
   }
 
   private iniciarPollingPagamento(codigoPedido: string): void {
