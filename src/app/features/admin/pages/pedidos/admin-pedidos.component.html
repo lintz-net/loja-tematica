@@ -7,10 +7,25 @@
     <p class="admin-pedidos__erro">{{ erro() }}</p>
   }
 
+  @if (!carregando() && pedidos().length > 0 && quantidadeAguardandoManual() > 0) {
+    <div class="admin-pedidos__filtros">
+      <button
+        type="button"
+        class="admin-pedidos__filtro"
+        [class.ativo]="somenteAguardandoManual()"
+        (click)="somenteAguardandoManual.set(!somenteAguardandoManual())"
+      >
+        ⚠️ Aguardando confirmação manual ({{ quantidadeAguardandoManual() }})
+      </button>
+    </div>
+  }
+
   @if (carregando()) {
     <p>Carregando pedidos…</p>
   } @else if (pedidos().length === 0) {
     <p>Nenhum pedido ainda.</p>
+  } @else if (pedidosFiltrados().length === 0) {
+    <p>Nenhum pedido de entrega local aguardando confirmação manual — tudo em dia.</p>
   } @else {
     <div class="admin-pedidos__tabela-wrap">
       <table class="admin-pedidos__tabela">
@@ -27,8 +42,8 @@
           </tr>
         </thead>
         <tbody>
-          @for (pedido of pedidos(); track pedido.codigo) {
-            <tr>
+          @for (pedido of pedidosFiltrados(); track pedido.codigo) {
+            <tr [class.admin-pedidos__linha--atencao]="aguardaConfirmacaoManual(pedido)">
               <td>{{ pedido.codigo }}</td>
               <td>{{ pedido.criadoEm | date: 'dd/MM/yyyy, HH:mm' }}</td>
               <td>
@@ -93,6 +108,12 @@
                     <option [value]="status">{{ rotulosStatus[status] }}</option>
                   }
                 </select>
+                @if (aguardaConfirmacaoManual(pedido)) {
+                  <br />
+                  <span class="admin-pedidos__aviso-manual" title="Entrega local não tem etiqueta do Melhor Envio — sem webhook pra avançar sozinho. Atualize aqui quando enviar/entregar de verdade.">
+                    ⚠️ Entrega local — atualizar na mão
+                  </span>
+                }
               </td>
             </tr>
           }

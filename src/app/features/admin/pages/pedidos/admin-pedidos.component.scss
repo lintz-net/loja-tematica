@@ -49,3 +49,35 @@
   color: var(--cor-texto-suave);
   font-size: 0.8rem;
 }
+
+.admin-pedidos__filtros {
+  margin-bottom: 16px;
+}
+
+.admin-pedidos__filtro {
+  background: color-mix(in srgb, var(--cor-aviso) 12%, transparent);
+  border: 1px solid var(--cor-aviso);
+  color: var(--cor-aviso);
+  padding: 8px 14px;
+  border-radius: var(--raio-padrao);
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  &.ativo {
+    background: var(--cor-aviso);
+    color: var(--cor-fundo);
+  }
+}
+
+.admin-pedidos__linha--atencao {
+  background: color-mix(in srgb, var(--cor-aviso) 8%, transparent);
+}
+
+.admin-pedidos__aviso-manual {
+  display: inline-block;
+  margin-top: 6px;
+  color: var(--cor-aviso);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: normal;
+}

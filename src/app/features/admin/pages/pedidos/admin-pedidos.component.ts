@@ -1,5 +1,5 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Pedido, StatusPedido } from '../../../../core/modelos/pedido.model';
 import { PedidoService } from '../../../../core/servicos/pedido.service';
 import { Envio, EnvioService, StatusEnvio } from '../../../../core/servicos/envio.service';
@@ -49,6 +49,29 @@ export class AdminPedidosComponent {
   readonly erro = signal<string | null>(null);
   readonly codigoSalvando = signal<string | null>(null);
   readonly codigoComprandoEtiqueta = signal<string | null>(null);
+
+  /** "Aguardando confirmação manual" — entrega local (grátis, sem etiqueta do Melhor Envio,
+   * ver `checkout.component.ts` → `ID_FRETE_LOCAL`) nunca gera evento de webhook, então a
+   * automação de status (`avancarStatusPedido` nas Edge Functions) não tem como avançar esses
+   * pedidos sozinha pra "Enviado"/"Entregue" — eles ficam parados em "Confirmado" até alguém
+   * mudar na mão aqui. Sinal: sem freteServicoId (não é serviço real do Melhor Envio) mas com
+   * freteTransportadora preenchida (distingue de pedido antigo sem frete nenhum registrado). */
+  readonly aguardaConfirmacaoManual = (pedido: Pedido): boolean =>
+    !pedido.freteServicoId &&
+    !!pedido.freteTransportadora &&
+    pedido.statusPagamento === 'aprovado' &&
+    pedido.status === 'confirmado';
+
+  readonly somenteAguardandoManual = signal(false);
+
+  readonly quantidadeAguardandoManual = computed(
+    () => this.pedidos().filter((p) => this.aguardaConfirmacaoManual(p)).length
+  );
+
+  readonly pedidosFiltrados = computed(() => {
+    if (!this.somenteAguardandoManual()) return this.pedidos();
+    return this.pedidos().filter((p) => this.aguardaConfirmacaoManual(p));
+  });
 
   constructor() {
     this.carregarPedidos();
