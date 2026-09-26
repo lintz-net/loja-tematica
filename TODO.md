@@ -164,9 +164,11 @@
     grosso, mais volume, não deveria seguir a mesma regra). Corrigido com valores próprios por
     produto (`migration-026-peso-dimensoes-bermudas.sql`, UPDATE direto por id, sem regra de
     tamanho): Tactel 0,25kg·3×25×30cm; Elanca/Ribana/Linho 0,30kg·4×25×30cm; Sarja (8 bolsos)
-    0,45kg·6×27×32cm. **Não propagado pro importador da OZKLO** — se uma bermuda nova aparecer
-    numa reimportação futura, ainda vai cair na regra genérica de camiseta (errada); ajustar
-    manualmente no admin até isso ser generalizado.
+    0,45kg·6×27×32cm. **Generalizado no importador em 2026-09-26**
+    (`calcular_peso_dimensoes_bermuda`, casa por palavra-chave no nome do produto —
+    tactel/elanca/ribana/linho/sarja): bermuda nova numa reimportação futura já usa a tabela
+    certa em vez de herdar a regra de camiseta; modelo desconhecido cai num fallback (valor
+    do meio) e imprime aviso pra revisão manual, em vez de errar silenciosamente.
 - **Revisão jurídica/contábil da declaração de conteúdo (DC-e)** — usada no lugar de nota
   fiscal nas etiquetas (MVP). DC-e é oficialmente pra envios sem fins comerciais; usar pra
   venda é solução técnica temporária, fora das regras do Melhor Envio. Conversar com contador
