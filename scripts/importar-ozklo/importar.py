@@ -96,6 +96,24 @@ PESO_DIMENSOES_BERMUDA_POR_MODELO = {
 }
 PESO_DIMENSOES_BERMUDA_FALLBACK = {"peso_kg": 0.30, "altura_cm": 4, "largura_cm": 25, "comprimento_cm": 30}
 
+# Camiseta também pesa/mede diferente por TECIDO — descoberto em 2026-09-26, mesma classe do
+# problema da bermuda: a regra por tamanho acima (PESO_DIMENSOES_MAIOR/MENOR) é só uma média
+# grosseira, ignora que dry fit/poliamida é bem mais leve que suedine oversized. Casa por
+# palavra-chave no nome (case-insensitive); ordem do dict importa só em teoria — nenhum nome
+# real bateu em mais de uma chave até agora (conferido manualmente contra o catálogo em
+# 2026-09-26). Produto sem nenhuma palavra-chave de tecido (a maioria — algodão comum, sem
+# menção especial) cai na regra por tamanho de sempre, sem aviso: aqui a ausência de tecido
+# especial não é uma lacuna de dado, é a maioria normal do catálogo.
+PESO_DIMENSOES_CAMISETA_POR_TECIDO = {
+    "dry fit": {"peso_kg": 0.20, "altura_cm": 3, "largura_cm": 25, "comprimento_cm": 35},
+    "dryfit": {"peso_kg": 0.20, "altura_cm": 3, "largura_cm": 25, "comprimento_cm": 35},
+    "poliamida": {"peso_kg": 0.20, "altura_cm": 3, "largura_cm": 25, "comprimento_cm": 35},
+    "estonada": {"peso_kg": 0.28, "altura_cm": 3, "largura_cm": 27, "comprimento_cm": 37},
+    "oversized": {"peso_kg": 0.35, "altura_cm": 4, "largura_cm": 30, "comprimento_cm": 40},
+    "suedine": {"peso_kg": 0.35, "altura_cm": 4, "largura_cm": 30, "comprimento_cm": 40},
+    "polo": {"peso_kg": 0.32, "altura_cm": 4, "largura_cm": 27, "comprimento_cm": 37},
+}
+
 
 def calcular_peso_dimensoes_bermuda(nome_produto):
     nome_normalizado = nome_produto.lower()
@@ -110,11 +128,19 @@ def calcular_peso_dimensoes_bermuda(nome_produto):
     return dict(PESO_DIMENSOES_BERMUDA_FALLBACK)
 
 
+def calcular_peso_dimensoes_camiseta(nome_produto, variantes):
+    nome_normalizado = nome_produto.lower()
+    for palavra, valores in PESO_DIMENSOES_CAMISETA_POR_TECIDO.items():
+        if palavra in nome_normalizado:
+            return dict(valores)
+    tem_tamanho_maior = any(v["tamanho"] in TAMANHOS_GRUPO_MAIOR for v in variantes)
+    return dict(PESO_DIMENSOES_MAIOR if tem_tamanho_maior else PESO_DIMENSOES_MENOR)
+
+
 def calcular_peso_dimensoes(nome_produto, slugs_categoria, variantes):
     if "bermuda" in slugs_categoria:
         return calcular_peso_dimensoes_bermuda(nome_produto)
-    tem_tamanho_maior = any(v["tamanho"] in TAMANHOS_GRUPO_MAIOR for v in variantes)
-    return dict(PESO_DIMENSOES_MAIOR if tem_tamanho_maior else PESO_DIMENSOES_MENOR)
+    return calcular_peso_dimensoes_camiseta(nome_produto, variantes)
 
 
 def login(email, senha):

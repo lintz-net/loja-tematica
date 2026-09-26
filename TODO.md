@@ -169,6 +169,16 @@
     tactel/elanca/ribana/linho/sarja): bermuda nova numa reimportação futura já usa a tabela
     certa em vez de herdar a regra de camiseta; modelo desconhecido cai num fallback (valor
     do meio) e imprime aviso pra revisão manual, em vez de errar silenciosamente.
+  - **Correção em 2026-09-26**: mesma classe de problema também dentro de camiseta — a regra
+    por tamanho é só uma média grosseira, ignora que dry fit/poliamida é bem mais leve que
+    suedine oversized. Ajustado por TECIDO (palavra-chave no nome) pros 6 produtos que bateram
+    no catálogo (`migration-027-peso-dimensoes-camiseta-por-tecido.sql`): dry
+    fit/poliamida 0,20kg·3×25×35cm; estonada 0,28kg·3×27×37cm; oversized/suedine
+    0,35kg·4×30×40cm; polo 0,32kg·4×27×37cm. Camiseta sem palavra-chave de tecido especial
+    (a maioria — algodão comum) continua na regra por tamanho de sempre, sem aviso (não é
+    lacuna, é o normal do catálogo). Generalizado no importador
+    (`calcular_peso_dimensoes_camiseta`): produto novo com um desses tecidos no nome já entra
+    com o peso certo, sem precisar de outro backfill.
 - **Revisão jurídica/contábil da declaração de conteúdo (DC-e)** — usada no lugar de nota
   fiscal nas etiquetas (MVP). DC-e é oficialmente pra envios sem fins comerciais; usar pra
   venda é solução técnica temporária, fora das regras do Melhor Envio. Conversar com contador
