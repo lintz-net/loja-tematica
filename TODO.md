@@ -159,6 +159,14 @@
   expostos de forma confiável em nenhuma página de produto da OZKLO (só aparecem, por acaso,
   no JSON-LD de *outros* produtos do carrossel de relacionados) — por isso a solução foi por
   regra de tamanho, não por dado raspado.
+  - **Correção em 2026-09-26**: a regra por tamanho (pensada só pra camiseta) tinha sido
+    aplicada por engano também às 5 bermudas do catálogo (peça diferente — tecido mais
+    grosso, mais volume, não deveria seguir a mesma regra). Corrigido com valores próprios por
+    produto (`migration-026-peso-dimensoes-bermudas.sql`, UPDATE direto por id, sem regra de
+    tamanho): Tactel 0,25kg·3×25×30cm; Elanca/Ribana/Linho 0,30kg·4×25×30cm; Sarja (8 bolsos)
+    0,45kg·6×27×32cm. **Não propagado pro importador da OZKLO** — se uma bermuda nova aparecer
+    numa reimportação futura, ainda vai cair na regra genérica de camiseta (errada); ajustar
+    manualmente no admin até isso ser generalizado.
 - **Revisão jurídica/contábil da declaração de conteúdo (DC-e)** — usada no lugar de nota
   fiscal nas etiquetas (MVP). DC-e é oficialmente pra envios sem fins comerciais; usar pra
   venda é solução técnica temporária, fora das regras do Melhor Envio. Conversar com contador
