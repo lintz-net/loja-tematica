@@ -73,13 +73,46 @@ MAPA_CATEGORIAS = {
 # risco real — cobrar de menos e a loja arcar com a diferença), só superestima levemente
 # quando um P/M/G é comprado sozinho de um produto que também tem GG. Valores conferidos com
 # o usuário em 2026-09-25 (ver docs/supabase/migration-025-peso-dimensoes-catalogo.sql, que
-# aplicou a mesma regra pro catálogo já importado antes desta mudança).
+# aplicou a mesma regra pro catálogo já importado antes desta mudança). SÓ VALE PRA CAMISETA —
+# bermuda usa uma tabela própria por modelo, ver calcular_peso_dimensoes_bermuda abaixo.
 TAMANHOS_GRUPO_MAIOR = {"GG", "G1", "G2", "XG"}
 PESO_DIMENSOES_MAIOR = {"peso_kg": 0.30, "altura_cm": 3, "largura_cm": 27, "comprimento_cm": 37}
 PESO_DIMENSOES_MENOR = {"peso_kg": 0.25, "altura_cm": 3, "largura_cm": 25, "comprimento_cm": 35}
 
+# Bermuda pesa/mede diferente por MODELO (tecido), não por tamanho — descoberto em 2026-09-26
+# depois que as 5 bermudas do catálogo (então existentes) tinham recebido por engano os
+# valores de camiseta acima (migration-026-peso-dimensoes-bermudas.sql corrigiu isso em
+# produção). Casa por palavra-chave no nome do produto (case-insensitive, sem acento não
+# tratado — os nomes da OZKLO pra esses modelos não usam acento). Modelo de bermuda novo que
+# não bate com nenhuma chave aqui cai no fallback (o valor mais comum entre os conhecidos, meio
+# do intervalo observado) e imprime aviso pra revisão manual — não existe uma regra geral
+# confiável pra "peso de bermuda" do jeito que existe pra camiseta.
+PESO_DIMENSOES_BERMUDA_POR_MODELO = {
+    "tactel": {"peso_kg": 0.25, "altura_cm": 3, "largura_cm": 25, "comprimento_cm": 30},
+    "elanca": {"peso_kg": 0.30, "altura_cm": 4, "largura_cm": 25, "comprimento_cm": 30},
+    "ribana": {"peso_kg": 0.30, "altura_cm": 4, "largura_cm": 25, "comprimento_cm": 30},
+    "linho": {"peso_kg": 0.30, "altura_cm": 4, "largura_cm": 25, "comprimento_cm": 30},
+    "sarja": {"peso_kg": 0.45, "altura_cm": 6, "largura_cm": 27, "comprimento_cm": 32},
+}
+PESO_DIMENSOES_BERMUDA_FALLBACK = {"peso_kg": 0.30, "altura_cm": 4, "largura_cm": 25, "comprimento_cm": 30}
 
-def calcular_peso_dimensoes(variantes):
+
+def calcular_peso_dimensoes_bermuda(nome_produto):
+    nome_normalizado = nome_produto.lower()
+    for modelo, valores in PESO_DIMENSOES_BERMUDA_POR_MODELO.items():
+        if modelo in nome_normalizado:
+            return dict(valores)
+    print(
+        f"AVISO: bermuda '{nome_produto}' não bateu com nenhum modelo conhecido "
+        f"({', '.join(PESO_DIMENSOES_BERMUDA_POR_MODELO)}) — usando peso/dimensão padrão de "
+        f"bermuda, revisar manualmente em /admin/produtos."
+    )
+    return dict(PESO_DIMENSOES_BERMUDA_FALLBACK)
+
+
+def calcular_peso_dimensoes(nome_produto, slugs_categoria, variantes):
+    if "bermuda" in slugs_categoria:
+        return calcular_peso_dimensoes_bermuda(nome_produto)
     tem_tamanho_maior = any(v["tamanho"] in TAMANHOS_GRUPO_MAIOR for v in variantes)
     return dict(PESO_DIMENSOES_MAIOR if tem_tamanho_maior else PESO_DIMENSOES_MENOR)
 
@@ -204,7 +237,7 @@ def montar_linha_produto_nova(produto, urls_imagens):
         "videos": None,
         "guia_medidas": None,
         "genero": "unissex",
-        **calcular_peso_dimensoes(variantes),
+        **calcular_peso_dimensoes(produto["nome"], slugs_categoria, variantes),
         "variantes": variantes,
         "destaque": False,
         "ordem_destaque": None,
