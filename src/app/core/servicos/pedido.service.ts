@@ -180,6 +180,7 @@ export class PedidoService {
     token: string;
     paymentMethodId: string;
     issuerId?: string;
+    parcelas: number;
   }): Observable<RespostaPagamentoCartao> {
     const promessa = fetch(
       `${environment.supabaseUrl}/functions/v1/mercado-pago-criar-pagamento-cartao`,

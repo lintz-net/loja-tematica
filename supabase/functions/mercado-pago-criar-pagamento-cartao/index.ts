@@ -19,6 +19,8 @@ import {
   restSupabase,
 } from '../_shared/mercado-pago.ts';
 
+const MAX_PARCELAS = 6;
+
 interface CorpoRequisicao {
   codigoPedido: string;
   valorTotal: number;
@@ -28,6 +30,7 @@ interface CorpoRequisicao {
   token: string;
   paymentMethodId: string;
   issuerId?: string;
+  parcelas: number;
 }
 
 interface RespostaPagamentoMercadoPago {
@@ -64,6 +67,7 @@ Deno.serve(async (req: Request) => {
     token,
     paymentMethodId,
     issuerId,
+    parcelas,
   } = corpo;
 
   if (
@@ -76,6 +80,12 @@ Deno.serve(async (req: Request) => {
   ) {
     return respostaJson({ error: 'Dados obrigatórios ausentes.' }, 400);
   }
+
+  // Sem juros — a divisão em si é feita pelo Mercado Pago (mesma cobrança total,
+  // `transaction_amount` não muda), a loja só decide quantas parcelas oferecer.
+  const numeroParcelas = Number.isInteger(parcelas) && parcelas >= 1 && parcelas <= MAX_PARCELAS
+    ? parcelas
+    : 1;
 
   const documentoLimpo = (documentoCliente ?? '').replace(/\D/g, '');
   const identification =
@@ -94,7 +104,7 @@ Deno.serve(async (req: Request) => {
         transaction_amount: Math.round(valorTotal * 100) / 100,
         token,
         description: `Pedido ${codigoPedido} — Vista Nostálgica`,
-        installments: 1, // MVP: só à vista por enquanto — parcelamento fica pra depois.
+        installments: numeroParcelas,
         payment_method_id: paymentMethodId,
         ...(issuerId ? { issuer_id: Number(issuerId) } : {}),
         external_reference: codigoPedido,

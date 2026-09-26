@@ -110,16 +110,8 @@
   font-size: 0.78rem;
 }
 
-// A margem negativa de .checkout__ajuda--pequena pressupõe que o elemento anterior é sempre
-// um input puro (com margin-bottom de 12px a compensar) — quebra quando vem depois de um
-// .checkout__linha que pode ter mensagem de erro no meio (o texto de erro fica sem esse
-// espaço reservado, e sobrepõe o parágrafo seguinte). Este aqui vem logo depois do bloco de
-// validade/CVV, então usa margem positiva normal em vez de tentar colar no campo anterior.
-.checkout__ajuda--cartao {
-  margin-top: 8px;
-}
-
-.checkout__formulario input {
+.checkout__formulario input,
+.checkout__formulario select {
   width: 100%;
   background: var(--cor-fundo);
   border: 1px solid var(--cor-borda);

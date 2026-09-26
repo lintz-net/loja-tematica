@@ -51,8 +51,13 @@
   suporte se aparecer instabilidade de novo (já visto: `500 internal_server_error`
   `communication_error` intermitente, mesma classe do problema antigo — não é bug nosso).
   Cartão de crédito: ver item próprio abaixo (implementado em 2026-09-25).
-- **Pagamento por cartão de crédito, implementado (2026-09-25)** — só à vista (1x) por
-  decisão de escopo; parcelamento fica pra depois. `MercadoPagoSdkService` carrega a SDK.js
+- **Pagamento por cartão de crédito, implementado (2026-09-25)**, com parcelamento sem juros
+  em até 6x adicionado depois (2026-09-25) — seletor de parcelas no checkout
+  (`opcoesParcelas`/`quantidadeMaximaParcelas` em `checkout.component.ts`), limitado por
+  `MAX_PARCELAS` e `VALOR_MINIMO_PARCELA` (R$5/parcela — `parcelamento.constantes.ts`). Quem
+  faz a divisão de verdade na cobrança é o próprio Mercado Pago (`installments` no payload de
+  `/v1/payments`, antes hardcoded em 1); a loja só decide até quantas parcelas oferecer.
+  `MercadoPagoSdkService` carrega a SDK.js
   do Mercado Pago (`https://sdk.mercadopago.com/js/v2`) sob demanda, só quando o cliente
   escolhe cartão — número/CVV nunca chegam no nosso backend, só o token de uso único gerado
   no navegador (`mp.createCardToken`). Nova Edge Function

@@ -375,9 +375,17 @@
                   </div>
                 </div>
 
-                <p class="checkout__ajuda checkout__ajuda--pequena checkout__ajuda--cartao">
-                  À vista, sem juros — R$ {{ valorTotal().toFixed(2) }}.
-                </p>
+                <select
+                  name="parcelas-cartao"
+                  [value]="parcelaSelecionada()"
+                  (change)="atualizarParcelas($any($event.target).value)"
+                >
+                  @for (opcao of opcoesParcelas(); track opcao.numero) {
+                    <option [value]="opcao.numero">
+                      {{ opcao.numero }}x de R$ {{ opcao.valorParcela.toFixed(2) }} sem juros
+                    </option>
+                  }
+                </select>
 
                 <input
                   type="text"
@@ -473,7 +481,7 @@
               <p class="checkout__revisao-pagamento">
                 {{ formaPagamentoRotulo() }}
                 @if (formaPagamento() === 'cartao') {
-                  · {{ numeroCartaoMascarado() }} · {{ parcelas() }}x
+                  · {{ numeroCartaoMascarado() }} · {{ parcelaSelecionada() }}x
                 }
               </p>
             </div>

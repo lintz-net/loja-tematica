@@ -41,6 +41,7 @@ describe('CheckoutComponent — formulário (CEP, cupom, frete, navegação, car
     createCardToken: (d: unknown) => Promise<{ id: string; status: string }>;
   }>;
   let configuracaoSignal: ReturnType<typeof signal<{ cidadesFreteGratis: Array<{ cidade: string; uf: string }> } | null>>;
+  let carrinhoValorTotalSignal: ReturnType<typeof signal<number>>;
 
   function configurar(): ComponentFixture<CheckoutComponent> {
     TestBed.configureTestingModule({
@@ -52,7 +53,7 @@ describe('CheckoutComponent — formulário (CEP, cupom, frete, navegação, car
           provide: CarrinhoService,
           useValue: {
             itensCarrinho: signal([]),
-            valorTotal: signal(0),
+            valorTotal: carrinhoValorTotalSignal,
             limparCarrinho: jasmine.createSpy('limparCarrinho'),
           },
         },
@@ -84,6 +85,7 @@ describe('CheckoutComponent — formulário (CEP, cupom, frete, navegação, car
     mercadoPagoSdkSpy = jasmine.createSpyObj('MercadoPagoSdkService', ['carregar']);
     mercadoPagoSdkSpy.carregar.and.resolveTo(mpSpy as never);
     configuracaoSignal = signal(null);
+    carrinhoValorTotalSignal = signal(0);
   });
 
   describe('atualizarCep', () => {
@@ -328,6 +330,52 @@ describe('CheckoutComponent — formulário (CEP, cupom, frete, navegação, car
     });
   });
 
+  describe('seleção de parcelas', () => {
+    it('opcoesParcelas divide o total igualmente, sem juros, até o máximo permitido', () => {
+      carrinhoValorTotalSignal.set(60); // 60 / 5 (mínimo por parcela) = 6, bate com MAX_PARCELAS
+      const fixture = configurar();
+
+      const opcoes = fixture.componentInstance.opcoesParcelas();
+
+      expect(opcoes.length).toBe(6);
+      expect(opcoes[0]).toEqual({ numero: 1, valorParcela: 60 });
+      expect(opcoes[2]).toEqual({ numero: 3, valorParcela: 20 });
+      expect(opcoes[5]).toEqual({ numero: 6, valorParcela: 10 });
+    });
+
+    it('limita as opções pelo valor mínimo por parcela quando o total é baixo', () => {
+      carrinhoValorTotalSignal.set(22); // 22/5 = 4,4 → só até 4x
+      const fixture = configurar();
+
+      expect(fixture.componentInstance.opcoesParcelas().length).toBe(4);
+      expect(fixture.componentInstance.quantidadeMaximaParcelas()).toBe(4);
+    });
+
+    it('parcelaSelecionada cai pro máximo disponível quando o total diminui depois da escolha (ex.: cupom)', () => {
+      carrinhoValorTotalSignal.set(60);
+      const fixture = configurar();
+      const comp = fixture.componentInstance;
+      comp.atualizarParcelas('6');
+      expect(comp.parcelaSelecionada()).toBe(6);
+
+      carrinhoValorTotalSignal.set(10); // agora só cabe até 2x
+
+      expect(comp.parcelaSelecionada()).toBe(2);
+    });
+
+    it('atualizarParcelas converte o valor do select, com fallback 1 se inválido', () => {
+      carrinhoValorTotalSignal.set(60);
+      const fixture = configurar();
+      const comp = fixture.componentInstance;
+
+      comp.atualizarParcelas('4');
+      expect(comp.parcelas()).toBe(4);
+
+      comp.atualizarParcelas('abc');
+      expect(comp.parcelas()).toBe(1);
+    });
+  });
+
   describe('pagamento por cartão (pagarComCartao, via tentarNovamente)', () => {
     function prepararCartaoValido(comp: CheckoutComponent): void {
       comp.formaPagamento.set('cartao');
@@ -359,6 +407,26 @@ describe('CheckoutComponent — formulário (CEP, cupom, frete, navegação, car
       expect(chamada.token).toBe('tok_abc');
       expect(chamada.paymentMethodId).toBe('master');
       expect(chamada.issuerId).toBe('123');
+      expect(chamada.parcelas).toBe(1);
+    }));
+
+    it('envia o número de parcelas escolhido (capturado em parcelasFinalizadas na criação do pedido)', fakeAsync(() => {
+      mpSpy.getPaymentMethods.and.resolveTo({ results: [{ id: 'master' }] });
+      mpSpy.getIssuers.and.resolveTo([{ id: '123' }]);
+      mpSpy.createCardToken.and.resolveTo({ id: 'tok_abc', status: 'ok' });
+      pedidoServiceSpy.criarPagamentoCartao.and.returnValue(
+        of({ idPagamento: '1', status: 'approved', statusDetail: 'accredited' })
+      );
+      const fixture = configurar();
+      const comp = fixture.componentInstance;
+      prepararCartaoValido(comp);
+      comp.parcelasFinalizadas.set(3);
+
+      comp.tentarNovamente();
+      tick();
+
+      const chamada = pedidoServiceSpy.criarPagamentoCartao.calls.mostRecent().args[0];
+      expect(chamada.parcelas).toBe(3);
     }));
 
     it('recusado mostra mensagem específica de recusa', fakeAsync(() => {

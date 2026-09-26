@@ -244,6 +244,7 @@ describe('PedidoService', () => {
           nomeCliente: 'Izac Lins',
           token: 'tok_123',
           paymentMethodId: 'master',
+          parcelas: 3,
         })
         .subscribe((r) => {
           expect(r).toEqual(resposta);
@@ -251,6 +252,7 @@ describe('PedidoService', () => {
           expect(url).toContain('/functions/v1/mercado-pago-criar-pagamento-cartao');
           const corpo = JSON.parse((init as RequestInit).body as string);
           expect(corpo.token).toBe('tok_123');
+          expect(corpo.parcelas).toBe(3);
           done();
         });
     });
@@ -266,6 +268,7 @@ describe('PedidoService', () => {
           nomeCliente: 'Izac Lins',
           token: 'tok_123',
           paymentMethodId: 'master',
+          parcelas: 1,
         })
         .subscribe({
           error: (erro) => {

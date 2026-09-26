@@ -25,6 +25,7 @@ import {
   validarValidadeCartao,
 } from '../../../../core/utilitarios/validacao.util';
 import { normalizarTexto } from '../../../../core/utilitarios/texto.util';
+import { parcelasDisponiveis } from '../../../../core/constantes/parcelamento.constantes';
 import { LOGOS_CARTAO } from '../../../../shared/dados/logos-pagamento';
 import { obterLogoTransportadora } from '../../../../shared/dados/logos-transportadora';
 
@@ -159,8 +160,9 @@ export class CheckoutComponent implements OnDestroy {
   );
 
   // Passo 7 — pagamento. Cartão cobra de verdade via SDK.js do Mercado Pago (tokenização no
-  // navegador — número/CVV nunca chegam no nosso backend), só à vista por enquanto
-  // (parcelamento fica pra uma próxima etapa, ver TODO.md).
+  // navegador — número/CVV nunca chegam no nosso backend). Parcelamento sem juros: quem
+  // divide o valor entre as parcelas é o próprio Mercado Pago (mesmo transaction_amount), a
+  // loja só decide até quantas parcelas oferecer (ver parcelamento.constantes.ts).
   readonly formaPagamento = signal<'cartao' | 'pix'>('pix');
   readonly bandeirasAceitas = LOGOS_CARTAO;
 
@@ -258,11 +260,34 @@ export class CheckoutComponent implements OnDestroy {
     Math.max(0, this.subtotal() + this.valorFrete() - this.valorDesconto())
   );
 
+  /** Máximo de parcelas sem juros oferecido pro valor atual do pedido — cai conforme o
+   * total cai (ex.: cupom aplicado), respeitando VALOR_MINIMO_PARCELA. */
+  readonly quantidadeMaximaParcelas = computed(() => parcelasDisponiveis(this.valorTotal()));
+
+  /** Opções pro seletor de parcelas — sempre a partir de 1x, valor de cada parcela é só o
+   * total dividido (sem juros: quem faz a divisão de verdade na cobrança é o Mercado Pago). */
+  readonly opcoesParcelas = computed(() => {
+    const total = this.valorTotal();
+    return Array.from({ length: this.quantidadeMaximaParcelas() }, (_, i) => i + 1).map(
+      (numero) => ({ numero, valorParcela: total / numero })
+    );
+  });
+
+  /** O que `parcelas()` guarda pode ficar desatualizado se o total cair depois da escolha
+   * (ex.: cupom aplicado depois) — este é o valor de verdade a usar em qualquer lugar
+   * (exibição, validação, envio pro pagamento). */
+  readonly parcelaSelecionada = computed(() =>
+    Math.min(this.parcelas(), this.quantidadeMaximaParcelas())
+  );
+
   readonly pedidoFinalizado = signal(false);
   readonly numeroPedido = signal('');
   // Carrinho é limpo assim que o pedido é criado — depois disso `valorTotal()` (derivado do
   // carrinho) recalcularia pra 0, então o valor do pedido finalizado fica guardado aqui.
   readonly valorTotalFinalizado = signal(0);
+  // Mesmo motivo do valorTotalFinalizado acima: valorTotal()=0 pós-limpeza faria
+  // parcelaSelecionada() cair pra 1x mesmo que o cliente tenha escolhido mais parcelas.
+  readonly parcelasFinalizadas = signal(1);
   readonly finalizandoPedido = signal(false);
   readonly erroFinalizacao = signal<string | null>(null);
 
@@ -464,6 +489,10 @@ export class CheckoutComponent implements OnDestroy {
     this.cpfCnpjCartao.set(mascararDocumento(valor));
   }
 
+  atualizarParcelas(valor: string): void {
+    this.parcelas.set(Number(valor) || 1);
+  }
+
   atualizarCodigoCupom(valor: string): void {
     this.codigoCupom.set(valor.toUpperCase());
     this.erroCupom.set(null);
@@ -610,6 +639,7 @@ export class CheckoutComponent implements OnDestroy {
     // Capturado antes de limpar o carrinho — depois disso `this.valorTotal()` (derivado do
     // carrinho) recalcularia pra 0, o que já quebrou a criação do Pix (valor não positivo).
     const valorTotalPedido = this.valorTotal();
+    const parcelasPedido = this.formaPagamento() === 'cartao' ? this.parcelaSelecionada() : 1;
 
     const itensPedido: ItemPedido[] = this.itens().map((item) => ({
       produtoNome: item.produto.nome,
@@ -638,7 +668,7 @@ export class CheckoutComponent implements OnDestroy {
         },
         itens: itensPedido,
         formaPagamento: this.formaPagamento(),
-        parcelas: this.formaPagamento() === 'cartao' ? this.parcelas() : 1,
+        parcelas: parcelasPedido,
         valorFrete: this.valorFrete(),
         valorTotal: valorTotalPedido,
         // Sem freteServicoId pra entrega local — não é um serviço real do Melhor Envio, não
@@ -655,6 +685,7 @@ export class CheckoutComponent implements OnDestroy {
         next: (pedido) => {
           this.numeroPedido.set(pedido.codigo);
           this.valorTotalFinalizado.set(valorTotalPedido);
+          this.parcelasFinalizadas.set(parcelasPedido);
           this.carrinhoService.limparCarrinho();
 
           if (this.formaPagamento() === 'pix') {
@@ -764,6 +795,7 @@ export class CheckoutComponent implements OnDestroy {
           token: token.id,
           paymentMethodId,
           issuerId,
+          parcelas: this.parcelasFinalizadas(),
         })
       );
 
