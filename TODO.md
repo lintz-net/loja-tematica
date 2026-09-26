@@ -145,17 +145,20 @@
   no Sandbox. Migrar exige: trocar o secret `AMBIENTE_MELHOR_ENVIO`, reautorizar o OAuth no
   ambiente de produção, e recadastrar o webhook lá (cadastro é por aplicativo/ambiente, não
   é automático).
-- **Peso/dimensões em branco pra todo o catálogo** — a cotação de frete usa valor genérico
-  (0,3kg, 20×5×25cm) até o admin preencher os reais. Risco de frete cobrado errado (a mais ou
-  a menos) pro cliente. Afeta os 139 produtos importados da OZKLO (ver item abaixo) e também
-  valia pros 128 produtos antigos do mock, hoje substituídos por eles (catálogo trocado
-  inteiro em 2026-09-24 — ver "Importação do catálogo da OZKLO"). Confirmado por scraping
-  (2026-09-24): peso/dimensões não são expostos de forma confiável em nenhuma página de
-  produto da OZKLO (o peso só aparece, por acaso, no JSON-LD de *outros* produtos que
-  aparecem no carrossel de relacionados de uma página — nunca no do próprio produto sendo
-  visto; sem endpoint ou atributo sistemático pra raspar). Não dá pra resolver via scraping.
-  Opções: pedir a planilha de peso/dimensões direto pro fornecedor, ou preencher manualmente
-  no admin aos poucos.
+- ~~**Peso/dimensões em branco pra todo o catálogo**~~ — **resolvido em 2026-09-26**. Peso
+  confirmado com o usuário: P/M/G = 0,25kg·3×25×35cm, GG/G1/G2/XG = 0,30kg·3×27×37cm. Como
+  peso/dimensões são salvos por PRODUTO (não por tamanho) e a maioria dos produtos mistura
+  P/M/G com GG na mesma ficha, aplicado sempre o peso do MAIOR tamanho presente — nunca
+  subestima o frete, só superestima levemente um P/M/G isolado de um produto que também tem
+  GG. Backfill rodado em produção
+  (`docs/supabase/migration-025-peso-dimensoes-catalogo.sql`, só preenche `is null`, não
+  sobrescreve ajuste manual): 132 produtos ficaram com 0,30kg, 7 com 0,25kg. Importador da
+  OZKLO (`scripts/importar-ozklo/importar.py`, `calcular_peso_dimensoes`) também ajustado pra
+  produto novo já nascer com o valor certo, não `None` — sem isso essa mesma lacuna voltaria a
+  cada reimportação. Confirmado por scraping (2026-09-24): peso/dimensões reais não são
+  expostos de forma confiável em nenhuma página de produto da OZKLO (só aparecem, por acaso,
+  no JSON-LD de *outros* produtos do carrossel de relacionados) — por isso a solução foi por
+  regra de tamanho, não por dado raspado.
 - **Revisão jurídica/contábil da declaração de conteúdo (DC-e)** — usada no lugar de nota
   fiscal nas etiquetas (MVP). DC-e é oficialmente pra envios sem fins comerciais; usar pra
   venda é solução técnica temporária, fora das regras do Melhor Envio. Conversar com contador
@@ -166,12 +169,6 @@
   de verdade várias vezes. Não se aplica ao nosso fluxo de compra de etiqueta via API (carrinho
   → checkout → gerar) — decidido não mapear pra não arriscar regressão de status caso apareça
   fora de ordem no futuro. Segue só logado em `eventos_webhook_melhor_envio`, sem ação.
-- **Imagem de preview `og-padrao.jpg`** (`environment.prod.ts`/`SeoService`) é fictícia —
-  subir uma imagem de verdade antes de publicar (afeta como o link aparece compartilhado no
-  WhatsApp/Instagram/Facebook).
-- **Rodar `docs/supabase/migration-016-cidades-frete-gratis.sql`** no SQL Editor do Supabase
-  (produção) — adiciona a coluna `cidades_frete_gratis` em `configuracao_loja`. Sem isso, o
-  admin não consegue salvar em `/admin/config` (a nova seção de cidades quebra o update).
 
 ## Importação do catálogo da OZKLO (2026-09-24)
 

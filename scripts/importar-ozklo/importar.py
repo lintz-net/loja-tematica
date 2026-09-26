@@ -67,6 +67,22 @@ MAPA_CATEGORIAS = {
     "Básicas": "camiseta",
 }
 
+# Peso/dimensões são salvos por PRODUTO, não por tamanho — e a maioria dos produtos da OZKLO
+# mistura P/M/G com GG/G1/G2/XG na mesma ficha, então não dá pra guardar dois pesos diferentes
+# pro mesmo produto. Usa sempre o peso do MAIOR tamanho presente: nunca subestima o frete (o
+# risco real — cobrar de menos e a loja arcar com a diferença), só superestima levemente
+# quando um P/M/G é comprado sozinho de um produto que também tem GG. Valores conferidos com
+# o usuário em 2026-09-25 (ver docs/supabase/migration-025-peso-dimensoes-catalogo.sql, que
+# aplicou a mesma regra pro catálogo já importado antes desta mudança).
+TAMANHOS_GRUPO_MAIOR = {"GG", "G1", "G2", "XG"}
+PESO_DIMENSOES_MAIOR = {"peso_kg": 0.30, "altura_cm": 3, "largura_cm": 27, "comprimento_cm": 37}
+PESO_DIMENSOES_MENOR = {"peso_kg": 0.25, "altura_cm": 3, "largura_cm": 25, "comprimento_cm": 35}
+
+
+def calcular_peso_dimensoes(variantes):
+    tem_tamanho_maior = any(v["tamanho"] in TAMANHOS_GRUPO_MAIOR for v in variantes)
+    return dict(PESO_DIMENSOES_MAIOR if tem_tamanho_maior else PESO_DIMENSOES_MENOR)
+
 
 def login(email, senha):
     resposta = requests.post(
@@ -175,6 +191,7 @@ def montar_imagens_por_cor_urls(produto, urls_imagens):
 
 def montar_linha_produto_nova(produto, urls_imagens):
     slugs_categoria, _ = mapear_categorias(produto.get("categoriasSugeridas", []))
+    variantes = montar_variantes(produto["variantes"])
     return {
         "id": produto["id"],
         "nome": produto["nome"],
@@ -187,11 +204,8 @@ def montar_linha_produto_nova(produto, urls_imagens):
         "videos": None,
         "guia_medidas": None,
         "genero": "unissex",
-        "peso_kg": None,
-        "altura_cm": None,
-        "largura_cm": None,
-        "comprimento_cm": None,
-        "variantes": montar_variantes(produto["variantes"]),
+        **calcular_peso_dimensoes(variantes),
+        "variantes": variantes,
         "destaque": False,
         "ordem_destaque": None,
         "preco_promocional": produto.get("precoPromocional"),
