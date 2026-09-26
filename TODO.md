@@ -134,9 +134,6 @@
   (`onboarding@resend.dev`), só entrega pro e-mail da própria conta Resend. Cliente real não
   recebe confirmação de compra. Precisa: domínio verificado no Resend + secret `RESEND_FROM`
   (ex.: `Vista Nostálgica <pedidos@vistanostalgica.com.br>`).
-
-## 🟡 Recomendado antes de operar de verdade
-
 - **SMTP customizado no Supabase Auth** — o login por link mágico em `/conta` usa o e-mail
   padrão do Supabase Auth (não o Resend — são dois sistemas diferentes), com limite de taxa
   baixo e remetente/template genéricos. Configurar em Project Settings → Auth → SMTP
@@ -145,6 +142,9 @@
   no Sandbox. Migrar exige: trocar o secret `AMBIENTE_MELHOR_ENVIO`, reautorizar o OAuth no
   ambiente de produção, e recadastrar o webhook lá (cadastro é por aplicativo/ambiente, não
   é automático).
+
+## 🟡 Recomendado antes de operar de verdade
+
 - ~~**Peso/dimensões em branco pra todo o catálogo**~~ — **resolvido em 2026-09-26**. Peso
   confirmado com o usuário: P/M/G = 0,25kg·3×25×35cm, GG/G1/G2/XG = 0,30kg·3×27×37cm. Como
   peso/dimensões são salvos por PRODUTO (não por tamanho) e a maioria dos produtos mistura
@@ -179,11 +179,6 @@
     lacuna, é o normal do catálogo). Generalizado no importador
     (`calcular_peso_dimensoes_camiseta`): produto novo com um desses tecidos no nome já entra
     com o peso certo, sem precisar de outro backfill.
-- **Revisão jurídica/contábil da declaração de conteúdo (DC-e)** — usada no lugar de nota
-  fiscal nas etiquetas (MVP). DC-e é oficialmente pra envios sem fins comerciais; usar pra
-  venda é solução técnica temporária, fora das regras do Melhor Envio. Conversar com contador
-  antes de operar assim por muito tempo em escala. NF-e automática e logística reversa ficam
-  fora de escopo por enquanto.
 - ~~**Evento `order.received` do Melhor Envio**~~ — investigado: nunca ocorreu em produção
   apesar de `created`, `released`, `ready-to-print`, `posted` e `delivered` já terem disparado
   de verdade várias vezes. Não se aplica ao nosso fluxo de compra de etiqueta via API (carrinho
