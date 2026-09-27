@@ -435,6 +435,43 @@ describe('CheckoutComponent — modoRetomada', () => {
       expect(pedidoServiceSpy.criarPedido).not.toHaveBeenCalled();
     });
 
+    it('manda retomada: false quando é um retry na mesma sessão (Pix ainda não foi gerado com sucesso, modoRetomada continua false)', () => {
+      pedidoServiceSpy.criarPagamentoPix.and.returnValue(
+        of({ idPagamento: '1', qrCode: 'copia-e-cola', qrCodeBase64: 'base64', expiraEm: '2026-01-01T00:00:00Z' })
+      );
+      const fixture = configurar();
+      fixture.detectChanges();
+
+      const comp = fixture.componentInstance;
+      comp.numeroPedido.set('PED-001');
+      comp.valorTotalFinalizado.set(102);
+
+      comp.tentarNovamente();
+
+      expect(pedidoServiceSpy.criarPagamentoPix).toHaveBeenCalledWith(
+        jasmine.objectContaining({ retomada: false })
+      );
+    });
+
+    it('manda retomada: true quando é a retomada de verdade (/checkout/:codigoRetomada) — evita reusar a idempotency key de um Pix expirado/recusado', () => {
+      pedidoServiceSpy.criarPagamentoPix.and.returnValue(
+        of({ idPagamento: '1', qrCode: 'copia-e-cola', qrCodeBase64: 'base64', expiraEm: '2026-01-01T00:00:00Z' })
+      );
+      const fixture = configurar();
+      fixture.detectChanges();
+
+      const comp = fixture.componentInstance;
+      comp.numeroPedido.set('PED-001');
+      comp.valorTotalFinalizado.set(102);
+      comp.modoRetomada.set(true);
+
+      comp.tentarNovamente();
+
+      expect(pedidoServiceSpy.criarPagamentoPix).toHaveBeenCalledWith(
+        jasmine.objectContaining({ retomada: true })
+      );
+    });
+
     it('cai em finalizarPedido quando o pedido ainda não foi criado', () => {
       const fixture = configurar();
       fixture.detectChanges();

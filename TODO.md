@@ -185,13 +185,21 @@
   `podeRetomarPagamento`) e no botão "Tentar novamente" da tela de erro do checkout. Coberto
   por `checkout.component.spec.ts` (só a parte de `modoRetomada`, 100%) e
   `pedido.component.spec.ts` (100%) — primeiros testes unitários do projeto.
-  - **Risco não resolvido, não testável sem API real**: a chamada de retomada usa a mesma
-    `X-Idempotency-Key` (o `codigoPedido`) que a criação original — não temos certeza do que o
-    Mercado Pago devolve se essa chave já corresponder a um pagamento **expirado ou recusado**
-    (o pagamento morto de volta, sem QR novo válido? um pagamento novo de verdade?). Se for o
-    primeiro caso, o cliente fica num loop sem conseguir pagar esse pedido nunca mais. Só dá
-    pra confirmar testando contra a API de verdade (não o sandbox instável) — não implementado
-    nenhuma mitigação client-side por falta dessa confirmação.
+  - ~~**Risco não resolvido, não testável sem API real**~~ — **mitigado em 2026-09-27**, sem
+    precisar confirmar o comportamento exato do Mercado Pago. A chamada de retomada usava a
+    mesma `X-Idempotency-Key` (o `codigoPedido`) que a criação original — sem certeza do que
+    eles devolvem se essa chave já corresponder a um pagamento **expirado ou recusado** (o
+    pagamento morto de volta, sem QR novo válido? um pagamento novo de verdade?). Em vez de
+    esperar acesso à API real pra confirmar, a mitigação foi remover a ambiguidade: novo
+    campo `retomada?: boolean` em `criarPagamentoPix` (`checkout.component.ts` passa
+    `this.modoRetomada()`) — quando `true`, a Edge Function `mercado-pago-criar-pagamento`
+    usa uma idempotency key **única por tentativa** (`${codigoPedido}-retomada-${uuid}`) em
+    vez da fixa por pedido, mesmo padrão que o pagamento por cartão já usa. Garante um Pix
+    genuinamente novo a cada retomada, sem depender de nenhuma resposta específica deles. A
+    criação original (não-retomada) continua com chave fixa por `codigoPedido` — não perde a
+    proteção contra retry de rede/clique duplo nesse momento, que é quando mais importa (a
+    proteção equivalente na retomada já vem do botão "Pagar agora" ficar desabilitado durante
+    o envio). Deploy da Edge Function feito.
 - ~~**`pedido.component.ts` usa `route.snapshot.paramMap` (não reativo)**~~ — **resolvido em
   2026-09-27**. Mesma classe de bug já corrigida em `checkout.component.ts`, replicada aqui:
   trocado por `route.paramMap` observable (`takeUntilDestroyed`), carregamento extraído pra

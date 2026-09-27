@@ -730,6 +730,10 @@ export class CheckoutComponent implements OnDestroy {
         emailCliente: this.email(),
         nomeCliente: this.nome(),
         documentoCliente: this.documento(),
+        // Só true quando essa geração acontece dentro da retomada — ver comentário no corpo
+        // da Edge Function (mercado-pago-criar-pagamento) sobre por que a idempotency key
+        // muda nesse caso.
+        retomada: this.modoRetomada(),
       })
       .subscribe({
         next: (pagamento) => {

@@ -14,6 +14,13 @@ interface CorpoRequisicao {
   emailCliente: string;
   nomeCliente: string;
   documentoCliente?: string;
+  /** true quando chamado a partir de /checkout/:codigoRetomada (Pix anterior expirado ou
+   * recusado, cliente voltando depois pra tentar de novo) — nesse caso usa uma idempotency
+   * key ÚNICA por tentativa em vez da fixa por pedido (ver abaixo), porque não temos certeza
+   * do que o Mercado Pago devolve se a chave já corresponder a um pagamento num estado
+   * terminal (expirado/recusado): na dúvida, evita o risco de reenviar de volta um QR morto
+   * pro cliente, em vez de gerar um Pix novo de verdade. */
+  retomada?: boolean;
 }
 
 interface RespostaPagamentoMercadoPago {
@@ -47,7 +54,7 @@ Deno.serve(async (req: Request) => {
     return respostaJson({ error: 'JSON inválido.' }, 400);
   }
 
-  const { codigoPedido, valorTotal, emailCliente, nomeCliente, documentoCliente } = corpo;
+  const { codigoPedido, valorTotal, emailCliente, nomeCliente, documentoCliente, retomada } = corpo;
   if (!codigoPedido || typeof valorTotal !== 'number' || !emailCliente || !nomeCliente) {
     return respostaJson({ error: 'Dados obrigatórios ausentes.' }, 400);
   }
@@ -66,14 +73,19 @@ Deno.serve(async (req: Request) => {
   // Expira em 30 minutos — bate com o que mostramos ao cliente na tela do Pix.
   const expiraEm = new Date(Date.now() + 30 * 60 * 1000);
 
+  // Fixa por pedido na criação normal (retry de rede/clique duplo não gera uma segunda
+  // cobrança — o Mercado Pago devolve o mesmo pagamento já criado). Única por tentativa na
+  // retomada (ver comentário em CorpoRequisicao.retomada) — o botão "Pagar agora" já fica
+  // desabilitado durante o envio (proteção contra clique duplo do lado do front-end), então
+  // não perdemos a proteção que importa ao trocar a chave aqui.
+  const idempotencyKey = retomada ? `${codigoPedido}-retomada-${crypto.randomUUID()}` : codigoPedido;
+
   let respostaMp: Response;
   try {
     respostaMp = await chamarMercadoPago('/v1/payments', {
       method: 'POST',
       headers: {
-        // Idempotency key fixa por pedido: um retry do checkout (ou clique duplo) não gera
-        // uma segunda cobrança — o Mercado Pago devolve o mesmo pagamento já criado.
-        'X-Idempotency-Key': codigoPedido,
+        'X-Idempotency-Key': idempotencyKey,
       },
       body: JSON.stringify({
         transaction_amount: Math.round(valorTotal * 100) / 100,

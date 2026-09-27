@@ -149,6 +149,9 @@ export class PedidoService {
     emailCliente: string;
     nomeCliente: string;
     documentoCliente?: string;
+    /** true quando chamado a partir da retomada (/checkout/:codigoRetomada) — muda a
+     * idempotency key usada na Edge Function, ver comentário lá. */
+    retomada?: boolean;
   }): Observable<RespostaPagamentoPix> {
     const promessa = fetch(`${environment.supabaseUrl}/functions/v1/mercado-pago-criar-pagamento`, {
       method: 'POST',
