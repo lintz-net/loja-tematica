@@ -281,13 +281,19 @@ Deno.serve(async (req: Request) => {
       // não bloqueia — a URL de impressão pode ser obtida depois, o essencial (compra) já foi feito
     }
 
+    // 'processando', não 'gerado' — o 200 de /generate só confirma que o pedido de geração foi
+    // ACEITO pro processamento assíncrono deles, não que a etiqueta já existe de verdade
+    // (descoberto em 2026-09-27: geração pode falhar depois, do lado deles, sem nenhum evento
+    // de erro pro nosso webhook — marcar 'gerado' aqui direto ficava preso parecendo saudável
+    // mesmo quando a geração real tinha falhado). 'gerado' de verdade só vem do webhook
+    // order.generated (ver melhor-envio-webhook/index.ts, SUFIXO_PARA_STATUS_ENVIO).
     await restSupabase(`envios?id=eq.${idEnvio}`, {
       method: 'PATCH',
       headers: { Prefer: 'return=minimal' },
       body: JSON.stringify({
         id_melhor_envio: idMelhorEnvio,
         url_etiqueta: urlEtiqueta,
-        status_envio: 'gerado',
+        status_envio: 'processando',
         erro_compra_etiqueta: null,
         atualizado_em: new Date().toISOString(),
       }),

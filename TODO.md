@@ -66,18 +66,25 @@
        destravar via UPDATE direto no banco (foi o que precisei fazer manualmente pra continuar
        o teste). Agora `'cancelado'` entra na lista de status que permitem comprar de novo,
        igual a `aguardando_compra`/`pendente_etiqueta`.
-    2. **`status_envio: 'gerado'` é otimista demais, ainda não corrigido** — nossa Edge Function
-       marca `'gerado'` direto da resposta HTTP 200 de `/api/v2/me/shipment/generate`, mas o
-       log mostra que **nenhuma das duas tentativas** recebeu o evento `order.generated`
-       (existe um mapeamento pra ele em `SUFIXO_PARA_STATUS_ENVIO`, nunca disparou aqui) — só
-       `created`/`released`(/`cancelled`). Ou seja, o 200 deles significa "pedido de geração
-       aceito pra processamento assíncrono", não "etiqueta gerada de verdade", e é por isso que
-       o painel deles mostrava erro de geração mesmo com nosso banco dizendo "gerado". Se a
-       geração falhar depois do 200 (como aconteceu), **não existe nenhum evento que nos avise
-       disso** — o status fica parado em "liberado" pra sempre, parecendo saudável, sem alerta
-       nenhum pro admin. Não corrigido ainda: exigiria decidir como tratar (ex.: só confiar em
-       `'gerado'` via webhook `order.generated`, com um estado intermediário tipo "processando"
-       enquanto isso não chega, e algum timeout/alerta se demorar demais).
+    2. ~~**`status_envio: 'gerado'` é otimista demais**~~ — **corrigido em 2026-09-27**. Nossa
+       Edge Function marcava `'gerado'` direto da resposta HTTP 200 de
+       `/api/v2/me/shipment/generate`, mas o log mostrou que **nenhuma das duas tentativas**
+       recebeu o evento `order.generated` (existe um mapeamento pra ele em
+       `SUFIXO_PARA_STATUS_ENVIO`, nunca disparou nos testes) — só `created`/`released`
+       (/`cancelled`). Ou seja, o 200 deles significa "pedido de geração aceito pra
+       processamento assíncrono", não "etiqueta gerada de verdade", e era por isso que o
+       painel deles mostrava erro de geração mesmo com nosso banco dizendo "gerado", sem
+       nenhum jeito do admin perceber. Corrigido: novo status `'processando'` (migration
+       `migration-028-status-envio-processando.sql`, novo valor no `CHECK` de
+       `envios.status_envio`, deploy da Edge Function feito) — a Edge Function agora marca
+       `'processando'` (não `'gerado'`) depois do 200 síncrono; `'gerado'` de verdade só passa
+       a vir do webhook `order.generated`, que já tinha o mapeamento pronto e simplesmente
+       nunca era a fonte real desse status. `'processando'` bloqueia comprar etiqueta de novo
+       (evita duplicar) igual a `'gerado'`/`'liberado'` já bloqueavam, e aparece como "aviso à
+       parte" (não como degrau da timeline) em `/pedido/:codigo`, mesmo tratamento que
+       `aguardando_compra`/`pendente_etiqueta` já tinham. **Não implementado**: timeout/alerta
+       automático se ficar `'processando'` por tempo demais sem o webhook confirmar — hoje o
+       admin só percebe que travou olhando o painel do Melhor Envio diretamente.
 
 - ~~**Pagamento real (Mercado Pago)**~~ — **resolvido em 2026-09-22**. Backend completo:
   migration (`status_pagamento`, `eventos_webhook_mercado_pago`), Edge Functions

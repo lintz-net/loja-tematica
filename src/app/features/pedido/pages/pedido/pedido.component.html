@@ -63,7 +63,9 @@
           </p>
         }
         @if (
-          envio.statusEnvio === 'aguardando_compra' || envio.statusEnvio === 'pendente_etiqueta'
+          envio.statusEnvio === 'aguardando_compra' ||
+          envio.statusEnvio === 'pendente_etiqueta' ||
+          envio.statusEnvio === 'processando'
         ) {
           <p>{{ rotulosStatusEnvio[envio.statusEnvio] }}</p>
         } @else if (

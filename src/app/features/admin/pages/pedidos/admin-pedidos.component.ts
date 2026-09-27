@@ -16,6 +16,7 @@ const ROTULOS_STATUS: Record<StatusPedido, string> = {
 const ROTULOS_STATUS_ENVIO: Record<StatusEnvio, string> = {
   aguardando_compra: 'Aguardando compra',
   pendente_etiqueta: 'Falhou — pendente',
+  processando: 'Gerando etiqueta…',
   criado: 'Criado',
   pendente: 'Pendente',
   liberado: 'Liberado',

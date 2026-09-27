@@ -10,6 +10,14 @@ export type StatusEnvio =
   | 'criado'
   | 'pendente'
   | 'liberado'
+  /** Compra/geração da etiqueta solicitada com sucesso (POST /generate devolveu 200), mas
+   * isso só confirma que o pedido de geração foi ACEITO pro processamento assíncrono deles —
+   * não que a etiqueta em si já existe. A confirmação de verdade só vem depois, pelo webhook
+   * `order.generated` (que vira `'gerado'`, ver melhor-envio-webhook). Descoberto em
+   * 2026-09-27: marcar `'gerado'` direto do 200 síncrono era otimista demais — em dois testes
+   * reais, o `order.generated` nunca chegou porque a geração falhou depois, do lado deles,
+   * sem gerar nenhum evento de erro pra nos avisar; o status ficava preso parecendo saudável. */
+  | 'processando'
   | 'gerado'
   | 'postado'
   | 'entregue'

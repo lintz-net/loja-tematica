@@ -25,6 +25,7 @@ const ETAPAS_ENVIO: StatusEnvio[] = ['criado', 'liberado', 'gerado', 'postado', 
 const ROTULOS_STATUS_ENVIO: Record<StatusEnvio, string> = {
   aguardando_compra: 'Aguardando compra da etiqueta',
   pendente_etiqueta: 'Compra da etiqueta pendente',
+  processando: 'Gerando etiqueta…',
   criado: 'Envio criado',
   pendente: 'Pendente',
   liberado: 'Liberado pra postagem',
