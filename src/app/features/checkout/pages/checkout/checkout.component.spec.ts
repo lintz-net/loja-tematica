@@ -121,7 +121,6 @@ describe('CheckoutComponent — modoRetomada', () => {
 
   describe('pedido não retomável', () => {
     const casosRedirecionamento: Array<[string, Partial<Pedido>]> = [
-      ['forma de pagamento cartão', { formaPagamento: 'cartao' }],
       ['status aprovado', { statusPagamento: 'aprovado' }],
       ['status cancelado', { statusPagamento: 'cancelado' }],
       ['status expirado', { statusPagamento: 'expirado' }],
@@ -314,6 +313,44 @@ describe('CheckoutComponent — modoRetomada', () => {
 
       expect(fixture.componentInstance.nome()).toBe('Cliente B');
       expect(fixture.componentInstance.numeroPedido()).toBe('PED-B');
+
+      discardPeriodicTasks();
+    }));
+  });
+
+  describe('pedido retomável (cartão pendente ou recusado)', () => {
+    it('cai na revisão com formaPagamento cartao, sem iniciar polling (cartão exige token novo, não aprova sozinho em background)', fakeAsync(() => {
+      const pedido = criarPedido({ formaPagamento: 'cartao', statusPagamento: 'recusado', parcelas: 3 });
+      pedidoServiceSpy.obterPorCodigo.and.returnValue(of(pedido));
+      const fixture = configurar();
+
+      paramMap$.next(convertToParamMap({ codigoRetomada: 'PED-001' }));
+      fixture.detectChanges();
+
+      const comp = fixture.componentInstance;
+      expect(comp.modoRetomada()).toBeTrue();
+      expect(comp.formaPagamento()).toBe('cartao');
+      expect(comp.etapaAtual()).toBe('revisao');
+      expect(comp.parcelasFinalizadas()).toBe(3);
+
+      // Sem polling: mais um tick não gera nova chamada a obterPorCodigo (só a inicial).
+      tick(4000);
+      expect(pedidoServiceSpy.obterPorCodigo).toHaveBeenCalledTimes(1);
+
+      discardPeriodicTasks();
+    }));
+
+    it('permite retomar pedido de cartão com status pendente (in_process/in_mediation)', fakeAsync(() => {
+      pedidoServiceSpy.obterPorCodigo.and.returnValue(
+        of(criarPedido({ formaPagamento: 'cartao', statusPagamento: 'pendente' }))
+      );
+      const fixture = configurar();
+
+      paramMap$.next(convertToParamMap({ codigoRetomada: 'PED-001' }));
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.modoRetomada()).toBeTrue();
+      expect(fixture.componentInstance.etapaAtual()).toBe('revisao');
 
       discardPeriodicTasks();
     }));

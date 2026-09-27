@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, OnDestroy, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
@@ -52,7 +53,7 @@ const ETAPAS: DefinicaoEtapa[] = [
 @Component({
   selector: 'app-checkout',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, NgTemplateOutlet],
   templateUrl: './checkout.component.html',
   styleUrl: './checkout.component.scss',
 })
@@ -323,12 +324,11 @@ export class CheckoutComponent implements OnDestroy {
 
     this.pedidoService.obterPorCodigo(codigoRetomada).subscribe({
       next: (pedido) => {
-        // Nada pra retomar: pedido não existe, já foi pago/cancelado, ou é de cartão (só Pix
-        // tem esse fluxo hoje) — manda pra tela de acompanhamento em vez de mostrar um
-        // formulário de pagamento que não serve pra nada nesses casos.
+        // Nada pra retomar: pedido não existe, já foi pago/cancelado — manda pra tela de
+        // acompanhamento em vez de mostrar um formulário de pagamento que não serve pra nada
+        // nesses casos.
         const podeRetomar =
           pedido &&
-          pedido.formaPagamento === 'pix' &&
           (pedido.statusPagamento === 'pendente' || pedido.statusPagamento === 'recusado');
 
         if (!podeRetomar) {
@@ -339,6 +339,7 @@ export class CheckoutComponent implements OnDestroy {
         this.pedidoRetomado.set(pedido);
         this.numeroPedido.set(pedido.codigo);
         this.valorTotalFinalizado.set(pedido.valorTotal);
+        this.parcelasFinalizadas.set(pedido.parcelas);
 
         this.nome.set(pedido.nomeCliente);
         this.email.set(pedido.emailCliente);
@@ -351,7 +352,7 @@ export class CheckoutComponent implements OnDestroy {
         this.cidade.set(pedido.endereco.cidade);
         this.uf.set(pedido.endereco.uf);
         this.cep.set(pedido.endereco.cep);
-        this.formaPagamento.set('pix');
+        this.formaPagamento.set(pedido.formaPagamento);
 
         // Sintetiza uma única "opção de frete" com os dados já gravados no pedido — assim o
         // computed `freteSelecionado`/`valorFrete` (e o bloco de revisão, sem edição nenhuma
@@ -377,13 +378,19 @@ export class CheckoutComponent implements OnDestroy {
         this.etapaAtual.set('revisao');
         this.carregandoRetomada.set(false);
 
-        // O pagamento pode ter sido aprovado (ou recusado de novo) por trás enquanto o
-        // cliente só estava olhando esta tela, antes de clicar em "Pagar agora" — sem isso,
-        // um "aprovado" silencioso deixaria a tela presa na revisão pedindo pra pagar de novo
-        // um pedido que já foi pago. iniciarPollingPagamento já lida com o caso 'aprovado'
-        // (troca pra tela de sucesso sozinha); outros status só param o polling, mesma
-        // limitação que a tela de "aguardando Pix" normal já tem.
-        this.iniciarPollingPagamento(pedido.codigo);
+        // Polling de aprovação em background só faz sentido pro Pix (QR code pago por fora,
+        // via webhook, enquanto o cliente pode estar só olhando esta tela sem interagir).
+        // Cartão não tem esse risco: nada acontece até o cliente preencher os dados de novo
+        // (token de uso único, sempre exige interação) e clicar em "Pagar agora".
+        if (pedido.formaPagamento === 'pix') {
+          // O pagamento pode ter sido aprovado (ou recusado de novo) por trás enquanto o
+          // cliente só estava olhando esta tela, antes de clicar em "Pagar agora" — sem isso,
+          // um "aprovado" silencioso deixaria a tela presa na revisão pedindo pra pagar de
+          // novo um pedido que já foi pago. iniciarPollingPagamento já lida com o caso
+          // 'aprovado' (troca pra tela de sucesso sozinha); outros status só param o
+          // polling, mesma limitação que a tela de "aguardando Pix" normal já tem.
+          this.iniciarPollingPagamento(pedido.codigo);
+        }
       },
       error: () => this.router.navigate(['/pedido', codigoRetomada]),
     });

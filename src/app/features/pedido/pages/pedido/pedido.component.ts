@@ -62,15 +62,15 @@ export class PedidoComponent {
   readonly naoEncontrado = signal(false);
   readonly envio = signal<Envio | null>(null);
 
-  /** "Pagar agora"/"Tentar pagar de novo" só faz sentido pra Pix pendente ou recusado — o
-   * fluxo de retomada em si (gerar Pix de novo sem recriar o pedido) mora em
-   * /checkout/:codigoRetomada (checkout.component.ts, modoRetomada), reaproveitando a mesma
-   * tela de revisão do "Como comprar" em vez de duplicar essa UI aqui. */
+  /** "Pagar agora"/"Tentar pagar de novo" só faz sentido pra pedido pendente ou recusado — o
+   * fluxo de retomada em si (gerar Pix de novo, ou pedir os dados do cartão de novo, sem
+   * recriar o pedido) mora em /checkout/:codigoRetomada (checkout.component.ts,
+   * modoRetomada), reaproveitando a mesma tela de revisão do "Como comprar" em vez de
+   * duplicar essa UI aqui. */
   readonly podeRetomarPagamento = computed(() => {
     const pedido = this.pedido();
     return (
       !!pedido &&
-      pedido.formaPagamento === 'pix' &&
       (pedido.statusPagamento === 'pendente' || pedido.statusPagamento === 'recusado')
     );
   });

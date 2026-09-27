@@ -214,7 +214,9 @@ describe('PedidoComponent', () => {
       ['pix cancelado', { formaPagamento: 'pix', statusPagamento: 'cancelado' }, false],
       ['pix expirado', { formaPagamento: 'pix', statusPagamento: 'expirado' }, false],
       ['pix sem statusPagamento (pedido antigo)', { formaPagamento: 'pix', statusPagamento: undefined }, false],
-      ['cartão pendente', { formaPagamento: 'cartao', statusPagamento: 'pendente' }, false],
+      ['cartão pendente', { formaPagamento: 'cartao', statusPagamento: 'pendente' }, true],
+      ['cartão recusado', { formaPagamento: 'cartao', statusPagamento: 'recusado' }, true],
+      ['cartão aprovado', { formaPagamento: 'cartao', statusPagamento: 'aprovado' }, false],
       ['pedido inexistente', null, false],
     ];
 

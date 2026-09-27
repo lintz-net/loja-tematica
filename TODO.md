@@ -74,12 +74,27 @@
     abaixo (Mercado Pago podendo devolver a resposta antiga em vez de processar o token novo).
   - **Não enviado**: nenhum dado de "device fingerprint"/antifraude (a lib de segurança do
     Mercado Pago, `mercadopago.com/v2/security.js`, que eles recomendam incluir pra melhorar
-    taxa de aprovação e reduzir risco de fraude). Considerar adicionar depois.
-  - **Retomada de pagamento** (`/checkout/:codigoRetomada`) continua só pra Pix — cartão
-    recusado hoje só permite tentar de novo inline na mesma sessão do checkout (token novo a
-    cada clique em "Tentar novamente"), não tem uma URL separada pra voltar depois. Replicar o
-    padrão da retomada Pix pro cartão fica pra depois, exige token novo (não dá pra guardar
-    token de uma sessão passada, expira e é de uso único).
+    taxa de aprovação e reduzir risco de fraude). **Pesquisado em 2026-09-27**: pausado de
+    propósito, não implementado ainda — o ponto crítico (enviar o device id como header
+    `X-meli-session-id` no `POST /v1/payments`, vs. algum campo do body) tem incerteza real na
+    minha memória de treinamento, e acertar errado ali falha *silenciosamente* (a API aceita a
+    requisição normalmente e só deixa de usar o dado, sem erro nenhum pra perceber em teste).
+    Precisa dos MCP servers do Mercado Pago (`mcp-mercado-pago`/`mercadopago`, configurados no
+    projeto mas não autorizados) pra consultar a documentação oficial antes de implementar —
+    autorização exige OAuth interativo, que a sessão que pesquisou isso não conseguiu fazer.
+  - ~~**Retomada de pagamento** (`/checkout/:codigoRetomada`) continua só pra Pix~~ —
+    **implementado em 2026-09-27**. `iniciarRetomada()` não filtra mais por
+    `formaPagamento === 'pix'`, só por `statusPagamento` ('pendente' ou 'recusado', dos dois
+    jeitos de pagamento — cartão pode ficar 'pendente' via `in_process`/`in_mediation` do
+    Mercado Pago). Diferente do Pix (revisão 100% somente-leitura), cartão sempre exige um
+    token novo (uso único, expira), então a etapa de revisão passa a mostrar o formulário de
+    cartão de novo quando `modoRetomada() && formaPagamento() === 'cartao'` — os campos
+    (`checkout.component.html`) foram extraídos pra um `<ng-template #camposCartao>`
+    reaproveitado tanto no passo normal de pagamento quanto aqui, evitando duplicar a
+    marcação. Idempotency key continua aleatória por tentativa (já era o comportamento do
+    cartão, diferente do risco não resolvido do Pix logo abaixo — não havia nada a mudar
+    aí). Sem polling em background durante a retomada de cartão (só faz sentido pro Pix, que
+    pode ser aprovado por fora via webhook enquanto o cliente olha a tela parado).
   - **Testado ponta a ponta em 2026-09-25**: cartão de teste Mastercard/APRO → pagamento
     aprovado na hora, `status_pagamento` e `id_pagamento_mercado_pago` gravados certos no
     pedido (confirmado direto no banco via `obter_pedido_por_codigo`). Cartão titular OTHE →
@@ -101,13 +116,12 @@
     primeiro caso, o cliente fica num loop sem conseguir pagar esse pedido nunca mais. Só dá
     pra confirmar testando contra a API de verdade (não o sandbox instável) — não implementado
     nenhuma mitigação client-side por falta dessa confirmação.
-- **`pedido.component.ts` usa `route.snapshot.paramMap` (não reativo)** — mesma classe de bug
-  encontrada e corrigida em `checkout.component.ts` (ver item de retomada acima: se o Angular
-  Router reaproveitar a instância do componente ao navegar entre duas URLs `/pedido/:codigo`
-  diferentes sem reload de página inteira, o snapshot fica travado no primeiro pedido
-  carregado). Não corrigido aqui por estar fora do escopo da sessão que achou o problema —
-  replicar o fix (trocar pra `route.paramMap` observable) se isso for confirmado como cenário
-  real de navegação no app.
+- ~~**`pedido.component.ts` usa `route.snapshot.paramMap` (não reativo)**~~ — **resolvido em
+  2026-09-27**. Mesma classe de bug já corrigida em `checkout.component.ts`, replicada aqui:
+  trocado por `route.paramMap` observable (`takeUntilDestroyed`), carregamento extraído pra
+  `carregarPedido(codigo)`, com cancelamento explícito da inscrição Realtime anterior antes de
+  assinar a do novo código (evita acumular listeners quando o Router reaproveita a instância
+  navegando entre `/pedido/:codigo` diferentes).
 - **Instabilidade recorrente `500 internal_error` no Mercado Pago (2026-09-24)** — mesmo
   padrão já visto e reportado no chamado antigo (histórico acima), voltou a acontecer:
   `POST /v1/payments` (Pix) falhou duas vezes seguidas com `{"error":null,"message":
