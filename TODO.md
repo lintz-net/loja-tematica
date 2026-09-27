@@ -46,7 +46,15 @@
     a falha aconteceu depois, no processamento assíncrono deles. Mesma classe da instabilidade
     `500 internal_error` já registrada pro Mercado Pago. Retry manual no painel deles
     ("GERAR NOVAMENTE") também falhou a primeira vez; cancelar e comprar uma etiqueta nova pro
-    mesmo pedido funcionou na segunda tentativa.
+    mesmo pedido funcionou na segunda tentativa (chegou até "liberado"), mas uma nova falha de
+    geração apareceu de novo depois (ORD diferente, mesma mensagem de erro) — confirma que é
+    **instabilidade intermitente**, não algo que retry resolve de forma confiável hoje.
+    **Evidência forte de que o pipeline completo funciona quando o sandbox coopera**: a aba
+    "Postados" do painel deles mostra 4 envios de testes anteriores (fora desta sessão, de uma
+    investigação prévia) com status **"Entregue"** e código de rastreio real — prova que
+    `gerado → liberado → postado → entregue` já rodou ponta a ponta nesse mesmo sandbox antes.
+    Não vale insistir mais hoje; retomar em outro dia (ou aceitar a evidência já coletada como
+    suficiente — o webhook em si já está comprovado funcionando com eventos reais).
 
 - ~~**Pagamento real (Mercado Pago)**~~ — **resolvido em 2026-09-22**. Backend completo:
   migration (`status_pagamento`, `eventos_webhook_mercado_pago`), Edge Functions
