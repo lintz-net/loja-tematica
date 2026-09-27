@@ -55,6 +55,29 @@
     `gerado → liberado → postado → entregue` já rodou ponta a ponta nesse mesmo sandbox antes.
     Não vale insistir mais hoje; retomar em outro dia (ou aceitar a evidência já coletada como
     suficiente — o webhook em si já está comprovado funcionando com eventos reais).
+  - **Dois gaps reais encontrados a partir do log de eventos** (`eventos_webhook_melhor_envio`),
+    não é só instabilidade de sandbox:
+    1. ~~**`podeComprarEtiqueta` não permitia comprar etiqueta nova pra envio `cancelado`**~~
+       — **corrigido em 2026-09-27**. A sequência de eventos recebida nas duas tentativas
+       (`order.created → order.released [→ order.cancelled]`) mostra que `status_envio` pode
+       legitimamente virar `cancelado` (admin cancelando no painel do Melhor Envio, ex.: pra
+       tentar de novo depois de uma geração travada) — antes disso, o botão "Comprar etiqueta"
+       simplesmente sumia da tela pra esse pedido, sem nenhuma opção visível, e só dava pra
+       destravar via UPDATE direto no banco (foi o que precisei fazer manualmente pra continuar
+       o teste). Agora `'cancelado'` entra na lista de status que permitem comprar de novo,
+       igual a `aguardando_compra`/`pendente_etiqueta`.
+    2. **`status_envio: 'gerado'` é otimista demais, ainda não corrigido** — nossa Edge Function
+       marca `'gerado'` direto da resposta HTTP 200 de `/api/v2/me/shipment/generate`, mas o
+       log mostra que **nenhuma das duas tentativas** recebeu o evento `order.generated`
+       (existe um mapeamento pra ele em `SUFIXO_PARA_STATUS_ENVIO`, nunca disparou aqui) — só
+       `created`/`released`(/`cancelled`). Ou seja, o 200 deles significa "pedido de geração
+       aceito pra processamento assíncrono", não "etiqueta gerada de verdade", e é por isso que
+       o painel deles mostrava erro de geração mesmo com nosso banco dizendo "gerado". Se a
+       geração falhar depois do 200 (como aconteceu), **não existe nenhum evento que nos avise
+       disso** — o status fica parado em "liberado" pra sempre, parecendo saudável, sem alerta
+       nenhum pro admin. Não corrigido ainda: exigiria decidir como tratar (ex.: só confiar em
+       `'gerado'` via webhook `order.generated`, com um estado intermediário tipo "processando"
+       enquanto isso não chega, e algum timeout/alerta se demorar demais).
 
 - ~~**Pagamento real (Mercado Pago)**~~ — **resolvido em 2026-09-22**. Backend completo:
   migration (`status_pagamento`, `eventos_webhook_mercado_pago`), Edge Functions

@@ -106,11 +106,19 @@ export class AdminPedidosComponent {
   }
 
   /** Etiqueta só pode ser comprada quando o pedido tem frete escolhido e ainda não tem envio
-   * gerado/comprado com sucesso — falhas anteriores (pendente_etiqueta) podem ser tentadas de novo. */
+   * gerado/comprado com sucesso — falhas anteriores (pendente_etiqueta) podem ser tentadas de
+   * novo, e um envio cancelado (pelo admin no painel do Melhor Envio, ex.: geração que travou
+   * do lado deles — visto na prática em 2026-09-27) também precisa poder comprar etiqueta
+   * nova, senão o pedido fica travado sem opção nenhuma na tela. */
   podeComprarEtiqueta(pedido: Pedido): boolean {
     if (!pedido.freteServicoId) return false;
     const envio = this.envioDoPedido(pedido.codigo);
-    return !envio || envio.statusEnvio === 'aguardando_compra' || envio.statusEnvio === 'pendente_etiqueta';
+    return (
+      !envio ||
+      envio.statusEnvio === 'aguardando_compra' ||
+      envio.statusEnvio === 'pendente_etiqueta' ||
+      envio.statusEnvio === 'cancelado'
+    );
   }
 
   /** Pede o CPF/CNPJ do destinatário via prompt só quando o pedido não tem esse dado (pedidos

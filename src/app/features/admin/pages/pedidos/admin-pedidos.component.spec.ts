@@ -191,6 +191,17 @@ describe('AdminPedidosComponent', () => {
 
       expect(fixture.componentInstance.podeComprarEtiqueta(pedido)).toBeFalse();
     });
+
+    it('é verdadeiro quando o envio foi cancelado — permite comprar etiqueta nova', () => {
+      const pedido = criarPedido({ freteServicoId: '1' });
+      pedidoServiceSpy.listarTodos.and.returnValue(of([pedido]));
+      envioServiceSpy.listarTodos.and.returnValue(
+        of(new Map([[pedido.codigo, criarEnvio({ statusEnvio: 'cancelado' })]]))
+      );
+      const fixture = configurar();
+
+      expect(fixture.componentInstance.podeComprarEtiqueta(pedido)).toBeTrue();
+    });
   });
 
   describe('comprarEtiqueta', () => {
