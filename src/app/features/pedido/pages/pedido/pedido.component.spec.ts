@@ -181,6 +181,7 @@ describe('PedidoComponent', () => {
       urlEtiqueta: null,
       codigoRastreio: 'BR123456789',
       erroCompraEtiqueta: null,
+      atualizadoEm: '2026-09-27T12:00:00.000Z',
     };
     aoMudar(envioAtualizado);
 

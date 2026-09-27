@@ -33,6 +33,9 @@ export interface Envio {
   urlEtiqueta: string | null;
   codigoRastreio: string | null;
   erroCompraEtiqueta: string | null;
+  /** Usado pra detectar envio preso em 'processando' por tempo demais sem o webhook
+   * `order.generated` confirmar — ver `admin-pedidos.component.ts`, `envioTravado`. */
+  atualizadoEm: string;
 }
 
 interface LinhaEnvio {
@@ -42,6 +45,7 @@ interface LinhaEnvio {
   url_etiqueta: string | null;
   codigo_rastreio: string | null;
   erro_compra_etiqueta: string | null;
+  atualizado_em: string;
 }
 
 function linhaParaEnvio(linha: LinhaEnvio): Envio {
@@ -52,6 +56,7 @@ function linhaParaEnvio(linha: LinhaEnvio): Envio {
     urlEtiqueta: linha.url_etiqueta,
     codigoRastreio: linha.codigo_rastreio,
     erroCompraEtiqueta: linha.erro_compra_etiqueta,
+    atualizadoEm: linha.atualizado_em,
   };
 }
 

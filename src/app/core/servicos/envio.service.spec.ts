@@ -12,6 +12,7 @@ function linhaEnvio(sobrescritas: Record<string, unknown> = {}) {
     url_etiqueta: null,
     codigo_rastreio: null,
     erro_compra_etiqueta: null,
+    atualizado_em: '2026-09-27T12:00:00.000Z',
     ...sobrescritas,
   };
 }

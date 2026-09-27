@@ -82,9 +82,24 @@
        nunca era a fonte real desse status. `'processando'` bloqueia comprar etiqueta de novo
        (evita duplicar) igual a `'gerado'`/`'liberado'` já bloqueavam, e aparece como "aviso à
        parte" (não como degrau da timeline) em `/pedido/:codigo`, mesmo tratamento que
-       `aguardando_compra`/`pendente_etiqueta` já tinham. **Não implementado**: timeout/alerta
-       automático se ficar `'processando'` por tempo demais sem o webhook confirmar — hoje o
-       admin só percebe que travou olhando o painel do Melhor Envio diretamente.
+       `aguardando_compra`/`pendente_etiqueta` já tinham.
+       - ~~**Timeout/alerta se ficar `'processando'` demais**~~ — **versão leve implementada em
+         2026-09-27**: detecção **client-side**, sem cron/infra nova —
+         `admin-pedidos.component.ts` (`envioTravado`, `TIMEOUT_PROCESSANDO_MS = 20min`) marca
+         como travado quando `atualizadoEm` do envio passa de 20min parado em `'processando'`,
+         checado só quando a tela `/admin/pedidos` é aberta/atualizada (sem polling em
+         background). Quando travado: aparece um aviso "Travado? Confira o Melhor Envio" na
+         linha do pedido, e o botão "Comprar etiqueta" volta a aparecer (mesmo tratamento que
+         `pendente_etiqueta`/`cancelado` já tinham). **Limitação consciente**: só funciona se
+         alguém abrir a tela — não notifica proativamente ninguém.
+       - **Alternativa mais robusta, não implementada** (considerada e adiada por enquanto): um
+         cron (`pg_cron` ou Edge Function agendada) que varre `envios` presos em `'processando'`
+         além do timeout e muda sozinho pra `'pendente_etiqueta'` com uma mensagem de erro —
+         reaproveitando o fluxo de retry que já existe, em vez de só mostrar um aviso passivo.
+         Mais confiável (não depende de ninguém estar olhando a tela), mas exige agendamento
+         (nova peça de infra pra manter, precisa da extensão `pg_cron` habilitada no projeto).
+         Vale revisitar se o volume de pedidos crescer a ponto de um envio travado passar
+         despercebido por muito tempo sem ninguém abrir `/admin/pedidos`.
 
 - ~~**Pagamento real (Mercado Pago)**~~ — **resolvido em 2026-09-22**. Backend completo:
   migration (`status_pagamento`, `eventos_webhook_mercado_pago`), Edge Functions

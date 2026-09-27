@@ -39,6 +39,7 @@ function criarEnvio(sobrescritas: Partial<Envio> = {}): Envio {
     urlEtiqueta: null,
     codigoRastreio: null,
     erroCompraEtiqueta: null,
+    atualizadoEm: '2026-09-27T12:00:00.000Z',
     ...sobrescritas,
   };
 }
@@ -192,11 +193,12 @@ describe('AdminPedidosComponent', () => {
       expect(fixture.componentInstance.podeComprarEtiqueta(pedido)).toBeFalse();
     });
 
-    it('é falso enquanto o envio está processando (geração solicitada, aguardando confirmação assíncrona) — evita comprar duas etiquetas', () => {
+    it('é falso enquanto o envio está processando há pouco tempo (aguardando confirmação assíncrona) — evita comprar duas etiquetas', () => {
       const pedido = criarPedido({ freteServicoId: '1' });
       pedidoServiceSpy.listarTodos.and.returnValue(of([pedido]));
+      const agoraMesmo = new Date().toISOString();
       envioServiceSpy.listarTodos.and.returnValue(
-        of(new Map([[pedido.codigo, criarEnvio({ statusEnvio: 'processando' })]]))
+        of(new Map([[pedido.codigo, criarEnvio({ statusEnvio: 'processando', atualizadoEm: agoraMesmo })]]))
       );
       const fixture = configurar();
 
@@ -212,6 +214,55 @@ describe('AdminPedidosComponent', () => {
       const fixture = configurar();
 
       expect(fixture.componentInstance.podeComprarEtiqueta(pedido)).toBeTrue();
+    });
+
+    it('é verdadeiro quando o envio está processando há mais de 20 minutos — trata como travado', () => {
+      const pedido = criarPedido({ freteServicoId: '1' });
+      pedidoServiceSpy.listarTodos.and.returnValue(of([pedido]));
+      const maisDe20Min = new Date(Date.now() - 21 * 60 * 1000).toISOString();
+      envioServiceSpy.listarTodos.and.returnValue(
+        of(new Map([[pedido.codigo, criarEnvio({ statusEnvio: 'processando', atualizadoEm: maisDe20Min })]]))
+      );
+      const fixture = configurar();
+
+      expect(fixture.componentInstance.podeComprarEtiqueta(pedido)).toBeTrue();
+    });
+  });
+
+  describe('envioTravado', () => {
+    beforeEach(() => {
+      pedidoServiceSpy.listarTodos.and.returnValue(of([]));
+    });
+
+    it('é falso pra qualquer status diferente de processando', () => {
+      const fixture = configurar();
+      const antigo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+
+      expect(
+        fixture.componentInstance.envioTravado(criarEnvio({ statusEnvio: 'gerado', atualizadoEm: antigo }))
+      ).toBeFalse();
+    });
+
+    it('é falso quando processando há menos de 20 minutos', () => {
+      const fixture = configurar();
+      const recente = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+
+      expect(
+        fixture.componentInstance.envioTravado(
+          criarEnvio({ statusEnvio: 'processando', atualizadoEm: recente })
+        )
+      ).toBeFalse();
+    });
+
+    it('é verdadeiro quando processando há mais de 20 minutos', () => {
+      const fixture = configurar();
+      const antigo = new Date(Date.now() - 25 * 60 * 1000).toISOString();
+
+      expect(
+        fixture.componentInstance.envioTravado(
+          criarEnvio({ statusEnvio: 'processando', atualizadoEm: antigo })
+        )
+      ).toBeTrue();
     });
   });
 

@@ -75,6 +75,14 @@
                       >Ver erro</span
                     >
                   }
+                  @if (envioTravado(envio)) {
+                    <br />
+                    <span
+                      class="admin-pedidos__detalhe"
+                      title="Geração aceita pelo Melhor Envio há mais de 20 minutos, sem confirmação. Provavelmente travou do lado deles — confira o painel do Melhor Envio ou tente comprar de novo."
+                      >Travado? Confira o Melhor Envio</span
+                    >
+                  }
                   @if (envio.urlEtiqueta) {
                     <br />
                     <a [href]="envio.urlEtiqueta" target="_blank" rel="noopener">Imprimir</a>

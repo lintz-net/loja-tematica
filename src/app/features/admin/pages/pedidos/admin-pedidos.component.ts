@@ -6,6 +6,14 @@ import { Envio, EnvioService, StatusEnvio } from '../../../../core/servicos/envi
 
 const STATUS_DISPONIVEIS: StatusPedido[] = ['recebido', 'confirmado', 'enviado', 'entregue'];
 
+/** Tempo em 'processando' (geração da etiqueta aceita pro processamento assíncrono do Melhor
+ * Envio, mas ainda sem confirmação real via webhook order.generated) além do qual tratamos
+ * como travado — o admin só descobriria isso olhando o painel deles diretamente, senão.
+ * Detecção client-side simples (checada quando a tela é aberta), sem cron/infra nova — ver
+ * TODO.md pra uma alternativa mais robusta (cron que reverte sozinho pra
+ * 'pendente_etiqueta'), considerada e deixada de lado por enquanto. */
+const TIMEOUT_PROCESSANDO_MS = 20 * 60 * 1000;
+
 const ROTULOS_STATUS: Record<StatusPedido, string> = {
   recebido: 'Recebido',
   confirmado: 'Confirmado',
@@ -106,11 +114,20 @@ export class AdminPedidosComponent {
     return this.envios().get(codigo) ?? null;
   }
 
+  /** Envio preso em 'processando' (geração aceita pro processamento assíncrono do Melhor
+   * Envio, mas nunca confirmada via webhook order.generated) além de TIMEOUT_PROCESSANDO_MS —
+   * detecção client-side simples, checada só quando a tela é aberta/atualizada (sem
+   * cron/polling em background). */
+  envioTravado(envio: Envio): boolean {
+    if (envio.statusEnvio !== 'processando') return false;
+    return Date.now() - new Date(envio.atualizadoEm).getTime() > TIMEOUT_PROCESSANDO_MS;
+  }
+
   /** Etiqueta só pode ser comprada quando o pedido tem frete escolhido e ainda não tem envio
    * gerado/comprado com sucesso — falhas anteriores (pendente_etiqueta) podem ser tentadas de
-   * novo, e um envio cancelado (pelo admin no painel do Melhor Envio, ex.: geração que travou
+   * novo, um envio cancelado (pelo admin no painel do Melhor Envio, ex.: geração que travou
    * do lado deles — visto na prática em 2026-09-27) também precisa poder comprar etiqueta
-   * nova, senão o pedido fica travado sem opção nenhuma na tela. */
+   * nova, e um envio preso em 'processando' por tempo demais (ver envioTravado) igual. */
   podeComprarEtiqueta(pedido: Pedido): boolean {
     if (!pedido.freteServicoId) return false;
     const envio = this.envioDoPedido(pedido.codigo);
@@ -118,7 +135,8 @@ export class AdminPedidosComponent {
       !envio ||
       envio.statusEnvio === 'aguardando_compra' ||
       envio.statusEnvio === 'pendente_etiqueta' ||
-      envio.statusEnvio === 'cancelado'
+      envio.statusEnvio === 'cancelado' ||
+      this.envioTravado(envio)
     );
   }
 
