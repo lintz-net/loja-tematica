@@ -26,12 +26,27 @@
   - Evento `order.delivered` do Melhor Envio → `entregue`.
   Testado ponta a ponta: pagamento por cartão aprovado (titular APRO) fez o pedido
   `VT-H8SOSZ` aparecer como "Confirmado" em `/pedido/:codigo` sem nenhuma ação manual.
-  **Falta testar a parte de envio** (`posted`/`delivered`) — a lógica é nova, precisa validar
-  contra o sandbox de verdade. Dá pra testar: comprar uma etiqueta de teste pra algum pedido
-  em `/admin/pedidos` (sandbox, sem custo real) e acompanhar `/pedido/:codigo` — o sandbox já
-  simulou esses eventos de verdade antes neste projeto (`created`/`released`/`ready-to-print`/
-  `posted`/`delivered` já dispararam em investigação anterior, ver nota mais abaixo sobre
-  `order.received`), mas não é instantâneo como o pagamento, leva um tempo até progredir.
+  **Parte de envio testada parcialmente em 2026-09-27** — pedido de teste `VT-K19HWX`
+  (frete real Jadlog, cotado via `melhor-envio-cotar` pra 3 CEPs diferentes — só Jadlog
+  disponível nessa conta sandbox, Correios não aparece em nenhuma cotação). Confirmado que o
+  webhook recebe e processa eventos reais automaticamente, **sem nenhuma ação manual nossa**:
+  duas transições capturadas ao vivo — `gerado → cancelado` (primeira etiqueta, cancelada
+  manualmente no painel deles depois de falhar a geração do PDF) e `gerado → liberado`
+  (segunda tentativa, com sucesso). **Não chegou a `postado`/`entregue`** dentro de ~20min de
+  observação — sandbox não é instantâneo, pode levar mais tempo (já confirmado em investigação
+  anterior que `posted`/`delivered` disparam de verdade nesse sandbox, só não dentro da janela
+  observada desta vez). Retomar esse teste specific (só falta essas duas transições) se puder
+  observar por mais tempo, ou aceitar a evidência já coletada como suficiente — a integração
+  do webhook em si (recebimento + parsing + atualização de status) já está comprovada
+  funcionando com dados reais, só não com os dois eventos finais específicos.
+  - **Achado à parte, não é bug nosso**: a primeira tentativa de gerar a etiqueta Jadlog
+    falhou no sandbox deles com "Um erro de sistema impediu a geração da etiqueta" — confirmado
+    que nossa Edge Function (`melhor-envio-comprar-etiqueta`) seguiu o fluxo documentado
+    corretamente (`/cart` → `/checkout` → `/generate` → `/print`, todas retornando 200 OK);
+    a falha aconteceu depois, no processamento assíncrono deles. Mesma classe da instabilidade
+    `500 internal_error` já registrada pro Mercado Pago. Retry manual no painel deles
+    ("GERAR NOVAMENTE") também falhou a primeira vez; cancelar e comprar uma etiqueta nova pro
+    mesmo pedido funcionou na segunda tentativa.
 
 - ~~**Pagamento real (Mercado Pago)**~~ — **resolvido em 2026-09-22**. Backend completo:
   migration (`status_pagamento`, `eventos_webhook_mercado_pago`), Edge Functions
