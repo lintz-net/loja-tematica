@@ -1,6 +1,7 @@
 import { isPlatformBrowser } from '@angular/common';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, DestroyRef, PLATFORM_ID, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Pedido, StatusPedido } from '../../../../core/modelos/pedido.model';
 import { PedidoService } from '../../../../core/servicos/pedido.service';
@@ -74,8 +75,32 @@ export class PedidoComponent {
     );
   });
 
+  /** Cancela a inscrição Realtime da consulta anterior, se houver — evita acumular listeners
+   * quando o Angular Router reaproveita esta mesma instância navegando entre duas URLs
+   * `/pedido/:codigo` diferentes (ver observação sobre paramMap abaixo). */
+  private cancelarEscutaRealtime: (() => void) | null = null;
+
   constructor() {
-    const codigo = this.route.snapshot.paramMap.get('codigo') ?? '';
+    // Observable, não snapshot: se o Router reaproveitar esta MESMA instância navegando de
+    // /pedido/A pra /pedido/B sem reload de página inteira (mesma config de rota, só o
+    // parâmetro muda), um snapshot lido só na construção ficaria travado no primeiro pedido
+    // carregado. takeUntilDestroyed evita vazar a subscription quando o componente for
+    // destruído de verdade (mesmo padrão de checkout.component.ts).
+    this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const codigo = params.get('codigo') ?? '';
+      this.carregarPedido(codigo);
+    });
+  }
+
+  private carregarPedido(codigo: string): void {
+    this.cancelarEscutaRealtime?.();
+    this.cancelarEscutaRealtime = null;
+
+    this.carregando.set(true);
+    this.naoEncontrado.set(false);
+    this.pedido.set(null);
+    this.envio.set(null);
+
     this.pedidoService.obterPorCodigo(codigo).subscribe({
       next: (pedido) => {
         this.pedido.set(pedido);
@@ -94,6 +119,7 @@ export class PedidoComponent {
      * comentário em EnvioService.escutarMudancas). */
     if (this.isBrowser) {
       const cancelar = this.envioService.escutarMudancas(codigo, (envio) => this.envio.set(envio));
+      this.cancelarEscutaRealtime = cancelar;
       this.destroyRef.onDestroy(cancelar);
     }
   }

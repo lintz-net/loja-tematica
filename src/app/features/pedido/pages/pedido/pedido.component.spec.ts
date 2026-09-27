@@ -2,7 +2,7 @@ import { PLATFORM_ID } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { PedidoComponent } from './pedido.component';
 import { PedidoService } from '../../../../core/servicos/pedido.service';
 import { Envio, EnvioService } from '../../../../core/servicos/envio.service';
@@ -49,11 +49,14 @@ describe('PedidoComponent', () => {
   let pedidoServiceSpy: jasmine.SpyObj<PedidoService>;
   let envioServiceSpy: jasmine.SpyObj<EnvioService>;
 
+  let paramMapSubject: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
+
   function configurar(options: {
     codigo?: string | null;
     plataforma?: 'browser' | 'server';
   } = {}): ComponentFixture<PedidoComponent> {
     const { codigo = 'ABC123', plataforma = 'browser' } = options;
+    paramMapSubject = new BehaviorSubject(convertToParamMap(codigo === null ? {} : { codigo }));
 
     TestBed.configureTestingModule({
       imports: [PedidoComponent],
@@ -64,11 +67,7 @@ describe('PedidoComponent', () => {
         { provide: PLATFORM_ID, useValue: plataforma },
         {
           provide: ActivatedRoute,
-          useValue: {
-            snapshot: {
-              paramMap: convertToParamMap(codigo === null ? {} : { codigo }),
-            },
-          },
+          useValue: { paramMap: paramMapSubject },
         },
       ],
     });
@@ -126,6 +125,42 @@ describe('PedidoComponent', () => {
     fixture.detectChanges();
 
     expect(pedidoServiceSpy.obterPorCodigo).toHaveBeenCalledWith('');
+  });
+
+  it('recarrega o pedido quando o código da rota muda sem recriar o componente (paramMap reativo)', () => {
+    const pedidoA = criarPedido({ codigo: 'ABC123' });
+    const pedidoB = criarPedido({ codigo: 'XYZ789' });
+    pedidoServiceSpy.obterPorCodigo.and.returnValue(of(pedidoA));
+
+    const fixture = configurar({ codigo: 'ABC123' });
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.pedido()?.codigo).toBe('ABC123');
+
+    // Mesma instância do componente (Router reaproveitando ao navegar entre /pedido/:codigo) —
+    // só o paramMap muda, sem passar de novo pelo construtor.
+    pedidoServiceSpy.obterPorCodigo.and.returnValue(of(pedidoB));
+    paramMapSubject.next(convertToParamMap({ codigo: 'XYZ789' }));
+    fixture.detectChanges();
+
+    expect(pedidoServiceSpy.obterPorCodigo).toHaveBeenCalledWith('XYZ789');
+    expect(fixture.componentInstance.pedido()?.codigo).toBe('XYZ789');
+  });
+
+  it('cancela a escuta Realtime anterior antes de assinar a do novo código', () => {
+    const cancelarA = jasmine.createSpy('cancelarA');
+    const cancelarB = jasmine.createSpy('cancelarB');
+    envioServiceSpy.escutarMudancas.and.returnValues(cancelarA, cancelarB);
+    pedidoServiceSpy.obterPorCodigo.and.returnValue(of(criarPedido({ codigo: 'ABC123' })));
+
+    const fixture = configurar({ codigo: 'ABC123', plataforma: 'browser' });
+    fixture.detectChanges();
+
+    paramMapSubject.next(convertToParamMap({ codigo: 'XYZ789' }));
+    fixture.detectChanges();
+
+    expect(cancelarA).toHaveBeenCalled();
+    expect(envioServiceSpy.escutarMudancas).toHaveBeenCalledWith('XYZ789', jasmine.any(Function));
   });
 
   it('assina o realtime de envio só no browser e atualiza o signal quando o canal dispara', () => {
