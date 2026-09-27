@@ -31,6 +31,12 @@ interface CorpoRequisicao {
   paymentMethodId: string;
   issuerId?: string;
   parcelas: number;
+  /** Device fingerprint do script antifraude deles (security.js), coletado no navegador —
+   * opcional, nunca bloqueia o pagamento quando ausente (ver checkout.component.ts,
+   * MercadoPagoSdkService.obterDeviceId). Vai como header X-meli-session-id no POST
+   * /v1/payments, não como campo do body (confirmado na documentação oficial deles e em
+   * discussões do repositório mercadopago/sdk-js em 2026-09-27). */
+  deviceId?: string;
 }
 
 interface RespostaPagamentoMercadoPago {
@@ -68,6 +74,7 @@ Deno.serve(async (req: Request) => {
     paymentMethodId,
     issuerId,
     parcelas,
+    deviceId,
   } = corpo;
 
   if (
@@ -99,7 +106,10 @@ Deno.serve(async (req: Request) => {
   try {
     respostaMp = await chamarMercadoPago('/v1/payments', {
       method: 'POST',
-      headers: { 'X-Idempotency-Key': crypto.randomUUID() },
+      headers: {
+        'X-Idempotency-Key': crypto.randomUUID(),
+        ...(deviceId ? { 'X-meli-session-id': deviceId } : {}),
+      },
       body: JSON.stringify({
         transaction_amount: Math.round(valorTotal * 100) / 100,
         token,

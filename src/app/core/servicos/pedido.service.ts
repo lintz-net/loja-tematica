@@ -181,6 +181,10 @@ export class PedidoService {
     paymentMethodId: string;
     issuerId?: string;
     parcelas: number;
+    /** Device fingerprint do script antifraude do Mercado Pago (security.js) — melhora taxa
+     * de aprovação/reduz risco de fraude. Opcional de propósito: nunca bloqueia o pagamento
+     * se o script não carregou a tempo (adblock, CSP, instabilidade). */
+    deviceId?: string;
   }): Observable<RespostaPagamentoCartao> {
     const promessa = fetch(
       `${environment.supabaseUrl}/functions/v1/mercado-pago-criar-pagamento-cartao`,

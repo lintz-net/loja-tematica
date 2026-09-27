@@ -72,16 +72,24 @@
     tentativa depois de recusada é uma cobrança nova de verdade (não um retry de clique
     duplo). Fixar a key aqui correria o mesmo risco já registrado no item de retomada do Pix
     abaixo (Mercado Pago podendo devolver a resposta antiga em vez de processar o token novo).
-  - **Não enviado**: nenhum dado de "device fingerprint"/antifraude (a lib de segurança do
-    Mercado Pago, `mercadopago.com/v2/security.js`, que eles recomendam incluir pra melhorar
-    taxa de aprovação e reduzir risco de fraude). **Pesquisado em 2026-09-27**: pausado de
-    propósito, não implementado ainda — o ponto crítico (enviar o device id como header
-    `X-meli-session-id` no `POST /v1/payments`, vs. algum campo do body) tem incerteza real na
-    minha memória de treinamento, e acertar errado ali falha *silenciosamente* (a API aceita a
-    requisição normalmente e só deixa de usar o dado, sem erro nenhum pra perceber em teste).
-    Precisa dos MCP servers do Mercado Pago (`mcp-mercado-pago`/`mercadopago`, configurados no
-    projeto mas não autorizados) pra consultar a documentação oficial antes de implementar —
-    autorização exige OAuth interativo, que a sessão que pesquisou isso não conseguiu fazer.
+  - ~~**Não enviado**: nenhum dado de "device fingerprint"/antifraude~~ — **implementado em
+    2026-09-27**. Os MCP servers do Mercado Pago (`mcp-mercado-pago`/`mercadopago`) deram 403
+    do CloudFront ao tentar autorizar (bloqueio de infraestrutura, não da conta do usuário —
+    endpoint deles parece não estar publicamente acessível ainda). Confirmado por outra via:
+    `WebSearch` + `WebFetch` direto na documentação oficial
+    (`mercadopago.com.br/developers/.../improve-payment-approval/recommendations`) e numa
+    discussão do repositório `mercadopago/sdk-js` no GitHub — duas fontes independentes
+    convergindo no mesmo ponto crítico que estava em aberto: o device id vai como **header**
+    `X-meli-session-id` no `POST /v1/payments` (não campo do body). `MercadoPagoSdkService`
+    ganhou `carregarScriptSeguranca()` (injeta `https://www.mercadopago.com/v2/security.js`
+    com `view="checkout"`, nunca rejeita — falha em carregar não pode bloquear o pagamento) e
+    `obterDeviceId()` (lê `window.MP_DEVICE_SESSION_ID` com polling curto, timing de
+    preenchimento não é imediato nem documentado oficialmente). Script carregado cedo — ao
+    escolher "cartão" no checkout (`selecionarFormaPagamento`) ou ao entrar em retomada de
+    cartão — não só no clique de pagar, pra dar tempo do fingerprint ficar pronto.
+    `criarPagamentoCartao` ganhou `deviceId?: string` opcional; a Edge Function
+    `mercado-pago-criar-pagamento-cartao` manda como `X-meli-session-id` quando presente, sem
+    exigir (nunca bloqueia a cobrança por falta dele).
   - ~~**Retomada de pagamento** (`/checkout/:codigoRetomada`) continua só pra Pix~~ —
     **implementado em 2026-09-27**. `iniciarRetomada()` não filtra mais por
     `formaPagamento === 'pix'`, só por `statusPagamento` ('pendente' ou 'recusado', dos dois

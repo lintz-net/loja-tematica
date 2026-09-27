@@ -24,10 +24,14 @@ interface MercadoPagoSdk {
 declare global {
   interface Window {
     MercadoPago?: new (publicKey: string, opcoes?: { locale?: string }) => MercadoPagoSdk;
+    /** Preenchida pelo script antifraude deles (ver carregarScriptSeguranca abaixo) — nome
+     * fixo da variável global, documentado por eles, não escolhido por nós. */
+    MP_DEVICE_SESSION_ID?: string;
   }
 }
 
 const SDK_URL = 'https://sdk.mercadopago.com/js/v2';
+const SCRIPT_SEGURANCA_URL = 'https://www.mercadopago.com/v2/security.js';
 
 /** Carrega a SDK.js do Mercado Pago (tokenização de cartão no navegador — número/CVV nunca
  * passam pelo nosso backend) só quando o cliente escolhe pagar com cartão no checkout, não em
@@ -59,5 +63,40 @@ export class MercadoPagoSdkService {
     });
 
     return this.promessaCarregamento;
+  }
+
+  private promessaScriptSeguranca: Promise<void> | null = null;
+
+  /** Script antifraude deles (device fingerprint) — preenche `window.MP_DEVICE_SESSION_ID`
+   * sozinho, sem callback. Carregar cedo (ao entrar no passo de pagamento, não só no clique
+   * de pagar) dá tempo do fingerprint ficar pronto antes da cobrança de verdade. Nunca
+   * rejeita: falha em carregar esse script (adblock, CSP, instabilidade) não pode impedir o
+   * cliente de pagar — só perde a proteção extra, silenciosamente. */
+  carregarScriptSeguranca(): Promise<void> {
+    if (this.promessaScriptSeguranca) return this.promessaScriptSeguranca;
+
+    this.promessaScriptSeguranca = new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = SCRIPT_SEGURANCA_URL;
+      script.setAttribute('view', 'checkout');
+      script.onload = () => resolve();
+      script.onerror = () => resolve();
+      document.head.appendChild(script);
+    });
+
+    return this.promessaScriptSeguranca;
+  }
+
+  /** Lê `window.MP_DEVICE_SESSION_ID` com um polling curto — na prática o valor pode não
+   * estar pronto exatamente quando o script termina de carregar (timing observado, não
+   * documentado oficialmente). `undefined` é um resultado válido (o pagamento segue sem o
+   * header de device id, nunca trava esperando). */
+  async obterDeviceId(timeoutMs = 2000): Promise<string | undefined> {
+    const inicio = Date.now();
+    while (Date.now() - inicio < timeoutMs) {
+      if (window.MP_DEVICE_SESSION_ID) return window.MP_DEVICE_SESSION_ID;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    return window.MP_DEVICE_SESSION_ID;
   }
 }

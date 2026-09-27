@@ -353,6 +353,9 @@ export class CheckoutComponent implements OnDestroy {
         this.uf.set(pedido.endereco.uf);
         this.cep.set(pedido.endereco.cep);
         this.formaPagamento.set(pedido.formaPagamento);
+        if (pedido.formaPagamento === 'cartao') {
+          this.mercadoPagoSdk.carregarScriptSeguranca();
+        }
 
         // Sintetiza uma única "opção de frete" com os dados já gravados no pedido — assim o
         // computed `freteSelecionado`/`valorFrete` (e o bloco de revisão, sem edição nenhuma
@@ -540,6 +543,11 @@ export class CheckoutComponent implements OnDestroy {
 
   selecionarFormaPagamento(forma: 'cartao' | 'pix'): void {
     this.formaPagamento.set(forma);
+    // Carrega cedo (ao escolher cartão, não só no clique de pagar) pra dar tempo do
+    // fingerprint ficar pronto antes da cobrança — fire-and-forget, nunca bloqueia nada.
+    if (forma === 'cartao') {
+      this.mercadoPagoSdk.carregarScriptSeguranca();
+    }
   }
 
   /** Etapa é considerada concluída quando seus dados obrigatórios já foram preenchidos —
@@ -792,12 +800,18 @@ export class CheckoutComponent implements OnDestroy {
         identificationNumber: documentoLimpo,
       });
 
+      // Best-effort: se o script antifraude (carregado ao escolher "cartão", ver
+      // selecionarFormaPagamento) ainda não coletou o fingerprint a tempo, segue sem ele —
+      // nunca deixa de cobrar por causa disso.
+      const deviceId = await this.mercadoPagoSdk.obterDeviceId();
+
       const pagamento = await firstValueFrom(
         this.pedidoService.criarPagamentoCartao({
           codigoPedido,
           valorTotal,
           emailCliente: this.email(),
           nomeCliente: this.nome(),
+          deviceId,
           documentoCliente: this.documento(),
           token: token.id,
           paymentMethodId,

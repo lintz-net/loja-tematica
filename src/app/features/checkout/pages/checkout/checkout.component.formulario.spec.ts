@@ -82,8 +82,14 @@ describe('CheckoutComponent — formulário (CEP, cupom, frete, navegação, car
     cepServiceSpy = jasmine.createSpyObj('CepService', ['buscarEndereco']);
     cupomServiceSpy = jasmine.createSpyObj('CupomService', ['validar']);
     mpSpy = jasmine.createSpyObj('MercadoPagoSdk', ['getPaymentMethods', 'getIssuers', 'createCardToken']);
-    mercadoPagoSdkSpy = jasmine.createSpyObj('MercadoPagoSdkService', ['carregar']);
+    mercadoPagoSdkSpy = jasmine.createSpyObj('MercadoPagoSdkService', [
+      'carregar',
+      'carregarScriptSeguranca',
+      'obterDeviceId',
+    ]);
     mercadoPagoSdkSpy.carregar.and.resolveTo(mpSpy as never);
+    mercadoPagoSdkSpy.carregarScriptSeguranca.and.resolveTo(undefined);
+    mercadoPagoSdkSpy.obterDeviceId.and.resolveTo(undefined);
     configuracaoSignal = signal(null);
     carrinhoValorTotalSignal = signal(0);
   });
@@ -428,6 +434,51 @@ describe('CheckoutComponent — formulário (CEP, cupom, frete, navegação, car
       const chamada = pedidoServiceSpy.criarPagamentoCartao.calls.mostRecent().args[0];
       expect(chamada.parcelas).toBe(3);
     }));
+
+    it('envia o deviceId do script antifraude quando disponível', fakeAsync(() => {
+      mpSpy.getPaymentMethods.and.resolveTo({ results: [{ id: 'master' }] });
+      mpSpy.getIssuers.and.resolveTo([{ id: '123' }]);
+      mpSpy.createCardToken.and.resolveTo({ id: 'tok_abc', status: 'ok' });
+      mercadoPagoSdkSpy.obterDeviceId.and.resolveTo('device-abc-123');
+      pedidoServiceSpy.criarPagamentoCartao.and.returnValue(
+        of({ idPagamento: '1', status: 'approved', statusDetail: 'accredited' })
+      );
+      const fixture = configurar();
+      prepararCartaoValido(fixture.componentInstance);
+
+      fixture.componentInstance.tentarNovamente();
+      tick();
+
+      const chamada = pedidoServiceSpy.criarPagamentoCartao.calls.mostRecent().args[0];
+      expect(chamada.deviceId).toBe('device-abc-123');
+    }));
+
+    it('paga sem o deviceId quando o script antifraude não coletou a tempo (nunca bloqueia)', fakeAsync(() => {
+      mpSpy.getPaymentMethods.and.resolveTo({ results: [{ id: 'master' }] });
+      mpSpy.getIssuers.and.resolveTo([{ id: '123' }]);
+      mpSpy.createCardToken.and.resolveTo({ id: 'tok_abc', status: 'ok' });
+      mercadoPagoSdkSpy.obterDeviceId.and.resolveTo(undefined);
+      pedidoServiceSpy.criarPagamentoCartao.and.returnValue(
+        of({ idPagamento: '1', status: 'approved', statusDetail: 'accredited' })
+      );
+      const fixture = configurar();
+      prepararCartaoValido(fixture.componentInstance);
+
+      fixture.componentInstance.tentarNovamente();
+      tick();
+
+      expect(fixture.componentInstance.pedidoFinalizado()).toBeTrue();
+      const chamada = pedidoServiceSpy.criarPagamentoCartao.calls.mostRecent().args[0];
+      expect(chamada.deviceId).toBeUndefined();
+    }));
+
+    it('carrega o script antifraude ao escolher cartão como forma de pagamento', () => {
+      const fixture = configurar();
+
+      fixture.componentInstance.selecionarFormaPagamento('cartao');
+
+      expect(mercadoPagoSdkSpy.carregarScriptSeguranca).toHaveBeenCalled();
+    });
 
     it('recusado mostra mensagem específica de recusa', fakeAsync(() => {
       mpSpy.getPaymentMethods.and.resolveTo({ results: [{ id: 'master' }] });
