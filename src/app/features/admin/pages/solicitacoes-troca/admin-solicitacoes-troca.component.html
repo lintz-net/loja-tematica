@@ -1,0 +1,68 @@
+<section class="container-pagina admin-solicitacoes-troca">
+  <header class="admin-solicitacoes-troca__cabecalho">
+    <h1>Solicitações de troca/devolução</h1>
+  </header>
+
+  @if (erro()) {
+    <p class="admin-solicitacoes-troca__erro">{{ erro() }}</p>
+  }
+
+  @if (carregando()) {
+    <p>Carregando solicitações…</p>
+  } @else if (solicitacoes().length === 0) {
+    <p>Nenhuma solicitação ainda.</p>
+  } @else {
+    <ul class="admin-solicitacoes-troca__lista">
+      @for (solicitacao of solicitacoes(); track solicitacao.id) {
+        <li class="admin-solicitacoes-troca__item">
+          <div class="admin-solicitacoes-troca__cabecalho-item">
+            <a [routerLink]="['/pedido', solicitacao.pedidoCodigo]" target="_blank">
+              Pedido {{ solicitacao.pedidoCodigo }}
+            </a>
+            <span>{{ solicitacao.criadoEm | date: 'dd/MM/yyyy, HH:mm' }}</span>
+          </div>
+
+          <p>
+            <strong>{{ solicitacao.tipo === 'troca' ? 'Troca' : 'Devolução' }}</strong> —
+            {{ solicitacao.emailCliente }}
+          </p>
+
+          <ul class="admin-solicitacoes-troca__itens">
+            @for (item of solicitacao.itens; track $index) {
+              <li>{{ item.produtoNome }} — {{ item.tamanho }}/{{ item.cor }} ({{ item.quantidade }}x)</li>
+            }
+          </ul>
+
+          <p><strong>Motivo:</strong> {{ solicitacao.motivo }}</p>
+          @if (solicitacao.observacoes) {
+            <p><strong>Observações:</strong> {{ solicitacao.observacoes }}</p>
+          }
+
+          <label class="admin-solicitacoes-troca__campo">
+            Resposta pro cliente
+            <textarea
+              rows="2"
+              [value]="respostaDigitada(solicitacao.id, solicitacao.respostaAdmin)"
+              (input)="atualizarRespostaDigitada(solicitacao.id, $any($event.target).value)"
+            ></textarea>
+          </label>
+
+          <div class="admin-solicitacoes-troca__acoes">
+            <select
+              [value]="solicitacao.status"
+              [disabled]="idSalvando() === solicitacao.id"
+              (change)="atualizarStatus(solicitacao, $any($event.target).value)"
+            >
+              @for (status of statusDisponiveis; track status) {
+                <option [value]="status">{{ rotulosStatus[status] }}</option>
+              }
+            </select>
+            @if (idSalvando() === solicitacao.id) {
+              <span>Salvando…</span>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>

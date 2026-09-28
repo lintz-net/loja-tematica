@@ -212,7 +212,8 @@ const PAGINA_TROCAS_DEVOLUCOES: DadosPaginaInstitucional = {
     {
       titulo: 'Onde trocar ou devolver?',
       paragrafos: [
-        'Pelo e-mail: envie uma mensagem para {{emailContato}} solicitando a troca ou devolução. Entraremos em contato o mais breve possível para orientá-lo sobre os próximos passos e o envio do produto.',
+        'Pela sua conta: entre em Minha conta com o e-mail usado na compra, encontre o pedido e clique em "Solicitar troca/devolução". Você escolhe os itens, o motivo, e acompanha o status da sua solicitação direto por ali.',
+        'Pelo e-mail: se preferir, envie uma mensagem para {{emailContato}} solicitando a troca ou devolução. Entraremos em contato o mais breve possível para orientá-lo sobre os próximos passos e o envio do produto.',
       ],
     },
     {
@@ -237,7 +238,8 @@ const PAGINA_TROCAS_DEVOLUCOES: DadosPaginaInstitucional = {
         { titulo: '2. Apresente o comprovante', texto: 'Apresente o ticket de compra ou comprovante.' },
         {
           titulo: '3. Aguarde as instruções',
-          texto: 'Aguarde as instruções para o envio do produto, caso opte pelo atendimento via e-mail.',
+          texto:
+            'Se solicitou pela sua conta, acompanhe o status ali mesmo. Se preferiu o e-mail, aguarde nosso retorno com as instruções para o envio do produto.',
         },
         {
           titulo: '4. Receba a confirmação',
@@ -394,6 +396,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/admin/pages/avaliacoes/admin-avaliacoes.component').then(
             (m) => m.AdminAvaliacoesComponent
+          ),
+      },
+      {
+        path: 'solicitacoes-troca',
+        loadComponent: () =>
+          import('./features/admin/pages/solicitacoes-troca/admin-solicitacoes-troca.component').then(
+            (m) => m.AdminSolicitacoesTrocaComponent
           ),
       },
       {

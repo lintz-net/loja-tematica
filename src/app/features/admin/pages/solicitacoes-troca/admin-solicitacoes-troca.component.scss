@@ -1,0 +1,71 @@
+.admin-solicitacoes-troca {
+  padding: 48px 0 80px;
+}
+
+.admin-solicitacoes-troca__cabecalho {
+  margin-bottom: 24px;
+}
+
+.admin-solicitacoes-troca__erro {
+  color: var(--cor-erro);
+  margin-bottom: 16px;
+}
+
+.admin-solicitacoes-troca__lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-solicitacoes-troca__item {
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-padrao);
+  padding: 16px;
+}
+
+.admin-solicitacoes-troca__cabecalho-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--cor-texto-suave);
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+.admin-solicitacoes-troca__itens {
+  margin: 4px 0 8px;
+  padding-left: 20px;
+}
+
+.admin-solicitacoes-troca__campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 12px 0;
+
+  textarea {
+    padding: 10px 12px;
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-padrao);
+    font-weight: 400;
+    font-family: inherit;
+    width: 100%;
+  }
+}
+
+.admin-solicitacoes-troca__acoes {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  select {
+    padding: 8px 12px;
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-padrao);
+  }
+}
