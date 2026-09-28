@@ -17,4 +17,8 @@ export abstract class CatalogoRepositorio {
   abstract obterProdutosEmDestaque(): Observable<Produto[]>;
   /** Produtos com `precoPromocional` preenchido e menor que `precoBase`. */
   abstract obterProdutosEmPromocao(): Observable<Produto[]>;
+  /** Heurística de "produtos relacionados" (mesma categoria do produto dado, excluindo ele
+   * mesmo) — não existe dado real de coocorrência de compra (`pedidos.itens` não guarda
+   * `produtoId`, só um snapshot do que foi comprado), então é a aproximação disponível. */
+  abstract obterProdutosRelacionados(produto: Produto, limite?: number): Observable<Produto[]>;
 }

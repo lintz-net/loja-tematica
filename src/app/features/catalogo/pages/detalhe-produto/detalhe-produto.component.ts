@@ -14,6 +14,7 @@ import { corParaEstiloSwatch } from '../../../../core/utilitarios/cor.util';
 import { GaleriaProdutoComponent } from '../../../../shared/componentes/galeria-produto/galeria-produto.component';
 import { ModalComponent } from '../../../../shared/componentes/modal/modal.component';
 import { VistosRecentementeComponent } from '../../../../shared/componentes/vistos-recentemente/vistos-recentemente.component';
+import { ProdutosRelacionadosComponent } from '../../../../shared/componentes/produtos-relacionados/produtos-relacionados.component';
 
 /** Imagens das tabelas padrão (fornecidas pelo usuário) — mostradas no modal "Guia de
  * medidas" quando o produto não tem uma tabela customizada própria. */
@@ -23,7 +24,7 @@ const IMAGEM_GUIA_FEMININA = '/imagens/guia-medidas/medidas-feminina.webp';
 @Component({
   selector: 'app-detalhe-produto',
   standalone: true,
-  imports: [GaleriaProdutoComponent, ModalComponent, VistosRecentementeComponent],
+  imports: [GaleriaProdutoComponent, ModalComponent, VistosRecentementeComponent, ProdutosRelacionadosComponent],
   templateUrl: './detalhe-produto.component.html',
   styleUrl: './detalhe-produto.component.scss',
 })

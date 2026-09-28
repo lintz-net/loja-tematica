@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { map, Observable, of } from 'rxjs';
 import { Categoria, SlugCategoria } from '../modelos/categoria.model';
 import { FaixaMedida, GeneroProduto, Produto, VarianteProduto } from '../modelos/produto.model';
 import { CatalogoRepositorio } from './catalogo.repositorio';
@@ -127,5 +127,20 @@ export class CatalogoApiService implements CatalogoRepositorio {
             .filter((produto) => (produto.precoPromocional ?? Infinity) < produto.precoBase)
         )
       );
+  }
+
+  /** Mesma categoria (a primeira do produto dado — a "principal"), excluindo ele mesmo. Sem
+   * `categorias` (produto legado sem tema) não há base pra relacionar nada. */
+  obterProdutosRelacionados(produto: Produto, limite = 8): Observable<Produto[]> {
+    const categoriaPrincipal = produto.categorias[0];
+    if (!categoriaPrincipal) return of([]);
+
+    const filtroCategoria = encodeURIComponent(JSON.stringify([categoriaPrincipal]));
+    return this.rest
+      .select<LinhaProduto[]>(
+        'produtos',
+        `?select=*&categorias=cs.${filtroCategoria}&id=neq.${produto.id}&limit=${limite}`
+      )
+      .pipe(map((linhas) => linhas.map(linhaParaProduto)));
   }
 }

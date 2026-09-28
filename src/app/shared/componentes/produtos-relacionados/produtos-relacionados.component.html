@@ -1,0 +1,12 @@
+@if (produtosRelacionados().length > 0) {
+  <section class="produtos-relacionados">
+    <h2 class="produtos-relacionados__titulo">Quem comprou também levou</h2>
+    <div class="produtos-relacionados__lista">
+      @for (produto of produtosRelacionados(); track produto.id) {
+        <div class="produtos-relacionados__item">
+          <app-cartao-produto [produto]="produto" />
+        </div>
+      }
+    </div>
+  </section>
+}
