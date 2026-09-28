@@ -75,14 +75,136 @@
   color: var(--cor-texto-suave);
 }
 
-.conta__botao-recomprar {
+.conta__pedido-acoes {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--cor-borda);
+}
+
+.conta__botao-acao {
   display: block;
   width: 100%;
   border-radius: 0;
-  border-width: 1px 0 0;
+  border-width: 0;
   padding: 10px 16px;
+
+  & + & {
+    border-top: 1px solid var(--cor-borda);
+  }
+}
+
+.conta__prazo-encerrado {
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
+
+  a {
+    color: inherit;
+  }
 }
 
 .conta__aviso--recompra {
   margin-bottom: 12px;
+}
+
+.conta__solicitacoes {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.conta__solicitacao-item {
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-padrao);
+  padding: 14px 16px;
+}
+
+.conta__solicitacao-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-weight: 600;
+}
+
+.conta__solicitacao-status {
+  color: var(--cor-acento-secundario, #0c7d71);
+}
+
+.conta__solicitacao-status--recusada {
+  color: var(--cor-erro);
+}
+
+.conta__solicitacao-status--concluida {
+  color: var(--cor-texto-suave);
+}
+
+.conta__solicitacao-itens {
+  margin: 6px 0 0;
+  color: var(--cor-texto-suave);
+  font-size: 0.9rem;
+}
+
+.conta__solicitacao-resposta {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+}
+
+.conta__solicitacao-confirmacao {
+  margin-bottom: 16px;
+}
+
+.conta__solicitacao-tipo {
+  display: flex;
+  gap: 16px;
+  margin: 12px 0;
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 400;
+  }
+}
+
+.conta__solicitacao-itens-form {
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-padrao);
+  padding: 12px;
+  margin: 0 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  legend {
+    font-weight: 600;
+    padding: 0 4px;
+  }
+}
+
+.conta__solicitacao-item-opcao {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+}
+
+.conta__solicitacao-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+
+  input,
+  textarea {
+    padding: 10px 12px;
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-padrao);
+    font-weight: 400;
+    font-family: inherit;
+  }
 }

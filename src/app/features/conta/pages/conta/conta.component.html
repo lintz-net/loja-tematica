@@ -26,14 +26,71 @@
               <span class="conta__pedido-data">{{ pedido.criadoEm | date: 'dd/MM/yyyy' }}</span>
               <span class="conta__pedido-total">{{ pedido.valorTotal | currency: 'BRL' }}</span>
             </a>
-            <button
-              type="button"
-              class="botao-secundario conta__botao-recomprar"
-              [disabled]="codigoRecomprando() === pedido.codigo"
-              (click)="comprarNovamente(pedido)"
-            >
-              {{ codigoRecomprando() === pedido.codigo ? 'Adicionando…' : 'Comprar de novo' }}
-            </button>
+            <div class="conta__pedido-acoes">
+              <button
+                type="button"
+                class="botao-secundario conta__botao-acao"
+                [disabled]="codigoRecomprando() === pedido.codigo"
+                (click)="comprarNovamente(pedido)"
+              >
+                {{ codigoRecomprando() === pedido.codigo ? 'Adicionando…' : 'Comprar de novo' }}
+              </button>
+              <button
+                type="button"
+                class="botao-secundario conta__botao-acao"
+                [disabled]="codigoGerandoComprovante() === pedido.codigo"
+                (click)="baixarComprovante(pedido)"
+              >
+                {{ codigoGerandoComprovante() === pedido.codigo ? 'Gerando…' : 'Baixar comprovante' }}
+              </button>
+              @if (dentroDoPrazoTroca(pedido)) {
+                <button
+                  type="button"
+                  class="botao-secundario conta__botao-acao"
+                  (click)="abrirSolicitacao(pedido)"
+                >
+                  Solicitar troca/devolução
+                </button>
+              } @else {
+                <span class="conta__prazo-encerrado">
+                  Prazo de troca/devolução encerrado —
+                  <a routerLink="/trocas-devolucoes">veja as condições</a>
+                </span>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (solicitacoes().length > 0) {
+      <h2 class="conta__subtitulo">Minhas solicitações de troca/devolução</h2>
+      <ul class="conta__solicitacoes">
+        @for (solicitacao of solicitacoes(); track solicitacao.id) {
+          <li class="conta__solicitacao-item">
+            <div class="conta__solicitacao-cabecalho">
+              <span>
+                Pedido {{ solicitacao.pedidoCodigo }} —
+                {{ solicitacao.tipo === 'troca' ? 'Troca' : 'Devolução' }}
+              </span>
+              <span
+                class="conta__solicitacao-status"
+                [class.conta__solicitacao-status--recusada]="solicitacao.status === 'recusada'"
+                [class.conta__solicitacao-status--concluida]="solicitacao.status === 'concluida'"
+              >
+                {{ rotulosStatusSolicitacao[solicitacao.status] }}
+              </span>
+            </div>
+            <p class="conta__solicitacao-itens">
+              @for (item of solicitacao.itens; track $index) {
+                {{ item.produtoNome }} — {{ item.tamanho }}/{{ item.cor }}@if (!$last) {, }
+              }
+            </p>
+            @if (solicitacao.respostaAdmin) {
+              <p class="conta__solicitacao-resposta">
+                <strong>Resposta da loja:</strong> {{ solicitacao.respostaAdmin }}
+              </p>
+            }
           </li>
         }
       </ul>
@@ -76,3 +133,90 @@
     </div>
   }
 </section>
+
+<app-modal
+  [aberto]="pedidoSolicitando() !== null"
+  titulo="Solicitar troca/devolução"
+  (fechar)="fecharSolicitacao()"
+>
+  @if (pedidoSolicitando(); as pedido) {
+    @if (solicitacaoEnviada()) {
+      <p class="conta__solicitacao-confirmacao">
+        Solicitação registrada! Você pode acompanhar o status aqui na sua conta — vamos
+        analisar e responder o quanto antes.
+      </p>
+      <button type="button" class="botao-primario" (click)="fecharSolicitacao()">Fechar</button>
+    } @else {
+      <p class="conta__aviso">
+        Pedido {{ pedido.codigo }} — escolha o que deseja trocar ou devolver.
+      </p>
+
+      <div class="conta__solicitacao-tipo">
+        <label>
+          <input
+            type="radio"
+            name="tipo-solicitacao"
+            [checked]="tipoSolicitacao() === 'troca'"
+            (change)="tipoSolicitacao.set('troca')"
+          />
+          Troca
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="tipo-solicitacao"
+            [checked]="tipoSolicitacao() === 'devolucao'"
+            (change)="tipoSolicitacao.set('devolucao')"
+          />
+          Devolução
+        </label>
+      </div>
+
+      <fieldset class="conta__solicitacao-itens-form">
+        <legend>Itens</legend>
+        @for (item of pedido.itens; track $index) {
+          <label class="conta__solicitacao-item-opcao">
+            <input
+              type="checkbox"
+              [checked]="itensMarcados().has($index)"
+              (change)="alternarItemMarcado($index)"
+            />
+            {{ item.produtoNome }} — {{ item.tamanho }}/{{ item.cor }} ({{ item.quantidade }}x)
+          </label>
+        }
+      </fieldset>
+
+      <label class="conta__solicitacao-campo">
+        Motivo
+        <input
+          type="text"
+          placeholder="Ex.: tamanho errado, produto com defeito…"
+          [value]="motivoSolicitacao()"
+          (input)="motivoSolicitacao.set($any($event.target).value)"
+        />
+      </label>
+
+      <label class="conta__solicitacao-campo">
+        Observações (opcional)
+        <textarea
+          rows="3"
+          [value]="observacoesSolicitacao()"
+          (input)="observacoesSolicitacao.set($any($event.target).value)"
+        ></textarea>
+      </label>
+
+      @if (erroSolicitacao()) {
+        <p class="conta__erro">{{ erroSolicitacao() }}</p>
+      }
+
+      <button
+        type="button"
+        class="botao-primario"
+        [disabled]="!podeEnviarSolicitacao() || enviandoSolicitacao()"
+        (click)="enviarSolicitacao()"
+      >
+        {{ enviandoSolicitacao() ? 'Enviando…' : 'Enviar solicitação' }}
+      </button>
+    }
+  }
+</app-modal>

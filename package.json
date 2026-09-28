@@ -22,6 +22,7 @@
     "@angular/service-worker": "^19.2.0",
     "@angular/ssr": "^19.2.27",
     "@supabase/supabase-js": "^2.115.0",
+    "jspdf": "^4.2.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
