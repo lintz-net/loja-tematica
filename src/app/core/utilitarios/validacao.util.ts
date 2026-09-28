@@ -47,38 +47,3 @@ export function validarDocumento(valor: string): boolean {
   if (digitos.length === 14) return validarCnpj(digitos);
   return false;
 }
-
-/** Algoritmo de Luhn — o mesmo checksum que toda bandeira de cartão usa pra gerar números
- * válidos. Pega bem mais erro de digitação que só checar o tamanho (12-19 dígitos conforme a
- * bandeira), sem precisar saber qual bandeira é pra validar. */
-export function validarNumeroCartao(valor: string): boolean {
-  const digitos = valor.replace(/\D/g, '');
-  if (digitos.length < 12 || digitos.length > 19) return false;
-
-  let soma = 0;
-  let dobrar = false;
-  for (let i = digitos.length - 1; i >= 0; i--) {
-    let n = Number(digitos[i]);
-    if (dobrar) {
-      n *= 2;
-      if (n > 9) n -= 9;
-    }
-    soma += n;
-    dobrar = !dobrar;
-  }
-  return soma % 10 === 0;
-}
-
-/** MM/AA não vencido — mês entre 01 e 12, e a data (último dia do mês de validade) ainda não
- * passou. Cartão vence no fim do mês impresso, não no dia 1º. */
-export function validarValidadeCartao(valor: string): boolean {
-  const digitos = valor.replace(/\D/g, '');
-  if (digitos.length !== 4) return false;
-
-  const mes = Number(digitos.slice(0, 2));
-  const ano = 2000 + Number(digitos.slice(2, 4));
-  if (mes < 1 || mes > 12) return false;
-
-  const fimDoMesDeValidade = new Date(ano, mes, 0, 23, 59, 59);
-  return fimDoMesDeValidade.getTime() >= Date.now();
-}

@@ -89,26 +89,27 @@
          cartão (dentro da etapa "revisao", modoRetomada() && formaPagamento() === 'cartao') —
          cartão sempre exige um token novo (uso único, expira), então a retomada precisa do
          formulário de novo, não só de um resumo somente-leitura como o Pix tem. -->
+    <!-- Número/validade/CVV são "Secure Fields" do Mercado Pago: os <div> abaixo só marcam
+         onde a SDK injeta seus próprios iframes (montados em montarCardForm, checkout.component.ts)
+         — nunca viram <input> nosso, é isso que reduz nosso escopo de PCI DSS pra SAQ A. -->
     <ng-template #camposCartao>
-      <div class="checkout__cartao">
-        <input
-          type="text"
-          inputmode="numeric"
-          name="cc-number"
-          autocomplete="cc-number"
-          placeholder="Número do cartão"
-          maxlength="23"
-          [value]="numeroCartao()"
-          [class.checkout__campo--invalido]="erroNumeroCartao()"
-          (input)="atualizarNumeroCartao($any($event.target).value)"
-          (keydown)="bloquearNaoNumerico($event)"
-          (blur)="numeroCartaoTocado.set(true)"
-        />
-        @if (erroNumeroCartao()) {
-          <p class="checkout__erro-campo">{{ erroNumeroCartao() }}</p>
+      <!-- keydown.enter: nome/CPF (inputs normais, fora dos iframes) ficam dentro deste mesmo
+           <form> que a SDK escuta pra tokenizar — sem isso, apertar Enter num desses campos
+           (ou um autofill do navegador confirmando com Enter) dispara um submit nativo e a SDK
+           tenta cobrar na hora, mesmo sem o cliente ter clicado em "Confirmar". -->
+      <form
+        id="form-checkout"
+        class="checkout__cartao"
+        (submit)="$event.preventDefault()"
+        (keydown.enter)="$event.preventDefault()"
+      >
+        @if (cardFormErro()) {
+          <p class="checkout__erro-campo">{{ cardFormErro() }}</p>
         }
+        <div id="form-checkout__cardNumber" class="checkout__campo-seguro"></div>
         <input
           type="text"
+          id="form-checkout__cardholderName"
           name="cc-name"
           autocomplete="cc-name"
           placeholder="Nome impresso no cartão"
@@ -122,40 +123,10 @@
         }
         <div class="checkout__linha">
           <div class="checkout__campo">
-            <input
-              type="text"
-              inputmode="numeric"
-              name="cc-exp"
-              autocomplete="cc-exp"
-              placeholder="Vencimento (MM/AA)"
-              maxlength="5"
-              [value]="validadeCartao()"
-              [class.checkout__campo--invalido]="erroValidadeCartao()"
-              (input)="atualizarValidadeCartao($any($event.target).value)"
-              (keydown)="bloquearNaoNumerico($event)"
-              (blur)="validadeCartaoTocada.set(true)"
-            />
-            @if (erroValidadeCartao()) {
-              <p class="checkout__erro-campo">{{ erroValidadeCartao() }}</p>
-            }
+            <div id="form-checkout__expirationDate" class="checkout__campo-seguro"></div>
           </div>
           <div class="checkout__campo checkout__campo--cvv">
-            <input
-              type="text"
-              inputmode="numeric"
-              name="cc-csc"
-              autocomplete="cc-csc"
-              placeholder="CVV"
-              maxlength="4"
-              [value]="cvvCartao()"
-              [class.checkout__campo--invalido]="erroCvvCartao()"
-              (input)="atualizarCvvCartao($any($event.target).value)"
-              (keydown)="bloquearNaoNumerico($event)"
-              (blur)="cvvCartaoTocado.set(true)"
-            />
-            @if (erroCvvCartao()) {
-              <p class="checkout__erro-campo">{{ erroCvvCartao() }}</p>
-            }
+            <div id="form-checkout__securityCode" class="checkout__campo-seguro"></div>
           </div>
         </div>
 
@@ -188,6 +159,22 @@
           <p class="checkout__erro-campo">{{ erroCpfCnpjCartao() }}</p>
         }
 
+        <!-- Campos que a SDK exige que existam pra montar o form, mas que a loja não usa
+             diretamente: o input visível de CPF/CNPJ acima tem máscara (pontos/traço) pro
+             cliente ler, mas a API do Mercado Pago só aceita dígitos — por isso o valor que a
+             SDK lê de verdade (identificationNumber) vem de um campo escondido à parte, sempre
+             só com dígitos. Tipo de documento decidido sozinho a partir da quantidade de
+             dígitos; emissor/parcelas ficam com o seletor de parcelas próprio (ver
+             quantidadeMaximaParcelas em checkout.component.ts) em vez do da SDK. -->
+        <input type="hidden" id="form-checkout__identificationNumber" [value]="documentoCartaoDigitos()" />
+        <select id="form-checkout__identificationType" hidden [value]="tipoDocumentoCartao()">
+          <option value="CPF">CPF</option>
+          <option value="CNPJ">CNPJ</option>
+        </select>
+        <select id="form-checkout__issuer" hidden></select>
+        <select id="form-checkout__installments" hidden></select>
+        <input type="hidden" id="form-checkout__cardholderEmail" [value]="email()" />
+
         <div class="checkout__bandeiras">
           <span class="rotulo">Cartões aceitos</span>
           <div class="checkout__bandeiras-lista">
@@ -201,7 +188,7 @@
             }
           </div>
         </div>
-      </div>
+      </form>
     </ng-template>
 
     <div class="checkout__grade">
@@ -250,10 +237,11 @@
             />
             @if (erroDocumento()) {
               <p class="checkout__erro-campo">{{ erroDocumento() }}</p>
+            } @else {
+              <p class="checkout__ajuda checkout__ajuda--pequena">
+                Necessário pra emissão da etiqueta de envio.
+              </p>
             }
-            <p class="checkout__ajuda checkout__ajuda--pequena">
-              Necessário pra emissão da etiqueta de envio.
-            </p>
           }
           @case ('endereco') {
             <h3>Endereço de entrega</h3>
@@ -424,9 +412,6 @@
               </button>
             </div>
 
-            @if (formaPagamento() === 'cartao') {
-              <ng-container [ngTemplateOutlet]="camposCartao"></ng-container>
-            }
           }
           @case ('revisao') {
             <h3>Revise seu pedido</h3>
@@ -486,18 +471,17 @@
                   </button>
                 }
               </div>
-              @if (modoRetomada() && formaPagamento() === 'cartao') {
+              @if (formaPagamento() === 'cartao') {
                 <p class="checkout__ajuda checkout__ajuda--pequena">
-                  Cartão é de uso único por tentativa — informe os dados de novo pra pagar.
+                  @if (modoRetomada()) {
+                    Cartão é de uso único por tentativa — informe os dados de novo pra pagar.
+                  } @else {
+                    Os dados do cartão são preenchidos aqui, na revisão final do pedido.
+                  }
                 </p>
                 <ng-container [ngTemplateOutlet]="camposCartao"></ng-container>
               } @else {
-                <p class="checkout__revisao-pagamento">
-                  {{ formaPagamentoRotulo() }}
-                  @if (formaPagamento() === 'cartao') {
-                    · {{ numeroCartaoMascarado() }} · {{ parcelaSelecionada() }}x
-                  }
-                </p>
+                <p class="checkout__revisao-pagamento">{{ formaPagamentoRotulo() }}</p>
               }
             </div>
           }
@@ -515,8 +499,8 @@
             <button
               type="button"
               class="botao-primario"
-              [disabled]="finalizandoPedido() || (modoRetomada() && formaPagamento() === 'cartao' && !pagamentoValido())"
-              (click)="modoRetomada() ? tentarNovamente() : finalizarPedido()"
+              [disabled]="finalizandoPedido() || (formaPagamento() === 'cartao' && !pagamentoValido())"
+              (click)="confirmarPagamento()"
             >
               {{
                 finalizandoPedido()

@@ -1,11 +1,4 @@
-import {
-  mascararCep,
-  mascararCvv,
-  mascararDocumento,
-  mascararNumeroCartao,
-  mascararTelefone,
-  mascararValidadeCartao,
-} from './mascara.util';
+import { mascararCep, mascararDocumento, mascararTelefone } from './mascara.util';
 
 describe('mascararCep', () => {
   it('não formata enquanto tem 5 dígitos ou menos', () => {
@@ -68,51 +61,5 @@ describe('mascararDocumento', () => {
 
   it('trunca em 14 dígitos', () => {
     expect(mascararDocumento('112223330001819999')).toBe('11.222.333/0001-81');
-  });
-});
-
-describe('mascararNumeroCartao', () => {
-  it('agrupa de 4 em 4 dígitos', () => {
-    expect(mascararNumeroCartao('4235647728025682')).toBe('4235 6477 2802 5682');
-  });
-
-  it('não deixa espaço sobrando no fim de um grupo incompleto', () => {
-    expect(mascararNumeroCartao('42356')).toBe('4235 6');
-    expect(mascararNumeroCartao('4235')).toBe('4235');
-  });
-
-  it('ignora letras e símbolos', () => {
-    expect(mascararNumeroCartao('4235-6477-2802-5682')).toBe('4235 6477 2802 5682');
-    expect(mascararNumeroCartao('abcd4235')).toBe('4235');
-  });
-
-  it('trunca em 19 dígitos', () => {
-    expect(mascararNumeroCartao('1'.repeat(25))).toBe('1111 1111 1111 1111 111');
-  });
-});
-
-describe('mascararValidadeCartao', () => {
-  it('não insere barra com 2 dígitos ou menos', () => {
-    expect(mascararValidadeCartao('1')).toBe('1');
-    expect(mascararValidadeCartao('12')).toBe('12');
-  });
-
-  it('insere a barra a partir do 3º dígito', () => {
-    expect(mascararValidadeCartao('123')).toBe('12/3');
-    expect(mascararValidadeCartao('1230')).toBe('12/30');
-  });
-
-  it('trunca em 4 dígitos e ignora não-dígitos', () => {
-    expect(mascararValidadeCartao('12/30/99')).toBe('12/30');
-  });
-});
-
-describe('mascararCvv', () => {
-  it('mantém só dígitos', () => {
-    expect(mascararCvv('12a3')).toBe('123');
-  });
-
-  it('trunca em 4 dígitos', () => {
-    expect(mascararCvv('123456')).toBe('1234');
   });
 });

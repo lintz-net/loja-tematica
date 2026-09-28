@@ -2,18 +2,6 @@
 
 ## 🔴 Bloqueadores pra produção
 
-- **Compliance PCI do pagamento por cartão — decisão consciente, pendência real** — o
-  pagamento por cartão foi implementado como **Checkout API** (formulário de cartão no nosso
-  próprio site, tokenizado via SDK.js do Mercado Pago antes de qualquer coisa chegar no
-  backend — ver `checkout.component.ts`/`mercado-pago-sdk.service.ts`), não como
-  **Checkout Pro** (redirect pra página deles). Mesmo o número do cartão nunca tocando nosso
-  backend, hospedar o formulário no nosso domínio classifica a loja num nível de certificação
-  PCI DSS mais exigente (**SAQ A-EP**, não o SAQ A mais simples do Checkout Pro) — precisa
-  preencher esse questionário de autoavaliação formalmente com o Mercado Pago antes de operar
-  cartão de verdade em produção com volume real. Decisão discutida e confirmada com o usuário
-  em 2026-09-25: manter o Checkout API por causa da UX (cliente nunca sai do site), aceitando
-  essa obrigação extra de compliance conscientemente — Checkout Pro (mais simples, SAQ A) foi
-  oferecido como alternativa e recusado.
 - **Status do pedido (logística) automatizado, implementado em 2026-09-25** —
   `pedidos.status` (recebido/confirmado/enviado/entregue, mostrado na barra de cima de
   `/pedido/:codigo`) antes só mudava manualmente pelo admin em `/admin/pedidos`. Agora avança
@@ -224,6 +212,15 @@
   no corpo da notificação — sempre reconsulta o pagamento real na API deles — simular a
   notificação só re-testaria nosso código reagindo a um pagamento que segue "pending" pra
   sempre. Validação completa de aprovação real só é possível em produção.
+  - **Tentativa em 2026-09-28**: testado o truque documentado de aprovação automática (nome
+    do pagador = `APRO`) — gerou o Pix normalmente (pedido `VT-KMPNSL`, QR code + copia-e-cola
+    certos), mas ficou "pendente" por 5+ minutos sem aprovar sozinho. Pesquisa apontou que
+    esse truque é documentado só pra **Orders API** (`/v1/orders`, API mais nova do Mercado
+    Pago), não pra **Payments API** clássica (`/v1/payments`, que é o que
+    `mercado-pago-criar-pagamento` usa) — não se aplica à nossa integração. Confirma a
+    limitação já registrada acima: não existe hoje um jeito confiável de simular aprovação de
+    Pix de teste pela API que usamos: geração de QR code/copia-e-cola/polling já validados
+    (funcionam certo), só a aprovação de verdade que só é testável em produção.
 - **Domínio próprio** (`vistanostalgica.com.br`) — registro/DNS adiado por decisão do
   usuário, sem pressa. `environment.prod.ts` já está pronto com a URL certa, só falta
   registrar o domínio e apontar o DNS pro Netlify (painel do Netlify → domínio do site →
@@ -243,6 +240,43 @@
 
 ## 🟡 Recomendado antes de operar de verdade
 
+- **Compliance PCI do pagamento por cartão — Secure Fields implementado e testado em
+  2026-09-27, falta só o questionário formal com o Mercado Pago** — o pagamento por cartão é
+  **Checkout API** (formulário no nosso próprio site, não redirect pro Mercado Pago), o que
+  originalmente exigia o questionário PCI DSS mais rigoroso (**SAQ A-EP**, 191 requisitos)
+  porque número/validade/CVV passavam por `<input>` nosso antes da tokenização, mesmo sem
+  tocar o backend. Resolvido trocando pra **Secure Fields** (`mp.cardForm({ iframe: true, ...
+  })`): esses três campos agora são iframes do próprio Mercado Pago (ver
+  `mercado-pago-sdk.service.ts` e o bloco `#camposCartao` em `checkout.component.html`/`.ts`)
+  — nosso HTML/JS nunca mais chega perto desses dados, o que reduz o escopo de PCI pra
+  **SAQ A** (autodeclaração simples, ~20 requisitos, sem scan trimestral). Nome do titular e
+  CPF/CNPJ continuam em `<input>` normal (não são dado sensível de cartão). Decisão original
+  de manter Checkout API em vez de Checkout Pro (2026-09-25, por causa da UX — cliente nunca
+  sai do site) permanece, mas agora sem o ônus do SAQ A-EP.
+  - **Testado ponta a ponta em navegador real em 2026-09-27** (cartão de teste sandbox,
+    titular `APRO`) — pedido criado e pagamento aprovado com sucesso pelo fluxo normal
+    (Secure Fields montado na etapa "revisao", não em "pagamento" — token é gerado só ali).
+    Durante o teste ao vivo foram achados e corrigidos 4 bugs reais da implementação:
+    1) a montagem dos iframes rodava antes do `<form id="form-checkout">` existir no DOM
+       (corrigido com polling em vez de `setTimeout` fixo);
+    2) o botão de pagar fica fora desse `<form>` (ele confirma o pedido inteiro, não só o
+       cartão) — sem disparar `requestSubmit()` manualmente a SDK nunca tokenizava de verdade;
+    3) quando os campos ficam vazios/inválidos a SDK nunca chama `onSubmit` (só `onError`),
+       então sem um timeout de segurança o pagamento travava para sempre em "Enviando…";
+    4) o Mercado Pago rejeitava o CPF/CNPJ porque o campo que a SDK lê (`identificationNumber`)
+       era o mesmo `<input>` visível com máscara (pontos/traço) — separado num campo escondido
+       só com dígitos.
+    Também corrigido: Enter num campo do formulário (nome/CPF, fora dos iframes) disparava um
+    submit nativo do `<form id="form-checkout">` sem o cliente ter clicado em "Confirmar".
+  - **Rebaixado de bloqueador pra recomendado em 2026-09-28**: o SAQ A é uma autoavaliação —
+    o Mercado Pago não trava/impede receber pagamentos reais por falta desse formulário
+    preenchido, é uma obrigação legal/contratual pra manter em dia (cobrada em auditoria,
+    disputa de chargeback, ou se o volume crescer o bastante pra virar alvo de revisão), não
+    um gate técnico. Implementação já está no nível de segurança certo; o questionário só
+    formaliza isso. Dá pra operar em produção normalmente e resolver com calma depois — não
+    achei um link direto confiável pra onde preencher (site de documentação deles é uma SPA
+    que não abre via fetch automatizado); melhor caminho é abrir chamado com o suporte do
+    Mercado Pago perguntando especificamente por "questionário SAQ A / compliance PCI DSS".
 - ~~**Peso/dimensões em branco pra todo o catálogo**~~ — **resolvido em 2026-09-26**. Peso
   confirmado com o usuário: P/M/G = 0,25kg·3×25×35cm, GG/G1/G2/XG = 0,30kg·3×27×37cm. Como
   peso/dimensões são salvos por PRODUTO (não por tamanho) e a maioria dos produtos mistura

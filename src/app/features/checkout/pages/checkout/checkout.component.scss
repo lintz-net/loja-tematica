@@ -168,6 +168,24 @@
   border-top: 1px solid var(--cor-borda);
 }
 
+// Alvo onde a SDK do Mercado Pago injeta seu próprio <iframe> (Secure Fields — número,
+// validade, CVV do cartão) — mesma moldura visual dos nossos <input>, mas o conteúdo em si
+// não é nosso, então não dá pra estilizar por dentro.
+.checkout__campo-seguro {
+  width: 100%;
+  height: 42px;
+  background: var(--cor-fundo);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-padrao);
+  margin-bottom: 12px;
+  overflow: hidden;
+
+  iframe {
+    width: 100%;
+    height: 100%;
+  }
+}
+
 .checkout__bandeiras .rotulo {
   margin-bottom: 10px;
 }

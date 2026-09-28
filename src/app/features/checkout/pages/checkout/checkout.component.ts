@@ -5,26 +5,15 @@ import { firstValueFrom } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CarrinhoService } from '../../../../core/servicos/carrinho.service';
 import { PedidoService } from '../../../../core/servicos/pedido.service';
-import { MercadoPagoSdkService } from '../../../../core/servicos/mercado-pago-sdk.service';
+import { CardForm, MercadoPagoSdkService } from '../../../../core/servicos/mercado-pago-sdk.service';
 import { FreteService, OpcaoFrete } from '../../../../core/servicos/frete.service';
 import { CepService } from '../../../../core/servicos/cep.service';
 import { CupomService, CupomValido } from '../../../../core/servicos/cupom.service';
 import { ConfiguracaoLojaService } from '../../../../core/servicos/configuracao-loja.service';
 import { ItemPedido, Pedido } from '../../../../core/modelos/pedido.model';
 import { imagemDaVariante } from '../../../../core/utilitarios/imagem-produto.util';
-import {
-  mascararCep,
-  mascararCvv,
-  mascararDocumento,
-  mascararNumeroCartao,
-  mascararTelefone,
-  mascararValidadeCartao,
-} from '../../../../core/utilitarios/mascara.util';
-import {
-  validarDocumento,
-  validarNumeroCartao,
-  validarValidadeCartao,
-} from '../../../../core/utilitarios/validacao.util';
+import { mascararCep, mascararDocumento, mascararTelefone } from '../../../../core/utilitarios/mascara.util';
+import { validarDocumento } from '../../../../core/utilitarios/validacao.util';
 import { normalizarTexto } from '../../../../core/utilitarios/texto.util';
 import { parcelasDisponiveis } from '../../../../core/constantes/parcelamento.constantes';
 import { LOGOS_CARTAO } from '../../../../shared/dados/logos-pagamento';
@@ -171,45 +160,28 @@ export class CheckoutComponent implements OnDestroy {
    * ela, a opção continua mostrando só o nome em texto (ver obterLogoTransportadora). */
   readonly obterLogoTransportadora = obterLogoTransportadora;
 
-  readonly numeroCartao = signal('');
   readonly nomeCartao = signal('');
-  readonly validadeCartao = signal('');
-  readonly cvvCartao = signal('');
   readonly cpfCnpjCartao = signal('');
   readonly parcelas = signal(1);
 
   // "Tocado" (blur) por campo — mensagem de erro só aparece depois que o cliente saiu do
   // campo, nunca enquanto ele ainda está no meio de digitar (senão fica irritante).
-  readonly numeroCartaoTocado = signal(false);
   readonly nomeCartaoTocado = signal(false);
-  readonly validadeCartaoTocada = signal(false);
-  readonly cvvCartaoTocado = signal(false);
   readonly cpfCnpjCartaoTocado = signal(false);
 
-  readonly erroNumeroCartao = computed(() => {
-    if (!this.numeroCartaoTocado()) return null;
-    if (!this.numeroCartao().trim()) return 'Informe o número do cartão.';
-    return validarNumeroCartao(this.numeroCartao()) ? null : 'Número de cartão inválido — confira os dígitos.';
-  });
+  // Número/validade/CVV vivem dentro de iframes do Mercado Pago (Secure Fields — ver
+  // mercado-pago-sdk.service.ts) e nunca tocam nosso HTML/JS, então não dá pra validar esses
+  // três campos aqui: quem valida é a própria SDK, reportado via `cardFormErro` (preenchido no
+  // callback onError/onCardTokenReceived) e `cardFormPronto` (o form só é considerado utilizável
+  // depois de montado com sucesso).
+  readonly cardFormPronto = signal(false);
+  readonly cardFormErro = signal<string | null>(null);
+  private cardForm: CardForm | null = null;
+  private resolverEnvioCardForm: (() => void) | null = null;
 
   readonly erroNomeCartao = computed(() => {
     if (!this.nomeCartaoTocado()) return null;
     return this.nomeCartao().trim().length > 1 ? null : 'Informe o nome impresso no cartão.';
-  });
-
-  readonly erroValidadeCartao = computed(() => {
-    if (!this.validadeCartaoTocada()) return null;
-    const valor = this.validadeCartao().trim();
-    if (!valor) return 'Informe a validade.';
-    if (!/^\d{2}\/\d{2}$/.test(valor)) return 'Validade incompleta (MM/AA).';
-    return validarValidadeCartao(valor) ? null : 'Cartão vencido ou validade inválida.';
-  });
-
-  readonly erroCvvCartao = computed(() => {
-    if (!this.cvvCartaoTocado()) return null;
-    const valor = this.cvvCartao().trim();
-    if (!valor) return 'Informe o CVV.';
-    return /^\d{3,4}$/.test(valor) ? null : 'CVV inválido.';
   });
 
   readonly erroCpfCnpjCartao = computed(() => {
@@ -218,16 +190,26 @@ export class CheckoutComponent implements OnDestroy {
     return validarDocumento(this.cpfCnpjCartao()) ? null : 'CPF/CNPJ inválido — confira os dígitos.';
   });
 
-  /** Validação de verdade, não só formato: Luhn no número do cartão, MM/AA não vencido, e
-   * dígito verificador real do CPF/CNPJ (ver validacao.util.ts) — pega erro de digitação que
-   * só checar tamanho/regex deixaria passar até chegar na recusa do Mercado Pago. */
+  /** O <select> escondido `form-checkout__identificationType` (exigido pela SDK pra montar o
+   * form) precisa refletir isso — ver template. */
+  readonly tipoDocumentoCartao = computed(() =>
+    this.cpfCnpjCartao().replace(/\D/g, '').length === 14 ? 'CNPJ' : 'CPF'
+  );
+
+  /** O input escondido `form-checkout__identificationNumber` (que a SDK lê de verdade) usa
+   * isso — a API do Mercado Pago só aceita dígitos, o input visível pro cliente tem máscara
+   * (pontos/traço) que ela rejeitaria com "invalid parameter identificationNumber". */
+  readonly documentoCartaoDigitos = computed(() => this.cpfCnpjCartao().replace(/\D/g, ''));
+
+  /** Número/validade/CVV são validados pela própria SDK dentro dos iframes (Secure Fields) —
+   * aqui só resta conferir que o form foi montado e que nome/CPF-CNPJ (campos normais, fora do
+   * iframe) estão preenchidos e válidos. Erro real de cartão (Luhn, vencimento) só aparece no
+   * momento de gerar o token, reportado em `cardFormErro`. */
   readonly pagamentoValido = computed(() => {
     if (this.formaPagamento() !== 'cartao') return true;
     return (
-      validarNumeroCartao(this.numeroCartao()) &&
+      this.cardFormPronto() &&
       this.nomeCartao().trim().length > 1 &&
-      validarValidadeCartao(this.validadeCartao()) &&
-      /^\d{3,4}$/.test(this.cvvCartao().trim()) &&
       validarDocumento(this.cpfCnpjCartao())
     );
   });
@@ -237,11 +219,6 @@ export class CheckoutComponent implements OnDestroy {
     cartao: 'Cartão de crédito',
   };
   readonly formaPagamentoRotulo = computed(() => this.ROTULOS_PAGAMENTO[this.formaPagamento()]);
-
-  readonly numeroCartaoMascarado = computed(() => {
-    const digitos = this.numeroCartao().replace(/\D/g, '');
-    return digitos.length >= 4 ? `•••• ${digitos.slice(-4)}` : '';
-  });
 
   readonly valorFrete = computed(() => this.freteSelecionado()?.preco ?? 0);
 
@@ -261,14 +238,21 @@ export class CheckoutComponent implements OnDestroy {
     Math.max(0, this.subtotal() + this.valorFrete() - this.valorDesconto())
   );
 
-  /** Máximo de parcelas sem juros oferecido pro valor atual do pedido — cai conforme o
-   * total cai (ex.: cupom aplicado), respeitando VALOR_MINIMO_PARCELA. */
-  readonly quantidadeMaximaParcelas = computed(() => parcelasDisponiveis(this.valorTotal()));
+  /** Valor a usar no seletor de parcelas — depois que o pedido já foi criado (ex.: retry de
+   * pagamento após erro), o carrinho já foi limpo e `valorTotal()` cairia pra 0; nesse caso usa
+   * o valor já travado do pedido em vez do carrinho (que não reflete mais nada). */
+  private readonly valorParaParcelas = computed(() =>
+    this.numeroPedido() ? this.valorTotalFinalizado() : this.valorTotal()
+  );
+
+  /** Máximo de parcelas sem juros oferecido pro valor do pedido — cai conforme o total cai
+   * (ex.: cupom aplicado), respeitando VALOR_MINIMO_PARCELA. */
+  readonly quantidadeMaximaParcelas = computed(() => parcelasDisponiveis(this.valorParaParcelas()));
 
   /** Opções pro seletor de parcelas — sempre a partir de 1x, valor de cada parcela é só o
    * total dividido (sem juros: quem faz a divisão de verdade na cobrança é o Mercado Pago). */
   readonly opcoesParcelas = computed(() => {
-    const total = this.valorTotal();
+    const total = this.valorParaParcelas();
     return Array.from({ length: this.quantidadeMaximaParcelas() }, (_, i) => i + 1).map(
       (numero) => ({ numero, valorParcela: total / numero })
     );
@@ -381,6 +365,10 @@ export class CheckoutComponent implements OnDestroy {
         this.etapaAtual.set('revisao');
         this.carregandoRetomada.set(false);
 
+        if (pedido.formaPagamento === 'cartao') {
+          this.montarCardForm(pedido.valorTotal);
+        }
+
         // Polling de aprovação em background só faz sentido pro Pix (QR code pago por fora,
         // via webhook, enquanto o cliente pode estar só olhando esta tela sem interagir).
         // Cartão não tem esse risco: nada acontece até o cliente preencher os dados de novo
@@ -405,6 +393,9 @@ export class CheckoutComponent implements OnDestroy {
    * e sumir na hora seguinte, mais sólido visualmente. Deixa passar teclas de controle
    * (Backspace, setas, Tab, Ctrl+C/V etc.) — só barra caractere de verdade que não é dígito. */
   bloquearNaoNumerico(evento: KeyboardEvent): void {
+    // Autopreenchimento do navegador dispara eventos sintéticos sem `key` (ex.: preenchimento
+    // automático de CPF salvo) — sem essa guarda, o autofill quebrava com TypeError aqui.
+    if (!evento.key) return;
     if (evento.ctrlKey || evento.metaKey || evento.altKey) return;
     if (evento.key.length > 1) return; // teclas de controle (Backspace, ArrowLeft, Tab...)
     if (!/\d/.test(evento.key)) evento.preventDefault();
@@ -477,22 +468,10 @@ export class CheckoutComponent implements OnDestroy {
     });
   }
 
-  atualizarNumeroCartao(valor: string): void {
-    this.numeroCartao.set(mascararNumeroCartao(valor));
-  }
-
   atualizarNomeCartao(valor: string): void {
     // Maiúsculas porque é assim que o cartão vem impresso, e é o que o Mercado Pago espera
     // no cardholderName — evita rejeição silenciosa por diferença de caixa.
     this.nomeCartao.set(valor.toUpperCase());
-  }
-
-  atualizarValidadeCartao(valor: string): void {
-    this.validadeCartao.set(mascararValidadeCartao(valor));
-  }
-
-  atualizarCvvCartao(valor: string): void {
-    this.cvvCartao.set(mascararCvv(valor));
   }
 
   atualizarCpfCnpjCartao(valor: string): void {
@@ -544,9 +523,114 @@ export class CheckoutComponent implements OnDestroy {
   selecionarFormaPagamento(forma: 'cartao' | 'pix'): void {
     this.formaPagamento.set(forma);
     // Carrega cedo (ao escolher cartão, não só no clique de pagar) pra dar tempo do
-    // fingerprint ficar pronto antes da cobrança — fire-and-forget, nunca bloqueia nada.
+    // fingerprint ficar pronto antes da cobrança — fire-and-forget, nunca bloqueia nada. O
+    // Secure Fields em si só monta na etapa "revisao" (ver avancar()) — é lá que o
+    // `<form id="form-checkout">` de verdade existe no DOM, não aqui.
     if (forma === 'cartao') {
       this.mercadoPagoSdk.carregarScriptSeguranca();
+    }
+  }
+
+  private async aguardarElemento(id: string, tentativas = 40): Promise<boolean> {
+    for (let i = 0; i < tentativas; i++) {
+      if (document.getElementById(id)) return true;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    return false;
+  }
+
+  /** Monta o Secure Fields (iframes de número/validade/CVV) — só pode ser chamado quando o
+   * `<form id="form-checkout">` alvo (renderizado na etapa "revisao", ver
+   * checkout.component.html) está de verdade no DOM. Só resolve depois que `onFormMounted`
+   * (sucesso ou erro) dispara — quem chama precisa aguardar isso antes de deixar o cliente
+   * pagar, senão os iframes podem não estar prontos pra digitar ainda. Chamado de novo em toda
+   * (re)entrada na etapa "revisao" com cartão — inclusive no retry depois de um erro (a tela de
+   * erro substitui a página inteira, o que desmonta os iframes anteriores junto). */
+  private async montarCardForm(valorTotal: number): Promise<void> {
+    try {
+      this.cardForm?.unmount();
+    } catch {
+      // unmount() do SDK lança se o form anterior nunca chegou a montar de verdade — sem
+      // problema, é só o cleanup de uma tentativa que já tinha falhado.
+    }
+    this.cardForm = null;
+    this.cardFormPronto.set(false);
+    this.cardFormErro.set(null);
+
+    const elementoExiste = await this.aguardarElemento('form-checkout');
+    if (!elementoExiste) {
+      this.cardFormErro.set('Não foi possível carregar o formulário de cartão. Recarregue a página.');
+      return;
+    }
+
+    try {
+      const mp = await this.mercadoPagoSdk.carregar();
+
+      // Se a SDK nunca chamar `onFormMounted` (falha de rede, travada em algum estado
+      // interno), não pode deixar o cliente preso pra sempre num botão desabilitado sem
+      // explicação — daí o timeout, cancelado assim que `onFormMounted` dispara de verdade
+      // (nunca deixa os dois `resolve()` competindo soltos).
+      await new Promise<void>((resolve) => {
+        const temporizador = setTimeout(() => {
+          if (!this.cardFormPronto()) {
+            this.cardFormErro.set(
+              'O formulário de cartão demorou demais pra carregar. Recarregue a página.'
+            );
+          }
+          resolve();
+        }, 8000);
+
+        this.cardForm = mp.cardForm({
+          amount: valorTotal.toFixed(2),
+          iframe: true,
+          form: {
+            id: 'form-checkout',
+            cardNumber: { id: 'form-checkout__cardNumber', placeholder: 'Número do cartão' },
+            expirationDate: { id: 'form-checkout__expirationDate', placeholder: 'MM/AA' },
+            securityCode: { id: 'form-checkout__securityCode', placeholder: 'CVV' },
+            cardholderName: {
+              id: 'form-checkout__cardholderName',
+              placeholder: 'Nome impresso no cartão',
+            },
+            // Emissor e parcelas ficam escondidos (ver checkout.component.html) — a loja usa
+            // o próprio seletor de parcelas (respeitando VALOR_MINIMO_PARCELA), não o da SDK.
+            issuer: { id: 'form-checkout__issuer' },
+            installments: { id: 'form-checkout__installments' },
+            identificationType: { id: 'form-checkout__identificationType' },
+            identificationNumber: { id: 'form-checkout__identificationNumber' },
+            cardholderEmail: { id: 'form-checkout__cardholderEmail' },
+          },
+          callbacks: {
+            onFormMounted: (erro) => {
+              clearTimeout(temporizador);
+              if (erro) {
+                console.error('Falha ao montar o Secure Fields:', erro);
+                this.cardFormErro.set(
+                  'Não foi possível carregar o formulário de cartão. Recarregue a página.'
+                );
+              } else {
+                this.cardFormPronto.set(true);
+              }
+              resolve();
+            },
+            // Dispara só depois que a SDK termina a tokenização assíncrona iniciada pelo
+            // submit do <form id="form-checkout"> (ver pagarComCartao) — antes disso,
+            // getCardFormData() não tem token nenhum pra devolver, mesmo com os campos
+            // preenchidos.
+            onSubmit: (evento) => {
+              evento.preventDefault();
+              this.resolverEnvioCardForm?.();
+              this.resolverEnvioCardForm = null;
+            },
+            onError: (erro) => {
+              console.error('Erro no Secure Fields:', erro);
+            },
+          },
+        });
+      });
+    } catch (erro) {
+      console.error('Falha ao carregar a SDK do Mercado Pago:', erro);
+      this.cardFormErro.set('Não foi possível carregar o formulário de cartão. Recarregue a página.');
     }
   }
 
@@ -561,7 +645,10 @@ export class CheckoutComponent implements OnDestroy {
       case 'frete':
         return this.freteSelecionado() !== null;
       case 'pagamento':
-        return this.pagamentoValido();
+        // Escolher a forma de pagamento é suficiente pra avançar — o cartão em si (Secure
+        // Fields) só é validado na etapa "revisao" (onde o formulário de verdade é montado e
+        // o botão de confirmar já é bloqueado por pagamentoValido() até ele ficar pronto).
+        return true;
       case 'revisao':
         return false;
     }
@@ -580,6 +667,12 @@ export class CheckoutComponent implements OnDestroy {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       if (proximaEtapa === 'frete') {
         this.cotarFrete();
+      }
+      // O Secure Fields só pode montar quando o <form id="form-checkout"> de verdade existe
+      // no DOM — na etapa "revisao" (não em "pagamento", que só escolhe Pix vs cartão), e só
+      // pro fluxo normal: retomada já monta em iniciarRetomada().
+      if (proximaEtapa === 'revisao' && this.formaPagamento() === 'cartao' && !this.modoRetomada()) {
+        this.montarCardForm(this.valorTotal());
       }
     }
   }
@@ -753,56 +846,95 @@ export class CheckoutComponent implements OnDestroy {
   }
 
   /** Botão "Tentar novamente" da tela de erro — se o pedido já foi criado (só o pagamento
-   * falhou), tenta cobrar de novo o MESMO pedido, sem recriar nada. O carrinho já foi limpo
-   * nesse ponto, então chamar finalizarPedido() de novo criaria um pedido vazio. Só cai em
-   * finalizarPedido() quando o pedido em si não chegou a ser criado. Cartão gera um token
-   * novo a cada tentativa (o token é de uso único) — os campos continuam preenchidos com o
-   * que o cliente digitou, ele só precisa corrigir o que causou a recusa e tentar de novo. */
+   * falhou), volta pra revisão sem recriar nada (chamar finalizarPedido() de novo criaria um
+   * pedido vazio, já que o carrinho foi limpo). Só cai em finalizarPedido() quando o pedido em
+   * si não chegou a ser criado.
+   *
+   * Pix não precisa de nova interação do cliente — gera um QR code novo sozinho. Cartão é
+   * diferente: token é de uso único, e a tela de erro (que substitui a página inteira, ver
+   * checkout.component.html) desmonta os iframes do Secure Fields junto — então aqui só
+   * remonta o formulário em branco, sem tentar cobrar de novo automaticamente. É o clique do
+   * cliente em "Confirmar e finalizar pedido"/"Pagar agora" (ver confirmarPagamento) que
+   * dispara a cobrança de fato, depois que ele preencher os campos de novo. */
   tentarNovamente(): void {
-    if (this.numeroPedido()) {
-      this.erroFinalizacao.set(null);
-      this.finalizandoPedido.set(true);
-      if (this.formaPagamento() === 'cartao') {
-        this.pagarComCartao(this.numeroPedido(), this.valorTotalFinalizado());
-      } else {
-        this.gerarPagamentoPix(this.numeroPedido(), this.valorTotalFinalizado());
-      }
+    if (!this.numeroPedido()) {
+      this.finalizarPedido();
       return;
     }
-    this.finalizarPedido();
+
+    this.erroFinalizacao.set(null);
+    if (this.formaPagamento() === 'cartao') {
+      this.montarCardForm(this.valorTotalFinalizado());
+      return;
+    }
+
+    this.finalizandoPedido.set(true);
+    this.gerarPagamentoPix(this.numeroPedido(), this.valorTotalFinalizado());
   }
 
-  /** Tokeniza o cartão via SDK.js do Mercado Pago (número/CVV nunca chegam no nosso
-   * backend, só o token de uso único) e cobra o pedido já criado. Diferente do Pix, a
-   * resposta já vem com o status final na hora — 'approved' fecha o pedido, qualquer outro
-   * status vira erro com convite pra tentar de novo (cartão diferente, ou corrigir os dados). */
-  private async pagarComCartao(codigoPedido: string, valorTotal: number): Promise<void> {
-    try {
-      const mp = await this.mercadoPagoSdk.carregar();
-      const numeroLimpo = this.numeroCartao().replace(/\D/g, '');
-      const bin = numeroLimpo.slice(0, 6);
+  /** Botão principal da etapa "revisao" — cria o pedido na primeira vez (finalizarPedido) ou,
+   * se ele já existe (retomada, ou um "Tentar novamente" que só remontou o formulário em
+   * branco), cobra o pedido existente direto: o Secure Fields já está montado e pronto (só o
+   * clique confirma que o cliente terminou de preencher). */
+  confirmarPagamento(): void {
+    if (!this.numeroPedido()) {
+      this.finalizarPedido();
+      return;
+    }
 
-      const metodos = await mp.getPaymentMethods({ bin });
-      const paymentMethodId = metodos.results[0]?.id;
-      if (!paymentMethodId) {
-        throw new Error('Não reconhecemos a bandeira desse cartão.');
+    this.finalizandoPedido.set(true);
+    if (this.formaPagamento() === 'cartao') {
+      this.pagarComCartao(this.numeroPedido(), this.valorTotalFinalizado());
+    } else {
+      this.gerarPagamentoPix(this.numeroPedido(), this.valorTotalFinalizado());
+    }
+  }
+
+  /** Pega o token (número/CVV nunca chegam no nosso backend nem no nosso JS — ficam dentro
+   * dos iframes do Secure Fields, ver mercado-pago-sdk.service.ts) e cobra o pedido já
+   * criado. Diferente do Pix, a resposta já vem com o status final na hora — 'approved' fecha
+   * o pedido, qualquer outro status vira erro com convite pra tentar de novo. */
+  private async pagarComCartao(codigoPedido: string, valorTotal: number): Promise<void> {
+    const formulario = document.getElementById('form-checkout') as HTMLFormElement | null;
+    if (!this.cardForm || !formulario) {
+      this.finalizandoPedido.set(false);
+      this.erroFinalizacao.set('Formulário de cartão não carregou. Recarregue a página e tente de novo.');
+      return;
+    }
+
+    try {
+      // O botão "Pagar agora"/"Confirmar e finalizar pedido" fica fora do <form
+      // id="form-checkout"> (ele confirma o pedido inteiro, não só o cartão) — então precisa
+      // disparar o submit manualmente pra SDK tokenizar de verdade. A SDK intercepta esse
+      // submit, faz o trabalho assíncrono (chama a API deles) e só então invoca `onSubmit`
+      // (ver montarCardForm) — getCardFormData() só tem o token depois disso, nunca antes.
+      // Quando os campos estão vazios/inválidos, porém, a SDK NUNCA chama onSubmit (só
+      // onError, sem avisar que o envio foi cancelado) — sem o timeout abaixo, ficaria preso
+      // pra sempre no "Enviando…".
+      const tokenizacaoConcluiu = await new Promise<boolean>((resolve) => {
+        const temporizador = setTimeout(() => {
+          this.resolverEnvioCardForm = null;
+          resolve(false);
+        }, 6000);
+        this.resolverEnvioCardForm = () => {
+          clearTimeout(temporizador);
+          resolve(true);
+        };
+        if (formulario.requestSubmit) {
+          formulario.requestSubmit();
+        } else {
+          formulario.dispatchEvent(new Event('submit', { cancelable: true }));
+        }
+      });
+
+      if (!tokenizacaoConcluiu) {
+        throw new Error('Confira o número, a validade e o CVV do cartão antes de tentar de novo.');
       }
 
-      const issuers = await mp.getIssuers({ paymentMethodId, bin });
-      const issuerId = issuers[0]?.id;
-
-      const [mes, ano] = this.validadeCartao().trim().split('/');
-      const documentoLimpo = this.cpfCnpjCartao().replace(/\D/g, '');
-
-      const token = await mp.createCardToken({
-        cardNumber: numeroLimpo,
-        cardholderName: this.nomeCartao().trim(),
-        cardExpirationMonth: mes,
-        cardExpirationYear: `20${ano}`,
-        securityCode: this.cvvCartao().trim(),
-        identificationType: documentoLimpo.length === 14 ? 'CNPJ' : 'CPF',
-        identificationNumber: documentoLimpo,
-      });
+      const dadosCartao = this.cardForm.getCardFormData();
+      if (!dadosCartao.token) {
+        throw new Error('Não foi possível gerar o token do cartão — confira o número, validade e CVV.');
+      }
 
       // Best-effort: se o script antifraude (carregado ao escolher "cartão", ver
       // selecionarFormaPagamento) ainda não coletou o fingerprint a tempo, segue sem ele —
@@ -817,9 +949,9 @@ export class CheckoutComponent implements OnDestroy {
           nomeCliente: this.nome(),
           deviceId,
           documentoCliente: this.documento(),
-          token: token.id,
-          paymentMethodId,
-          issuerId,
+          token: dadosCartao.token,
+          paymentMethodId: dadosCartao.paymentMethodId,
+          issuerId: dadosCartao.issuerId || undefined,
           parcelas: this.parcelasFinalizadas(),
         })
       );
@@ -842,6 +974,9 @@ export class CheckoutComponent implements OnDestroy {
       this.erroFinalizacao.set(
         'Não foi possível processar o cartão. Confira o número, validade e CVV, e tente de novo.'
       );
+      // Token de uso único: mesmo em erro de rede/negócio (não relacionado ao cartão em si),
+      // o token já emitido não serve mais — repetirPagamentoCartao() (via "Tentar novamente")
+      // remonta o Secure Fields do zero antes da próxima tentativa.
     }
   }
 
@@ -881,6 +1016,11 @@ export class CheckoutComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.pararPolling();
+    try {
+      this.cardForm?.unmount();
+    } catch {
+      // Idem ao comentário em montarCardForm — inofensivo se o form nunca chegou a montar.
+    }
   }
 
   voltarParaHome(): void {

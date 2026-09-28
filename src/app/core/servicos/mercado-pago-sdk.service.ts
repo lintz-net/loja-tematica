@@ -1,24 +1,64 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
 
+/** Campo do form do Secure Fields: `id` é o id do elemento DOM (input normal pros campos que
+ * não precisam de iframe — nome, documento — ou o container onde a SDK injeta o iframe pros
+ * campos sensíveis — número, validade, CVV). */
+interface CampoCardForm {
+  id: string;
+  placeholder?: string;
+}
+
+/** Dados montados pela própria SDK a partir do que o cliente preencheu nos campos (inclusive
+ * dentro dos iframes, que a gente nunca lê diretamente) — usados pra chamar nosso backend. */
+export interface DadosCardForm {
+  token: string;
+  paymentMethodId: string;
+  issuerId: string;
+  cardholderEmail: string;
+  amount: string;
+  installments: string;
+  identificationNumber: string;
+  identificationType: string;
+}
+
+export interface ConfiguracaoCardForm {
+  amount: string;
+  /** Secure Fields de verdade: número/validade/CVV ficam dentro de iframes do próprio
+   * Mercado Pago — nunca tocam no nosso HTML/JS. É isso que reduz o escopo de PCI DSS de
+   * SAQ A-EP pra SAQ A. */
+  iframe: true;
+  autoMount?: boolean;
+  form: {
+    id: string;
+    cardNumber: CampoCardForm;
+    expirationDate: CampoCardForm;
+    securityCode: CampoCardForm;
+    cardholderName: CampoCardForm;
+    issuer: CampoCardForm;
+    installments: CampoCardForm;
+    identificationType: CampoCardForm;
+    identificationNumber: CampoCardForm;
+    cardholderEmail: CampoCardForm;
+  };
+  callbacks: {
+    onFormMounted?: (erro?: unknown) => void;
+    onCardTokenReceived?: (erro: unknown, token?: { id: string }) => void;
+    onSubmit?: (evento: Event) => void;
+    onFetching?: (recurso: string) => void;
+    onError?: (erro: unknown) => void;
+  };
+}
+
+export interface CardForm {
+  getCardFormData(): DadosCardForm;
+  unmount(): void;
+}
+
 /** Formato mínimo da SDK.js v2 do Mercado Pago que a gente usa — não existe @types oficial,
  * então só o que é chamado daqui é tipado. */
 interface MercadoPagoSdk {
-  getPaymentMethods(opcoes: { bin: string }): Promise<{
-    results: Array<{ id: string; name: string }>;
-  }>;
-  getIssuers(opcoes: { paymentMethodId: string; bin: string }): Promise<
-    Array<{ id: string; name: string }>
-  >;
-  createCardToken(dados: {
-    cardNumber: string;
-    cardholderName: string;
-    cardExpirationMonth: string;
-    cardExpirationYear: string;
-    securityCode: string;
-    identificationType: string;
-    identificationNumber: string;
-  }): Promise<{ id: string; status: string }>;
+  cardForm(configuracao: ConfiguracaoCardForm): CardForm;
 }
 
 declare global {

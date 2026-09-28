@@ -36,10 +36,19 @@ describe('CheckoutComponent — formulário (CEP, cupom, frete, navegação, car
   let cupomServiceSpy: jasmine.SpyObj<CupomService>;
   let mercadoPagoSdkSpy: jasmine.SpyObj<MercadoPagoSdkService>;
   let mpSpy: jasmine.SpyObj<{
-    getPaymentMethods: (o: { bin: string }) => Promise<{ results: Array<{ id: string }> }>;
-    getIssuers: (o: { paymentMethodId: string; bin: string }) => Promise<Array<{ id: string }>>;
-    createCardToken: (d: unknown) => Promise<{ id: string; status: string }>;
+    cardForm: (config: { callbacks?: { onFormMounted?: (erro?: unknown) => void } }) => unknown;
   }>;
+  let cardFormSpy: jasmine.SpyObj<{ getCardFormData: () => unknown; unmount: () => void }>;
+  let dadosCardFormPadrao: {
+    token: string;
+    paymentMethodId: string;
+    issuerId: string;
+    cardholderEmail: string;
+    amount: string;
+    installments: string;
+    identificationNumber: string;
+    identificationType: string;
+  };
   let configuracaoSignal: ReturnType<typeof signal<{ cidadesFreteGratis: Array<{ cidade: string; uf: string }> } | null>>;
   let carrinhoValorTotalSignal: ReturnType<typeof signal<number>>;
 
@@ -81,7 +90,26 @@ describe('CheckoutComponent — formulário (CEP, cupom, frete, navegação, car
     freteServiceSpy = jasmine.createSpyObj('FreteService', ['cotar']);
     cepServiceSpy = jasmine.createSpyObj('CepService', ['buscarEndereco']);
     cupomServiceSpy = jasmine.createSpyObj('CupomService', ['validar']);
-    mpSpy = jasmine.createSpyObj('MercadoPagoSdk', ['getPaymentMethods', 'getIssuers', 'createCardToken']);
+    cardFormSpy = jasmine.createSpyObj('CardForm', ['getCardFormData', 'unmount']);
+    dadosCardFormPadrao = {
+      token: 'tok_abc',
+      paymentMethodId: 'master',
+      issuerId: '123',
+      cardholderEmail: 'izac@example.com',
+      amount: '90.00',
+      installments: '1',
+      identificationNumber: '12345678909',
+      identificationType: 'CPF',
+    };
+    cardFormSpy.getCardFormData.and.returnValue(dadosCardFormPadrao);
+    mpSpy = jasmine.createSpyObj('MercadoPagoSdk', ['cardForm']);
+    // Simula a SDK real chamando onFormMounted() com sucesso assim que `mp.cardForm(...)` é
+    // invocado — sem isso, montarCardForm() (checkout.component.ts) ficaria esperando pra
+    // sempre o callback que só o servidor de verdade do Mercado Pago dispara.
+    mpSpy.cardForm.and.callFake((configuracao: { callbacks?: { onFormMounted?: (erro?: unknown) => void } }) => {
+      configuracao.callbacks?.onFormMounted?.();
+      return cardFormSpy as never;
+    });
     mercadoPagoSdkSpy = jasmine.createSpyObj('MercadoPagoSdkService', [
       'carregar',
       'carregarScriptSeguranca',
@@ -382,29 +410,48 @@ describe('CheckoutComponent — formulário (CEP, cupom, frete, navegação, car
     });
   });
 
-  describe('pagamento por cartão (pagarComCartao, via tentarNovamente)', () => {
+  describe('pagamento por cartão (pagarComCartao, via confirmarPagamento)', () => {
+    // Número/validade/CVV vivem dentro dos iframes do Secure Fields — o componente nunca lê
+    // esses valores diretamente, só o que a própria SDK monta em getCardFormData() (mockado
+    // via cardFormSpy). Por isso o teste injeta o CardForm já "montado" direto no campo
+    // privado, em vez de simular a digitação nos iframes (impossível de simular em jsdom).
+    // pagarComCartao também dispara um submit de verdade no <form id="form-checkout"> (é assim
+    // que a SDK real sabe que deve tokenizar — ver comentário lá) — o teste simula a SDK
+    // escutando esse submit e chamando de volta o callback `onSubmit` (aqui, resolvendo
+    // resolverEnvioCardForm direto, já que o cardForm mockado não dispara callbacks sozinho).
+    let formularioFake: HTMLFormElement;
+
     function prepararCartaoValido(comp: CheckoutComponent): void {
       comp.formaPagamento.set('cartao');
-      comp.numeroCartao.set('4235 6477 2802 5682');
       comp.nomeCartao.set('IZAC LINS');
-      comp.validadeCartao.set('12/30');
-      comp.cvvCartao.set('123');
       comp.cpfCnpjCartao.set('12345678909');
       comp.numeroPedido.set('VT-ABC123');
       comp.valorTotalFinalizado.set(90);
+      (comp as unknown as { cardForm: unknown }).cardForm = cardFormSpy;
+
+      formularioFake = document.createElement('form');
+      formularioFake.id = 'form-checkout';
+      formularioFake.addEventListener('submit', (evento) => {
+        evento.preventDefault();
+        const resolver = (comp as unknown as { resolverEnvioCardForm: (() => void) | null })
+          .resolverEnvioCardForm;
+        resolver?.();
+      });
+      document.body.appendChild(formularioFake);
     }
 
+    afterEach(() => {
+      formularioFake?.remove();
+    });
+
     it('aprovado fecha o pedido (pedidoFinalizado)', fakeAsync(() => {
-      mpSpy.getPaymentMethods.and.resolveTo({ results: [{ id: 'master' }] });
-      mpSpy.getIssuers.and.resolveTo([{ id: '123' }]);
-      mpSpy.createCardToken.and.resolveTo({ id: 'tok_abc', status: 'ok' });
       pedidoServiceSpy.criarPagamentoCartao.and.returnValue(
         of({ idPagamento: '1', status: 'approved', statusDetail: 'accredited' })
       );
       const fixture = configurar();
       prepararCartaoValido(fixture.componentInstance);
 
-      fixture.componentInstance.tentarNovamente();
+      fixture.componentInstance.confirmarPagamento();
       tick();
 
       expect(fixture.componentInstance.pedidoFinalizado()).toBeTrue();
@@ -417,9 +464,6 @@ describe('CheckoutComponent — formulário (CEP, cupom, frete, navegação, car
     }));
 
     it('envia o número de parcelas escolhido (capturado em parcelasFinalizadas na criação do pedido)', fakeAsync(() => {
-      mpSpy.getPaymentMethods.and.resolveTo({ results: [{ id: 'master' }] });
-      mpSpy.getIssuers.and.resolveTo([{ id: '123' }]);
-      mpSpy.createCardToken.and.resolveTo({ id: 'tok_abc', status: 'ok' });
       pedidoServiceSpy.criarPagamentoCartao.and.returnValue(
         of({ idPagamento: '1', status: 'approved', statusDetail: 'accredited' })
       );
@@ -428,7 +472,7 @@ describe('CheckoutComponent — formulário (CEP, cupom, frete, navegação, car
       prepararCartaoValido(comp);
       comp.parcelasFinalizadas.set(3);
 
-      comp.tentarNovamente();
+      comp.confirmarPagamento();
       tick();
 
       const chamada = pedidoServiceSpy.criarPagamentoCartao.calls.mostRecent().args[0];
@@ -436,9 +480,6 @@ describe('CheckoutComponent — formulário (CEP, cupom, frete, navegação, car
     }));
 
     it('envia o deviceId do script antifraude quando disponível', fakeAsync(() => {
-      mpSpy.getPaymentMethods.and.resolveTo({ results: [{ id: 'master' }] });
-      mpSpy.getIssuers.and.resolveTo([{ id: '123' }]);
-      mpSpy.createCardToken.and.resolveTo({ id: 'tok_abc', status: 'ok' });
       mercadoPagoSdkSpy.obterDeviceId.and.resolveTo('device-abc-123');
       pedidoServiceSpy.criarPagamentoCartao.and.returnValue(
         of({ idPagamento: '1', status: 'approved', statusDetail: 'accredited' })
@@ -446,7 +487,7 @@ describe('CheckoutComponent — formulário (CEP, cupom, frete, navegação, car
       const fixture = configurar();
       prepararCartaoValido(fixture.componentInstance);
 
-      fixture.componentInstance.tentarNovamente();
+      fixture.componentInstance.confirmarPagamento();
       tick();
 
       const chamada = pedidoServiceSpy.criarPagamentoCartao.calls.mostRecent().args[0];
@@ -454,9 +495,6 @@ describe('CheckoutComponent — formulário (CEP, cupom, frete, navegação, car
     }));
 
     it('paga sem o deviceId quando o script antifraude não coletou a tempo (nunca bloqueia)', fakeAsync(() => {
-      mpSpy.getPaymentMethods.and.resolveTo({ results: [{ id: 'master' }] });
-      mpSpy.getIssuers.and.resolveTo([{ id: '123' }]);
-      mpSpy.createCardToken.and.resolveTo({ id: 'tok_abc', status: 'ok' });
       mercadoPagoSdkSpy.obterDeviceId.and.resolveTo(undefined);
       pedidoServiceSpy.criarPagamentoCartao.and.returnValue(
         of({ idPagamento: '1', status: 'approved', statusDetail: 'accredited' })
@@ -464,7 +502,7 @@ describe('CheckoutComponent — formulário (CEP, cupom, frete, navegação, car
       const fixture = configurar();
       prepararCartaoValido(fixture.componentInstance);
 
-      fixture.componentInstance.tentarNovamente();
+      fixture.componentInstance.confirmarPagamento();
       tick();
 
       expect(fixture.componentInstance.pedidoFinalizado()).toBeTrue();
@@ -481,16 +519,13 @@ describe('CheckoutComponent — formulário (CEP, cupom, frete, navegação, car
     });
 
     it('recusado mostra mensagem específica de recusa', fakeAsync(() => {
-      mpSpy.getPaymentMethods.and.resolveTo({ results: [{ id: 'master' }] });
-      mpSpy.getIssuers.and.resolveTo([{ id: '123' }]);
-      mpSpy.createCardToken.and.resolveTo({ id: 'tok_abc', status: 'ok' });
       pedidoServiceSpy.criarPagamentoCartao.and.returnValue(
         of({ idPagamento: '1', status: 'rejected', statusDetail: 'cc_rejected_other_reason' })
       );
       const fixture = configurar();
       prepararCartaoValido(fixture.componentInstance);
 
-      fixture.componentInstance.tentarNovamente();
+      fixture.componentInstance.confirmarPagamento();
       tick();
 
       expect(fixture.componentInstance.pedidoFinalizado()).toBeFalse();
@@ -498,62 +533,91 @@ describe('CheckoutComponent — formulário (CEP, cupom, frete, navegação, car
     }));
 
     it('status em análise (in_process) mostra mensagem de aguardar', fakeAsync(() => {
-      mpSpy.getPaymentMethods.and.resolveTo({ results: [{ id: 'master' }] });
-      mpSpy.getIssuers.and.resolveTo([{ id: '123' }]);
-      mpSpy.createCardToken.and.resolveTo({ id: 'tok_abc', status: 'ok' });
       pedidoServiceSpy.criarPagamentoCartao.and.returnValue(
         of({ idPagamento: '1', status: 'in_process', statusDetail: 'pending_review' })
       );
       const fixture = configurar();
       prepararCartaoValido(fixture.componentInstance);
 
-      fixture.componentInstance.tentarNovamente();
+      fixture.componentInstance.confirmarPagamento();
       tick();
 
       expect(fixture.componentInstance.erroFinalizacao()).toContain('análise');
     }));
 
-    it('bandeira não reconhecida (getPaymentMethods sem resultado) vira erro genérico', fakeAsync(() => {
-      mpSpy.getPaymentMethods.and.resolveTo({ results: [] });
+    it('sem token (getCardFormData sem token — cartão/iframe inválido) vira erro genérico', fakeAsync(() => {
+      cardFormSpy.getCardFormData.and.returnValue({ ...dadosCardFormPadrao, token: '' });
       const fixture = configurar();
       prepararCartaoValido(fixture.componentInstance);
 
-      fixture.componentInstance.tentarNovamente();
+      fixture.componentInstance.confirmarPagamento();
       tick();
 
       expect(fixture.componentInstance.erroFinalizacao()).toContain('Não foi possível processar o cartão');
       expect(pedidoServiceSpy.criarPagamentoCartao).not.toHaveBeenCalled();
     }));
 
-    it('falha na tokenização (createCardToken rejeita) vira erro genérico', fakeAsync(() => {
-      mpSpy.getPaymentMethods.and.resolveTo({ results: [{ id: 'master' }] });
-      mpSpy.getIssuers.and.resolveTo([{ id: '123' }]);
-      mpSpy.createCardToken.and.rejectWith(new Error('cartão inválido'));
+    it('sem CardForm montado vira erro genérico, sem tentar cobrar', fakeAsync(() => {
       const fixture = configurar();
-      prepararCartaoValido(fixture.componentInstance);
+      const comp = fixture.componentInstance;
+      prepararCartaoValido(comp);
+      (comp as unknown as { cardForm: unknown }).cardForm = null;
 
-      fixture.componentInstance.tentarNovamente();
+      comp.confirmarPagamento();
       tick();
 
-      expect(fixture.componentInstance.erroFinalizacao()).toContain('Não foi possível processar o cartão');
+      expect(comp.erroFinalizacao()).toContain('Formulário de cartão não carregou');
       expect(pedidoServiceSpy.criarPagamentoCartao).not.toHaveBeenCalled();
     }));
 
-    it('sem emissor (getIssuers vazio) ainda envia a cobrança, sem issuerId', fakeAsync(() => {
-      mpSpy.getPaymentMethods.and.resolveTo({ results: [{ id: 'visa' }] });
-      mpSpy.getIssuers.and.resolveTo([]);
-      mpSpy.createCardToken.and.resolveTo({ id: 'tok_x', status: 'ok' });
+    it('sem emissor (issuerId vazio) ainda envia a cobrança, sem issuerId', fakeAsync(() => {
+      cardFormSpy.getCardFormData.and.returnValue({ ...dadosCardFormPadrao, issuerId: '' });
       pedidoServiceSpy.criarPagamentoCartao.and.returnValue(
         of({ idPagamento: '1', status: 'approved', statusDetail: 'accredited' })
       );
       const fixture = configurar();
       prepararCartaoValido(fixture.componentInstance);
 
-      fixture.componentInstance.tentarNovamente();
+      fixture.componentInstance.confirmarPagamento();
       tick();
 
       const chamada = pedidoServiceSpy.criarPagamentoCartao.calls.mostRecent().args[0];
       expect(chamada.issuerId).toBeUndefined();
     }));
+
+    describe('tentarNovamente (cartão) — só remonta o formulário em branco, não cobra sozinho', () => {
+      it('remonta o Secure Fields e limpa o erro, sem chamar criarPagamentoCartao', fakeAsync(() => {
+        const fixture = configurar();
+        const comp = fixture.componentInstance;
+        prepararCartaoValido(comp);
+        comp.erroFinalizacao.set('Pagamento recusado pelo cartão.');
+
+        comp.tentarNovamente();
+        tick();
+
+        expect(comp.erroFinalizacao()).toBeNull();
+        expect(comp.cardFormPronto()).toBeTrue();
+        expect(pedidoServiceSpy.criarPagamentoCartao).not.toHaveBeenCalled();
+        expect(comp.finalizandoPedido()).toBeFalse();
+      }));
+
+      it('confirmarPagamento cobra de verdade depois que tentarNovamente remontou', fakeAsync(() => {
+        pedidoServiceSpy.criarPagamentoCartao.and.returnValue(
+          of({ idPagamento: '1', status: 'approved', statusDetail: 'accredited' })
+        );
+        const fixture = configurar();
+        const comp = fixture.componentInstance;
+        prepararCartaoValido(comp);
+        comp.erroFinalizacao.set('Pagamento recusado pelo cartão.');
+
+        comp.tentarNovamente();
+        tick();
+        comp.confirmarPagamento();
+        tick();
+
+        expect(comp.pedidoFinalizado()).toBeTrue();
+        expect(pedidoServiceSpy.criarPagamentoCartao).toHaveBeenCalledTimes(1);
+      }));
+    });
   });
 });
