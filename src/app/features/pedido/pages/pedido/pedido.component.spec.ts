@@ -1,5 +1,5 @@
 import { PLATFORM_ID } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { provideRouter } from '@angular/router';
 import { BehaviorSubject, of, throwError } from 'rxjs';
@@ -232,5 +232,23 @@ describe('PedidoComponent', () => {
         expect(fixture.componentInstance.podeRetomarPagamento()).toBe(esperado);
       });
     }
+  });
+
+  describe('copiarCodigoRastreio', () => {
+    it('copia o código pra área de transferência e mostra "Copiado!" por 2s', fakeAsync(() => {
+      pedidoServiceSpy.obterPorCodigo.and.returnValue(of(criarPedido()));
+      const escreverSpy = spyOn(navigator.clipboard, 'writeText').and.resolveTo();
+      const fixture = configurar();
+      fixture.detectChanges();
+
+      fixture.componentInstance.copiarCodigoRastreio('BR123456789');
+      tick();
+
+      expect(escreverSpy).toHaveBeenCalledWith('BR123456789');
+      expect(fixture.componentInstance.codigoRastreioCopiado()).toBeTrue();
+
+      tick(2000);
+      expect(fixture.componentInstance.codigoRastreioCopiado()).toBeFalse();
+    }));
   });
 });

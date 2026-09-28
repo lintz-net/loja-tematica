@@ -27,6 +27,12 @@
   observar por mais tempo, ou aceitar a evidência já coletada como suficiente — a integração
   do webhook em si (recebimento + parsing + atualização de status) já está comprovada
   funcionando com dados reais, só não com os dois eventos finais específicos.
+  - **Tentativa em 2026-09-28**: pedido de teste novo `VT-LHLJ26` (mesmo frete Jadlog) —
+    ficou "liberado" rápido, mas travou na geração de etiqueta de novo, mesma classe de erro
+    de antes ("Não é possível solicitar o processo de geração da etiqueta", visto no painel
+    deles pros dois pedidos de teste — `VT-K19HWX` de 2026-09-27 continua sem avançar também).
+    Decisão do usuário: não insistir mais por hoje, aceitar a evidência já documentada abaixo
+    (pipeline completo já comprovado funcionando quando o sandbox coopera).
   - **Achado à parte, não é bug nosso**: a primeira tentativa de gerar a etiqueta Jadlog
     falhou no sandbox deles com "Um erro de sistema impediu a geração da etiqueta" — confirmado
     que nossa Edge Function (`melhor-envio-comprar-etiqueta`) seguiu o fluxo documentado
@@ -464,8 +470,37 @@
 
 - **Avaliações/reviews de produto** — prova social é um dos maiores fatores de conversão em
   e-commerce de moda/estampa.
-- **Produtos relacionados / "quem comprou também levou"** na página de produto.
-- **Fluxo de troca/devolução dentro da conta** (`/conta`), em vez de só por e-mail.
+- ~~**Produtos relacionados / "quem comprou também levou"** na página de produto~~ —
+  **implementado em 2026-09-28**. Não existe dado real de coocorrência de compra pra fazer
+  "quem comprou também levou" de verdade (`pedidos.itens` é só um snapshot jsonb do que foi
+  comprado — nome/slug/imagem — sem `produtoId`, não dá pra agregar/juntar de volta com a
+  tabela de produtos sem uma migration nova). Implementado como heurística por categoria:
+  `CatalogoRepositorio.obterProdutosRelacionados(produto, limite)` (nova, implementada em
+  `catalogo-api.service.ts`) busca produtos que dividem a categoria principal do produto atual
+  (`categorias[0]`), excluindo ele mesmo, limitado a 8. Novo componente
+  `ProdutosRelacionadosComponent` (`shared/componentes/produtos-relacionados/`), reaproveitando
+  `CartaoProdutoComponent` e o mesmo padrão visual de `VistosRecentementeComponent` (lista
+  horizontal com scroll) — encaixado em `detalhe-produto.component.html` entre "Avaliações" e
+  "Vistos recentemente". Sem categoria (produto legado sem tema) não mostra nada, em vez de
+  quebrar. Reaproveita a mesma instância do componente entre navegações produto→produto
+  (`ngOnChanges` empurra pra um signal interno, refeito o fetch a cada troca).
+- ~~**Fluxo de troca/devolução dentro da conta** (`/conta`), em vez de só por e-mail~~ —
+  **implementado e testado em 2026-09-28**. Nova tabela `solicitacoes_troca`
+  (`migration-029-solicitacoes-troca.sql`, aplicada em produção) com RLS: cliente só
+  cria/lê as próprias solicitações (casado por e-mail da sessão, igual a policy de
+  `pedidos`), admin lê/atualiza todas (`eh_admin()`). Em `/conta`, cada pedido dentro de 15
+  dias corridos (mesmo prazo da página institucional) ganha um botão "Solicitar
+  troca/devolução" — modal deixa escolher quais itens, tipo (troca/devolução) e motivo;
+  "Minhas solicitações" mostra status e a resposta do admin. Novo
+  `/admin/solicitacoes-troca` (item novo no menu) lista tudo, admin muda status
+  (pendente/em análise/aprovada/recusada/concluída) e escreve uma resposta. Nova Edge
+  Function `enviar-email-solicitacao-troca` (mesmo padrão do `enviar-email-pedido`, deploy
+  feito) avisa o e-mail de contato da loja a cada solicitação nova — mesma limitação já
+  conhecida do Resend (só entrega de verdade depois do domínio verificado). Página
+  institucional "Trocas e devoluções" atualizada pra mencionar o novo fluxo self-service,
+  mantendo o e-mail como alternativa. Testado ponta a ponta pelo usuário: solicitação de
+  devolução criada em `/conta` apareceu certinho em "Minhas solicitações" com status
+  "Pendente".
 - **Nota fiscal/comprovante pra download** em `/conta`.
 - **Cupom de desconto**: limite de uso por cliente, cupom por categoria/produto, valor
   mínimo de pedido — deixado de fora de propósito do MVP atual.

@@ -960,6 +960,7 @@ export class CheckoutComponent implements OnDestroy {
 
       if (pagamento.status === 'approved') {
         this.pedidoFinalizado.set(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
 
@@ -993,6 +994,7 @@ export class CheckoutComponent implements OnDestroy {
         if (status === 'aprovado') {
           this.aguardandoPix.set(false);
           this.pedidoFinalizado.set(true);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         }
       });
     }, 4000);

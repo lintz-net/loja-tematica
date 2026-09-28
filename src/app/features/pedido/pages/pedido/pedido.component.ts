@@ -58,10 +58,17 @@ export class PedidoComponent {
   readonly rotulosStatusEnvio = ROTULOS_STATUS_ENVIO;
   readonly obterLogoTransportadora = obterLogoTransportadora;
 
+  /** Central de rastreio deles (login não exigido) — cobre Correios, Jadlog e as outras
+   * transportadoras da plataforma num único lugar, sem precisar montar um link por
+   * transportadora (formato de deep-link com o código embutido não é documentado/estável o
+   * bastante pra confiar, e varia por transportadora). */
+  readonly urlMelhorRastreio = 'https://melhorrastreio.com.br/';
+
   readonly carregando = signal(true);
   readonly pedido = signal<Pedido | null>(null);
   readonly naoEncontrado = signal(false);
   readonly envio = signal<Envio | null>(null);
+  readonly codigoRastreioCopiado = signal(false);
 
   /** "Pagar agora"/"Tentar pagar de novo" só faz sentido pra pedido pendente ou recusado — o
    * fluxo de retomada em si (gerar Pix de novo, ou pedir os dados do cartão de novo, sem
@@ -131,5 +138,12 @@ export class PedidoComponent {
 
   indiceEtapaEnvio(status: StatusEnvio): number {
     return this.etapasEnvio.indexOf(status);
+  }
+
+  copiarCodigoRastreio(codigo: string): void {
+    navigator.clipboard.writeText(codigo).then(() => {
+      this.codigoRastreioCopiado.set(true);
+      setTimeout(() => this.codigoRastreioCopiado.set(false), 2000);
+    });
   }
 }

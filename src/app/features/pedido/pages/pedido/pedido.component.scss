@@ -111,6 +111,17 @@
   font-weight: 600;
 }
 
+.pedido__rastreio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+
+  a {
+    font-size: 0.9rem;
+  }
+}
+
 .pedido__pagamento {
   display: flex;
   flex-direction: column;
