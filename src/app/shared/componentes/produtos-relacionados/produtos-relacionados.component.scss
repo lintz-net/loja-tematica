@@ -8,14 +8,3 @@
   font-size: clamp(1.3rem, 2.6vw, 1.6rem);
   margin-bottom: 18px;
 }
-
-.produtos-relacionados__lista {
-  display: flex;
-  gap: 16px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-}
-
-.produtos-relacionados__item {
-  flex: 0 0 200px;
-}

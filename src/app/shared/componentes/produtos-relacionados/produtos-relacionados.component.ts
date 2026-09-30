@@ -3,7 +3,7 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { of, switchMap } from 'rxjs';
 import { Produto } from '../../../core/modelos/produto.model';
 import { CatalogoRepositorio } from '../../../core/servicos/catalogo.repositorio';
-import { CartaoProdutoComponent } from '../cartao-produto/cartao-produto.component';
+import { CarrosselProdutosComponent } from '../carrossel-produtos/carrossel-produtos.component';
 
 /** "Quem comprou também levou" — na prática, mesma categoria do produto atual (não existe
  * dado real de coocorrência de compra, ver comentário em CatalogoRepositorio). Reaproveitado
@@ -14,7 +14,7 @@ import { CartaoProdutoComponent } from '../cartao-produto/cartao-produto.compone
 @Component({
   selector: 'app-produtos-relacionados',
   standalone: true,
-  imports: [CartaoProdutoComponent],
+  imports: [CarrosselProdutosComponent],
   templateUrl: './produtos-relacionados.component.html',
   styleUrl: './produtos-relacionados.component.scss',
 })

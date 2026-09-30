@@ -1,4 +1,10 @@
 .carrossel-produtos {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.carrossel-produtos__linha {
   position: relative;
   display: flex;
   align-items: center;
@@ -13,7 +19,7 @@
   scroll-behavior: smooth;
   padding-block: 4px;
   // Esconde a barra de rolagem nativa sem tirar a funcionalidade — a navegação visível é
-  // pelas setas/swipe, a barra do sistema só polui visualmente aqui.
+  // pelas setas/bolinhas/swipe, a barra do sistema só polui visualmente aqui.
   scrollbar-width: none;
   &::-webkit-scrollbar {
     display: none;
@@ -39,15 +45,44 @@
   display: none;
   align-items: center;
   justify-content: center;
+
+  &:hover:not(:disabled) {
+    border-color: var(--cor-borda-forte);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
 }
 
-.carrossel-produtos__seta:hover {
-  border-color: var(--cor-borda-forte);
-}
-
-// Setas só fazem sentido com espaço/mouse de sobra — em telas largas.
+// Setas só fazem sentido com espaço/mouse de sobra — em telas largas. No mobile a navegação
+// é por swipe + bolinhas.
 @media (min-width: 780px) {
   .carrossel-produtos__seta {
     display: flex;
   }
+}
+
+.carrossel-produtos__pontos {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.carrossel-produtos__ponto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  background: var(--cor-borda);
+  cursor: pointer;
+}
+
+.carrossel-produtos__ponto--ativo {
+  background: var(--cor-acento, var(--cor-texto));
+  width: 22px;
+  border-radius: 4px;
+  transition: width 0.2s ease;
 }
