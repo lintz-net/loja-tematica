@@ -14,6 +14,24 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  animation: pedido-entrada 0.45s ease both;
+}
+
+@keyframes pedido-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pedido {
+    animation: none;
+  }
 }
 
 .pedido__data {
@@ -21,31 +39,133 @@
   margin-top: -12px;
 }
 
-.pedido__status {
+// Timeline animada do status — bolinha numerada conectada por uma linha que "acende" conforme
+// o pedido avança; etapa concluída vira check, a etapa atual pulsa (ainda em andamento).
+.pedido__etapas {
   display: flex;
   list-style: none;
   padding: 0;
   margin: 0;
-  gap: 8px;
+}
 
-  li {
-    flex: 1;
-    text-align: center;
-    padding: 10px 6px;
-    border-radius: var(--raio-padrao);
-    border: 1px solid var(--cor-borda);
-    color: var(--cor-texto-suave);
-    font-size: 0.85rem;
-    font-weight: 600;
+.pedido__etapa {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-width: 0;
+
+  // Linha conectando esta bolinha à próxima — atrás dela (z-index), metade direita da coluna
+  // até o meio da próxima, pra não precisar saber a largura exata da bolinha em px.
+  &:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    width: 100%;
+    height: 3px;
+    background: var(--cor-borda);
+    z-index: 0;
+    transition: background-color 0.5s ease 0.1s;
   }
 
-  li.concluido {
-    border-color: var(--cor-acento-secundario, #0c7d71);
-    color: var(--cor-texto);
+  &--concluida:not(:last-child)::after {
+    background: var(--cor-acento-secundario, #0c7d71);
   }
+}
 
-  li.atual {
-    background: color-mix(in srgb, var(--cor-acento-secundario) 14%, transparent);
+.pedido__etapa-circulo {
+  position: relative;
+  z-index: 1;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border-radius: 50%;
+  border: 2px solid var(--cor-borda);
+  background: var(--cor-fundo);
+  color: var(--cor-texto-suave);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    color 0.3s ease,
+    transform 0.3s ease;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    // Entra com uma "assinatura" do traço, dá vida ao virar check em vez de só aparecer.
+    stroke-dasharray: 20;
+    stroke-dashoffset: 20;
+    animation: pedido-check 0.4s ease 0.15s forwards;
+  }
+}
+
+.pedido__etapa--concluida .pedido__etapa-circulo {
+  background: var(--cor-acento-secundario, #0c7d71);
+  border-color: var(--cor-acento-secundario, #0c7d71);
+  color: #fff;
+}
+
+.pedido__etapa--atual .pedido__etapa-circulo {
+  border-color: var(--cor-acento-secundario, #0c7d71);
+  color: var(--cor-acento-secundario, #0c7d71);
+  transform: scale(1.12);
+  animation: pedido-pulso 1.8s ease-in-out infinite;
+}
+
+.pedido__etapa-rotulo {
+  margin-top: 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--cor-texto-suave);
+  line-height: 1.25;
+  padding: 0 2px;
+  transition: color 0.3s ease;
+}
+
+.pedido__etapa--concluida .pedido__etapa-rotulo,
+.pedido__etapa--atual .pedido__etapa-rotulo {
+  color: var(--cor-texto);
+}
+
+@media (min-width: 480px) {
+  .pedido__etapa-rotulo {
+    font-size: 0.8rem;
+  }
+}
+
+@keyframes pedido-pulso {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--cor-acento-secundario, #0c7d71) 35%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 7px color-mix(in srgb, var(--cor-acento-secundario, #0c7d71) 0%, transparent);
+  }
+}
+
+@keyframes pedido-check {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+// Reduz o movimento pra quem pediu isso no SO/navegador — a timeline continua clara (cores +
+// check já bastam), só sem pulso/traço animado.
+@media (prefers-reduced-motion: reduce) {
+  .pedido__etapa--atual .pedido__etapa-circulo {
+    animation: none;
+  }
+  .pedido__etapa-circulo svg {
+    animation: none;
+    stroke-dashoffset: 0;
   }
 }
 
