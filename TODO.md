@@ -2,7 +2,9 @@
 
 ## 🔴 Bloqueadores pra produção
 
-- **Status do pedido (logística) automatizado, implementado em 2026-09-25** —
+- ~~**Status do pedido (logística) automatizado**~~ — **implementado em 2026-09-25, pipeline
+  completo (incluindo envio) comprovado funcionando ponta a ponta em 2026-10-03 — deixou de
+  ser bloqueador, ver detalhe no fim deste item.**
   `pedidos.status` (recebido/confirmado/enviado/entregue, mostrado na barra de cima de
   `/pedido/:codigo`) antes só mudava manualmente pelo admin em `/admin/pedidos`. Agora avança
   sozinho em três pontos, sempre só pra frente (nunca regride um status que já esteja mais
@@ -33,6 +35,38 @@
     deles pros dois pedidos de teste — `VT-K19HWX` de 2026-09-27 continua sem avançar também).
     Decisão do usuário: não insistir mais por hoje, aceitar a evidência já documentada abaixo
     (pipeline completo já comprovado funcionando quando o sandbox coopera).
+  - ~~**`postado`/`entregue` nunca confirmados ao vivo**~~ — **confirmado em 2026-10-03**.
+    Pedido novo `VT-RQOSEC` (CEP correto dessa vez — `VT-RQFF1P`, tentativa anterior no mesmo
+    dia, falhou na compra da etiqueta por CEP inválido digitado no checkout, sem relação com
+    o sistema). Etiqueta gerada com sucesso no painel deles (rastreio real), mas **nosso banco
+    não avançou sozinho via webhook** — ficou preso em `'liberado'` mesmo depois da etiqueta
+    aparecer como "Em trânsito"/"Entregue" no painel. `VT-LHLJ26` (pedido do dia 28, mesma
+    situação) idem. **Só avançou pra `'postado'` depois de chamar manualmente a função
+    `melhor-envio-rastrear-pendentes`** (fallback que já existia, consulta
+    `/api/v2/me/shipment/tracking` direto em vez de esperar o webhook) — confirmado tanto em
+    `VT-LHLJ26` quanto em `VT-RQOSEC`.
+    **Conclusão importante, muda a confiança no webhook sozinho**: o que estava documentado
+    acima como "webhook comprovado funcionando" é verdade só pra `created`/`released`/
+    `cancelled` (visto ao vivo em 2026-09-27) — pra `posted`/`delivered` especificamente, a
+    única confirmação que temos até agora veio do **fallback manual**, não do webhook em si.
+    Pode ser que o webhook também dispare esses eventos e só não tenhamos esperado tempo
+    suficiente (o `order.generated`/`order.posted` desse sandbox já demorou bem mais que
+    `created`/`released` nos testes), ou pode ser que esses dois eventos específicos tenham
+    algum problema de entrega que os outros não têm — não dá pra distinguir sem deixar rodando
+    por mais tempo sem a sincronização manual no meio. **Reforça a recomendação abaixo**: até
+    isso ficar mais claro, não dá pra depender só do webhook em produção — a função de
+    fallback precisa estar agendada (cron), não só disponível pra chamar manualmente.
+  - ~~**Cron do fallback de rastreio nunca tinha sido agendado de verdade**~~ — **resolvido em
+    2026-10-03**. `migration-009-agendar-crons.sql` já existia no repo com os dois jobs
+    (`melhor-envio-rastrear-pendentes` de hora em hora, `melhor-envio-refresh-token` diário),
+    mas nunca tinha sido rodada em produção — confirmado pelo próprio teste (se estivesse
+    ativo, o pedido teria avançado sozinho antes). Usuário rodou a migration no SQL Editor;
+    `cron.schedule(...)` confirmou os dois jobs criados. **Teste de verdade, sem nenhuma
+    chamada manual depois disso**: os 3 pedidos de teste (`VT-K19HWX`, `VT-LHLJ26`,
+    `VT-RQOSEC`) avançaram sozinhos de `'postado'` pra **`'entregue'`**, monitorado ao vivo —
+    confirma o cron rodando de verdade em produção. **Pendência fechada**: pipeline completo
+    (`criado → liberado → postado → entregue`) comprovado funcionando ponta a ponta de forma
+    totalmente automática.
   - **Achado à parte, não é bug nosso**: a primeira tentativa de gerar a etiqueta Jadlog
     falhou no sandbox deles com "Um erro de sistema impediu a geração da etiqueta" — confirmado
     que nossa Edge Function (`melhor-envio-comprar-etiqueta`) seguiu o fluxo documentado
