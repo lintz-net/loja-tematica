@@ -170,12 +170,16 @@ export class CheckoutComponent implements OnDestroy {
   readonly cpfCnpjCartaoTocado = signal(false);
 
   // Número/validade/CVV vivem dentro de iframes do Mercado Pago (Secure Fields — ver
-  // mercado-pago-sdk.service.ts) e nunca tocam nosso HTML/JS, então não dá pra validar esses
-  // três campos aqui: quem valida é a própria SDK, reportado via `cardFormErro` (preenchido no
-  // callback onError/onCardTokenReceived) e `cardFormPronto` (o form só é considerado utilizável
-  // depois de montado com sucesso).
+  // mercado-pago-sdk.service.ts) e nunca tocam nosso HTML/JS, então não dá pra ler o valor
+  // desses três campos aqui — mas dá pra saber se cada um está válido, via `onValidityChange`
+  // (dispara conforme o cliente digita dentro do iframe, sem nunca expor o valor em si).
+  // Começam todos `false`: sem isso, clicar em "Confirmar" com os campos vazios passava batido
+  // (só travava depois, no timeout da tokenização) — ver TODO.md.
   readonly cardFormPronto = signal(false);
   readonly cardFormErro = signal<string | null>(null);
+  readonly camposSeguroValidos = signal<Record<'cardNumber' | 'expirationDate' | 'securityCode', boolean>>(
+    { cardNumber: false, expirationDate: false, securityCode: false }
+  );
   private cardForm: CardForm | null = null;
   private resolverEnvioCardForm: (() => void) | null = null;
 
@@ -201,14 +205,19 @@ export class CheckoutComponent implements OnDestroy {
    * (pontos/traço) que ela rejeitaria com "invalid parameter identificationNumber". */
   readonly documentoCartaoDigitos = computed(() => this.cpfCnpjCartao().replace(/\D/g, ''));
 
-  /** Número/validade/CVV são validados pela própria SDK dentro dos iframes (Secure Fields) —
-   * aqui só resta conferir que o form foi montado e que nome/CPF-CNPJ (campos normais, fora do
-   * iframe) estão preenchidos e válidos. Erro real de cartão (Luhn, vencimento) só aparece no
-   * momento de gerar o token, reportado em `cardFormErro`. */
+  /** Número/validade/CVV são validados pela própria SDK dentro dos iframes (Secure Fields,
+   * via `onValidityChange` — ver `camposSeguroValidos`) — aqui confere que o form foi montado,
+   * que os três campos seguros estão válidos, e que nome/CPF-CNPJ (campos normais, fora do
+   * iframe) estão preenchidos e válidos. Erro de recusa de verdade (cartão sem saldo etc.) só
+   * aparece no momento de gerar o token/cobrar, não dá pra saber antes disso. */
   readonly pagamentoValido = computed(() => {
     if (this.formaPagamento() !== 'cartao') return true;
+    const campos = this.camposSeguroValidos();
     return (
       this.cardFormPronto() &&
+      campos.cardNumber &&
+      campos.expirationDate &&
+      campos.securityCode &&
       this.nomeCartao().trim().length > 1 &&
       validarDocumento(this.cpfCnpjCartao())
     );
@@ -556,6 +565,10 @@ export class CheckoutComponent implements OnDestroy {
     this.cardForm = null;
     this.cardFormPronto.set(false);
     this.cardFormErro.set(null);
+    // Form remontado = iframes em branco de novo (token de uso único) — os campos seguros
+    // precisam voltar a "inválido" até o cliente digitar de novo, senão o botão ficaria
+    // destravado com a validade da montagem anterior.
+    this.camposSeguroValidos.set({ cardNumber: false, expirationDate: false, securityCode: false });
 
     const elementoExiste = await this.aguardarElemento('form-checkout');
     if (!elementoExiste) {
@@ -624,6 +637,14 @@ export class CheckoutComponent implements OnDestroy {
             },
             onError: (erro) => {
               console.error('Erro no Secure Fields:', erro);
+            },
+            // Dispara a cada tecla digitada em qualquer campo do form — inclusive os de
+            // dentro dos iframes. Só atualiza o signal pros 3 campos seguros que a gente
+            // acompanha (nome/CPF já têm validação própria, fora da SDK).
+            onValidityChange: (erro, campo) => {
+              if (campo === 'cardNumber' || campo === 'expirationDate' || campo === 'securityCode') {
+                this.camposSeguroValidos.update((atual) => ({ ...atual, [campo]: !erro }));
+              }
             },
           },
         });

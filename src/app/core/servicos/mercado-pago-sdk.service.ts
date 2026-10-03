@@ -47,6 +47,11 @@ export interface ConfiguracaoCardForm {
     onSubmit?: (evento: Event) => void;
     onFetching?: (recurso: string) => void;
     onError?: (erro: unknown) => void;
+    /** Dispara conforme o cliente digita em cada campo — inclusive os de dentro dos iframes
+     * (número, validade, CVV), que a gente nunca lê diretamente. `erro` nulo/undefined
+     * significa "válido agora"; `campo` é o nome usado em `form` acima (ex.: 'cardNumber').
+     * É assim que validamos os campos do Secure Fields sem nunca ver o valor deles. */
+    onValidityChange?: (erro: unknown, campo?: string) => void;
   };
 }
 

@@ -620,4 +620,83 @@ describe('CheckoutComponent — formulário (CEP, cupom, frete, navegação, car
       }));
     });
   });
+
+  describe('pagamentoValido (cartão) — trava até os 3 campos seguros ficarem válidos', () => {
+    let formularioFake: HTMLFormElement;
+
+    function montarComDocumentoENome(comp: CheckoutComponent): void {
+      comp.formaPagamento.set('cartao');
+      comp.nomeCartao.set('IZAC LINS');
+      comp.cpfCnpjCartao.set('12345678909');
+
+      formularioFake = document.createElement('form');
+      formularioFake.id = 'form-checkout';
+      document.body.appendChild(formularioFake);
+    }
+
+    afterEach(() => {
+      formularioFake?.remove();
+    });
+
+    it('fica inválido com o form montado mas nenhum campo seguro preenchido ainda', fakeAsync(() => {
+      const fixture = configurar();
+      const comp = fixture.componentInstance;
+      montarComDocumentoENome(comp);
+
+      (comp as unknown as { montarCardForm: (v: number) => Promise<void> }).montarCardForm(90);
+      tick();
+
+      expect(comp.cardFormPronto()).toBeTrue();
+      expect(comp.pagamentoValido()).toBeFalse();
+    }));
+
+    it('fica válido só depois que onValidityChange confirma os 3 campos seguros', fakeAsync(() => {
+      const fixture = configurar();
+      const comp = fixture.componentInstance;
+      montarComDocumentoENome(comp);
+
+      let callbacksCapturados: {
+        onValidityChange?: (erro: unknown, campo?: string) => void;
+      } = {};
+      mpSpy.cardForm.and.callFake((configuracao: {
+        callbacks?: { onFormMounted?: (erro?: unknown) => void; onValidityChange?: (erro: unknown, campo?: string) => void };
+      }) => {
+        configuracao.callbacks?.onFormMounted?.();
+        callbacksCapturados = configuracao.callbacks ?? {};
+        return cardFormSpy as never;
+      });
+
+      (comp as unknown as { montarCardForm: (v: number) => Promise<void> }).montarCardForm(90);
+      tick();
+
+      expect(comp.pagamentoValido()).toBeFalse();
+
+      callbacksCapturados.onValidityChange?.(null, 'cardNumber');
+      expect(comp.pagamentoValido()).toBeFalse(); // faltam validade e CVV ainda
+
+      callbacksCapturados.onValidityChange?.(null, 'expirationDate');
+      callbacksCapturados.onValidityChange?.(null, 'securityCode');
+      expect(comp.pagamentoValido()).toBeTrue();
+
+      // Volta a ficar inválido se a SDK reportar erro de novo (ex.: cliente apagou o CVV).
+      callbacksCapturados.onValidityChange?.('CVV inválido', 'securityCode');
+      expect(comp.pagamentoValido()).toBeFalse();
+    }));
+
+    it('remontar o form (ex.: "Tentar novamente") reseta a validade dos campos seguros', fakeAsync(() => {
+      const fixture = configurar();
+      const comp = fixture.componentInstance;
+      montarComDocumentoENome(comp);
+
+      (comp as unknown as { montarCardForm: (v: number) => Promise<void> }).montarCardForm(90);
+      tick();
+      comp.camposSeguroValidos.set({ cardNumber: true, expirationDate: true, securityCode: true });
+      expect(comp.pagamentoValido()).toBeTrue();
+
+      (comp as unknown as { montarCardForm: (v: number) => Promise<void> }).montarCardForm(90);
+      tick();
+
+      expect(comp.pagamentoValido()).toBeFalse();
+    }));
+  });
 });
