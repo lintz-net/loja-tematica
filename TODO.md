@@ -502,8 +502,15 @@
 
 ## Ideias levantadas, ainda não implementadas
 
-- **Avaliações/reviews de produto** — prova social é um dos maiores fatores de conversão em
-  e-commerce de moda/estampa.
+- ~~**Avaliações/reviews de produto**~~ — **implementado em 2026-10-03**. Antes só existia
+  cadastro manual via admin; agora tem formulário público em `detalhe-produto` (sem exigir
+  login), com moderação: toda avaliação enviada pelo cliente entra como `status: 'pendente'`
+  e só aparece pro público depois de aprovada pelo admin (`migration-030-avaliacoes-publicas.sql`
+  — nova coluna `status` com `check` e policy de insert público que só aceita `'pendente'`,
+  reforçado no banco além do código). `/admin/avaliacoes` ganhou filtro por status (pendentes
+  com contador, aprovadas, rejeitadas, todas) e botões Aprovar/Rejeitar por linha. Avaliação
+  cadastrada direto pelo admin continua indo como `'aprovada'` (confiança implícita, sem
+  autofila de moderação).
 - ~~**Produtos relacionados / "quem comprou também levou"** na página de produto~~ —
   **implementado em 2026-09-28**. Não existe dado real de coocorrência de compra pra fazer
   "quem comprou também levou" de verdade (`pedidos.itens` é só um snapshot jsonb do que foi
@@ -535,9 +542,24 @@
   mantendo o e-mail como alternativa. Testado ponta a ponta pelo usuário: solicitação de
   devolução criada em `/conta` apareceu certinho em "Minhas solicitações" com status
   "Pendente".
-- **Nota fiscal/comprovante pra download** em `/conta`.
-- **Cupom de desconto**: limite de uso por cliente, cupom por categoria/produto, valor
-  mínimo de pedido — deixado de fora de propósito do MVP atual.
+- ~~**Nota fiscal/comprovante pra download** em `/conta`~~ — **implementado em 2026-09-28,
+  como comprovante (não nota fiscal de verdade)**. Nota fiscal eletrônica exige contratar um
+  provedor de NF-e (custo + CNPJ/regime tributário da loja) — fora do que dá pra fazer só com
+  código. Em vez disso, cada pedido em `/conta` ganhou um botão "Baixar comprovante" que gera
+  um PDF inteiramente no navegador (`jsPDF`, import dinâmico — não engorda o bundle principal)
+  com os dados do pedido (itens, valores, forma de pagamento, endereço) — deixa claro no
+  próprio PDF que não tem validade fiscal.
+- ~~**Cupom de desconto mais robusto**: limite de uso por cliente, cupom por categoria/produto,
+  valor mínimo de pedido~~ — **implementado em 2026-10-03**
+  (`migration-031-cupons-robustos.sql`, quatro colunas novas opcionais em `cupons` —
+  cupom antigo sem elas continua funcionando igual). Limite de uso é por e-mail (não por
+  login, já que o checkout não exige conta) — conta quantos pedidos esse e-mail já fez com
+  aquele código. Restrição por categoria/produto é "OR" entre as duas regras, e o desconto
+  incide só sobre os itens do carrinho que batem com a regra, não no pedido inteiro — tudo
+  recalculado no servidor (`validar-cupom` Edge Function reescrita pra receber os itens do
+  carrinho, não um subtotal pronto, e computar elegibilidade/desconto lá, nunca confiando em
+  nada vindo do cliente). `/admin/cupons` ganhou campos pra mínimo de pedido, limite por
+  e-mail e seletores múltiplos de categoria/produto, com coluna "Restrições" na listagem.
 - **PWA**: testar "Adicionar à tela inicial" de verdade no celular — só dá pra validar isso
   contra o site publicado (produção, HTTPS), não em `ng serve`.
 

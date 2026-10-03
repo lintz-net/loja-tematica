@@ -41,6 +41,56 @@
   }
 }
 
+.admin-avaliacoes__filtros {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-avaliacoes__filtro {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--cor-borda);
+  background: var(--cor-fundo);
+  color: var(--cor-texto-suave);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &.ativo {
+    border-color: var(--cor-acento-secundario, #0c7d71);
+    color: var(--cor-texto);
+    background: color-mix(in srgb, var(--cor-acento-secundario, #0c7d71) 12%, transparent);
+  }
+}
+
+.admin-avaliacoes__status {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--cor-acento-secundario, #0c7d71) 14%, transparent);
+  color: var(--cor-acento-secundario, #0c7d71);
+}
+
+.admin-avaliacoes__status--pendente {
+  background: color-mix(in srgb, #c27a1f 14%, transparent);
+  color: #c27a1f;
+}
+
+.admin-avaliacoes__status--rejeitada {
+  background: color-mix(in srgb, var(--cor-erro) 14%, transparent);
+  color: var(--cor-erro);
+}
+
+.admin-avaliacoes__acoes {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
 .admin-avaliacoes__tabela-wrap {
   overflow-x: auto;
 }

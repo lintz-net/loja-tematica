@@ -140,14 +140,75 @@
     </div>
   </section>
 
-  @if (avaliacoes().length > 0) {
-    <section class="container-pagina detalhe-produto__avaliacoes">
+  <section class="container-pagina detalhe-produto__avaliacoes">
+    <div class="detalhe-produto__avaliacoes-cabecalho">
       <h2 class="home-titulo-secao">
         Avaliações
-        <span class="detalhe-produto__media-avaliacoes">
-          {{ mediaAvaliacoes().toFixed(1) }} ★ ({{ avaliacoes().length }})
-        </span>
+        @if (avaliacoes().length > 0) {
+          <span class="detalhe-produto__media-avaliacoes">
+            {{ mediaAvaliacoes().toFixed(1) }} ★ ({{ avaliacoes().length }})
+          </span>
+        }
       </h2>
+      @if (!formAvaliacaoAberto()) {
+        <button type="button" class="botao-secundario" (click)="abrirFormAvaliacao()">
+          Deixar uma avaliação
+        </button>
+      }
+    </div>
+
+    @if (avaliacaoEnviada()) {
+      <p class="detalhe-produto__avaliacao-confirmacao">
+        Obrigado! Sua avaliação foi enviada e vai aparecer aqui assim que for aprovada.
+      </p>
+    }
+
+    @if (formAvaliacaoAberto()) {
+      <form class="detalhe-produto__form-avaliacao" (submit)="$event.preventDefault(); enviarAvaliacao()">
+        <input
+          type="text"
+          placeholder="Seu nome"
+          [value]="novaAvaliacaoNome()"
+          (input)="novaAvaliacaoNome.set($any($event.target).value)"
+        />
+        <div class="detalhe-produto__estrelas-escolha">
+          @for (n of [1, 2, 3, 4, 5]; track n) {
+            <button
+              type="button"
+              class="detalhe-produto__estrela-botao"
+              [class.ativa]="n <= novaAvaliacaoNota()"
+              [attr.aria-label]="n + ' estrela' + (n > 1 ? 's' : '')"
+              (click)="novaAvaliacaoNota.set(n)"
+            >
+              ★
+            </button>
+          }
+        </div>
+        <textarea
+          rows="3"
+          placeholder="Conte como foi sua experiência (opcional)"
+          [value]="novaAvaliacaoComentario()"
+          (input)="novaAvaliacaoComentario.set($any($event.target).value)"
+        ></textarea>
+        @if (erroAvaliacao()) {
+          <p class="detalhe-produto__avaliacao-erro">{{ erroAvaliacao() }}</p>
+        }
+        <div class="detalhe-produto__form-avaliacao-acoes">
+          <button
+            type="submit"
+            class="botao-primario"
+            [disabled]="!novaAvaliacaoNome().trim() || enviandoAvaliacao()"
+          >
+            {{ enviandoAvaliacao() ? 'Enviando…' : 'Enviar avaliação' }}
+          </button>
+          <button type="button" class="botao-secundario" (click)="formAvaliacaoAberto.set(false)">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    }
+
+    @if (avaliacoes().length > 0) {
       <ul class="detalhe-produto__lista-avaliacoes">
         @for (avaliacao of avaliacoes(); track avaliacao.id) {
           <li class="detalhe-produto__avaliacao">
@@ -161,8 +222,10 @@
           </li>
         }
       </ul>
-    </section>
-  }
+    } @else if (!formAvaliacaoAberto()) {
+      <p class="detalhe-produto__ajuda">Esse produto ainda não tem avaliações — seja o primeiro!</p>
+    }
+  </section>
 
   <section class="container-pagina">
     <app-produtos-relacionados [produto]="produto" />

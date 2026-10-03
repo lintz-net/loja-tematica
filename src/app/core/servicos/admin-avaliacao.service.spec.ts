@@ -11,6 +11,7 @@ function linhaAvaliacao(sobrescritas: Record<string, unknown> = {}) {
     nota: 5,
     comentario: null,
     criado_em: '2026-01-01T00:00:00.000Z',
+    status: 'aprovada',
     ...sobrescritas,
   };
 }
@@ -20,6 +21,7 @@ function dadosAvaliacao(sobrescritas: Partial<Omit<Avaliacao, 'id'>> = {}): Omit
     nomeCliente: 'Maria',
     nota: 5,
     criadoEm: '2026-01-01T00:00:00.000Z',
+    status: 'aprovada',
     ...sobrescritas,
   };
 }
@@ -136,6 +138,34 @@ describe('AdminAvaliacaoService', () => {
       );
 
       service.atualizar('aval-1', dadosAvaliacao()).subscribe({
+        error: (erro) => {
+          expect(erro.message).toBe('falhou');
+          done();
+        },
+      });
+    });
+  });
+
+  describe('atualizarStatus', () => {
+    it('atualiza só o status pelo id', (done) => {
+      tabelaFake.single.and.returnValue(
+        Promise.resolve({ data: linhaAvaliacao({ status: 'aprovada' }), error: null })
+      );
+
+      service.atualizarStatus('aval-1', 'aprovada').subscribe((avaliacao) => {
+        expect(tabelaFake.update).toHaveBeenCalledWith({ status: 'aprovada' });
+        expect(tabelaFake.eq).toHaveBeenCalledWith('id', 'aval-1');
+        expect(avaliacao.status).toBe('aprovada');
+        done();
+      });
+    });
+
+    it('propaga o erro quando a atualização de status falha', (done) => {
+      tabelaFake.single.and.returnValue(
+        Promise.resolve({ data: null, error: new Error('falhou') })
+      );
+
+      service.atualizarStatus('aval-1', 'rejeitada').subscribe({
         error: (erro) => {
           expect(erro.message).toBe('falhou');
           done();

@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { AdminCuponsComponent } from './admin-cupons.component';
 import { AdminCupomService } from '../../../../core/servicos/admin-cupom.service';
+import { CatalogoRepositorio } from '../../../../core/servicos/catalogo.repositorio';
 import { Cupom } from '../../../../core/modelos/cupom.model';
 
 function criarCupom(sobrescritas: Partial<Cupom> = {}): Cupom {
@@ -17,11 +18,15 @@ function criarCupom(sobrescritas: Partial<Cupom> = {}): Cupom {
 
 describe('AdminCuponsComponent', () => {
   let adminCupomServiceSpy: jasmine.SpyObj<AdminCupomService>;
+  let catalogoRepositorioSpy: jasmine.SpyObj<CatalogoRepositorio>;
 
   function configurar(): ComponentFixture<AdminCuponsComponent> {
     TestBed.configureTestingModule({
       imports: [AdminCuponsComponent],
-      providers: [{ provide: AdminCupomService, useValue: adminCupomServiceSpy }],
+      providers: [
+        { provide: AdminCupomService, useValue: adminCupomServiceSpy },
+        { provide: CatalogoRepositorio, useValue: catalogoRepositorioSpy },
+      ],
     });
     const fixture = TestBed.createComponent(AdminCuponsComponent);
     fixture.detectChanges();
@@ -36,6 +41,13 @@ describe('AdminCuponsComponent', () => {
       'excluir',
     ]);
     adminCupomServiceSpy.listarTodos.and.returnValue(of([criarCupom()]));
+
+    catalogoRepositorioSpy = jasmine.createSpyObj('CatalogoRepositorio', [
+      'obterCategorias',
+      'obterProdutos',
+    ]);
+    catalogoRepositorioSpy.obterCategorias.and.returnValue(of([]));
+    catalogoRepositorioSpy.obterProdutos.and.returnValue(of([]));
   });
 
   it('carrega os cupons', () => {
@@ -97,6 +109,30 @@ describe('AdminCuponsComponent', () => {
       expect(comp.cupons()[0]).toEqual(novo);
       expect(comp.novoCodigo()).toBe('');
       expect(comp.salvando()).toBeFalse();
+    });
+
+    it('inclui as restrições no payload quando preenchidas', () => {
+      const novo = criarCupom({ codigo: 'PROMO20', valorDesconto: 20 });
+      adminCupomServiceSpy.criar.and.returnValue(of(novo));
+      const fixture = configurar();
+      const comp = fixture.componentInstance;
+      comp.atualizarNovoCodigo('PROMO20');
+      comp.atualizarNovoValorDesconto('20');
+      comp.atualizarNovoValorMinimoPedido('100');
+      comp.atualizarNovoLimiteUsoPorEmail('1');
+      comp.novasCategorias.set(['camisetas']);
+      comp.novosProdutosIds.set(['prod-1']);
+
+      comp.criarCupom();
+
+      expect(adminCupomServiceSpy.criar).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          valorMinimoPedido: 100,
+          limiteUsoPorEmail: 1,
+          categorias: ['camisetas'],
+          produtosIds: ['prod-1'],
+        })
+      );
     });
 
     it('não chama o serviço quando o formulário está incompleto', () => {

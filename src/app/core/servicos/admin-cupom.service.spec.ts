@@ -10,6 +10,10 @@ function linhaCupom(sobrescritas: Record<string, unknown> = {}) {
     expira_em: null,
     ativo: true,
     criado_em: '2026-01-01T00:00:00.000Z',
+    valor_minimo_pedido: null,
+    limite_uso_por_email: null,
+    categorias: null,
+    produtos_ids: null,
     ...sobrescritas,
   };
 }
@@ -80,6 +84,50 @@ describe('AdminCupomService', () => {
             jasmine.objectContaining({ codigo: 'PROMO10', valor_desconto: 10, expira_em: null })
           );
           expect(cupom.codigo).toBe('PROMO10');
+          done();
+        });
+    });
+
+    it('inclui as restrições (mínimo, limite de uso, categorias e produtos) quando informadas', (done) => {
+      tabelaFake.single.and.returnValue(Promise.resolve({ data: linhaCupom(), error: null }));
+
+      service
+        .criar({
+          codigo: 'promo10',
+          tipoDesconto: 'percentual',
+          valorDesconto: 10,
+          valorMinimoPedido: 100,
+          limiteUsoPorEmail: 1,
+          categorias: ['camisetas'],
+          produtosIds: ['prod-1'],
+        })
+        .subscribe(() => {
+          expect(tabelaFake.insert).toHaveBeenCalledWith(
+            jasmine.objectContaining({
+              valor_minimo_pedido: 100,
+              limite_uso_por_email: 1,
+              categorias: ['camisetas'],
+              produtos_ids: ['prod-1'],
+            })
+          );
+          done();
+        });
+    });
+
+    it('manda null nas restrições quando não informadas', (done) => {
+      tabelaFake.single.and.returnValue(Promise.resolve({ data: linhaCupom(), error: null }));
+
+      service
+        .criar({ codigo: 'promo10', tipoDesconto: 'percentual', valorDesconto: 10 })
+        .subscribe(() => {
+          expect(tabelaFake.insert).toHaveBeenCalledWith(
+            jasmine.objectContaining({
+              valor_minimo_pedido: null,
+              limite_uso_por_email: null,
+              categorias: null,
+              produtos_ids: null,
+            })
+          );
           done();
         });
     });

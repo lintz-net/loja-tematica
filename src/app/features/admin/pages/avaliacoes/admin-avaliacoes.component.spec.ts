@@ -12,6 +12,7 @@ function criarAvaliacao(sobrescritas: Partial<Avaliacao> = {}): Avaliacao {
     nomeCliente: 'Maria',
     nota: 5,
     criadoEm: '2026-01-01T00:00:00.000Z',
+    status: 'aprovada',
     ...sobrescritas,
   };
 }
@@ -53,6 +54,7 @@ describe('AdminAvaliacoesComponent', () => {
       'listarTodas',
       'criar',
       'remover',
+      'atualizarStatus',
     ]);
     catalogoRepositorioSpy = jasmine.createSpyObj('CatalogoRepositorio', ['obterProdutos']);
     adminAvaliacaoServiceSpy.listarTodas.and.returnValue(of([criarAvaliacao()]));
@@ -151,6 +153,68 @@ describe('AdminAvaliacoesComponent', () => {
 
       expect(comp.erro()).toContain('Não foi possível criar a avaliação');
       expect(comp.salvando()).toBeFalse();
+    });
+  });
+
+  describe('avaliacoesFiltradas', () => {
+    it('filtra por "pendente" por padrão', () => {
+      adminAvaliacaoServiceSpy.listarTodas.and.returnValue(
+        of([criarAvaliacao({ id: 'a1', status: 'pendente' }), criarAvaliacao({ id: 'a2', status: 'aprovada' })])
+      );
+      const fixture = configurar();
+
+      expect(fixture.componentInstance.filtroStatus()).toBe('pendente');
+      expect(fixture.componentInstance.avaliacoesFiltradas().map((a) => a.id)).toEqual(['a1']);
+    });
+
+    it('"todas" mostra tudo, sem filtrar', () => {
+      adminAvaliacaoServiceSpy.listarTodas.and.returnValue(
+        of([criarAvaliacao({ id: 'a1', status: 'pendente' }), criarAvaliacao({ id: 'a2', status: 'rejeitada' })])
+      );
+      const fixture = configurar();
+      fixture.componentInstance.filtroStatus.set('todas');
+
+      expect(fixture.componentInstance.avaliacoesFiltradas().map((a) => a.id)).toEqual(['a1', 'a2']);
+    });
+
+    it('quantidadePendentes conta só as pendentes, independente do filtro atual', () => {
+      adminAvaliacaoServiceSpy.listarTodas.and.returnValue(
+        of([
+          criarAvaliacao({ id: 'a1', status: 'pendente' }),
+          criarAvaliacao({ id: 'a2', status: 'pendente' }),
+          criarAvaliacao({ id: 'a3', status: 'aprovada' }),
+        ])
+      );
+      const fixture = configurar();
+
+      expect(fixture.componentInstance.quantidadePendentes()).toBe(2);
+    });
+  });
+
+  describe('moderar', () => {
+    it('aprova a avaliação e atualiza a lista', () => {
+      const pendente = criarAvaliacao({ id: 'a1', status: 'pendente' });
+      adminAvaliacaoServiceSpy.listarTodas.and.returnValue(of([pendente]));
+      adminAvaliacaoServiceSpy.atualizarStatus.and.returnValue(of({ ...pendente, status: 'aprovada' }));
+      const fixture = configurar();
+
+      fixture.componentInstance.moderar(pendente, 'aprovada');
+
+      expect(adminAvaliacaoServiceSpy.atualizarStatus).toHaveBeenCalledWith('a1', 'aprovada');
+      expect(fixture.componentInstance.avaliacoes()[0].status).toBe('aprovada');
+      expect(fixture.componentInstance.idModerando()).toBeNull();
+    });
+
+    it('mostra erro quando a moderação falha', () => {
+      const pendente = criarAvaliacao({ id: 'a1', status: 'pendente' });
+      adminAvaliacaoServiceSpy.listarTodas.and.returnValue(of([pendente]));
+      adminAvaliacaoServiceSpy.atualizarStatus.and.returnValue(throwError(() => new Error('falhou')));
+      const fixture = configurar();
+
+      fixture.componentInstance.moderar(pendente, 'rejeitada');
+
+      expect(fixture.componentInstance.erro()).toContain('Não foi possível atualizar a avaliação');
+      expect(fixture.componentInstance.idModerando()).toBeNull();
     });
   });
 

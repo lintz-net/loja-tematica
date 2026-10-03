@@ -10,6 +10,10 @@ interface LinhaCupom {
   expira_em: string | null;
   ativo: boolean;
   criado_em: string;
+  valor_minimo_pedido: number | null;
+  limite_uso_por_email: number | null;
+  categorias: string[] | null;
+  produtos_ids: string[] | null;
 }
 
 function linhaParaCupom(linha: LinhaCupom): Cupom {
@@ -20,7 +24,22 @@ function linhaParaCupom(linha: LinhaCupom): Cupom {
     expiraEm: linha.expira_em ?? undefined,
     ativo: linha.ativo,
     criadoEm: linha.criado_em,
+    valorMinimoPedido: linha.valor_minimo_pedido ?? undefined,
+    limiteUsoPorEmail: linha.limite_uso_por_email ?? undefined,
+    categorias: linha.categorias ?? undefined,
+    produtosIds: linha.produtos_ids ?? undefined,
   };
+}
+
+export interface DadosCupom {
+  codigo: string;
+  tipoDesconto: TipoDescontoCupom;
+  valorDesconto: number;
+  expiraEm?: string;
+  valorMinimoPedido?: number;
+  limiteUsoPorEmail?: number;
+  categorias?: string[];
+  produtosIds?: string[];
 }
 
 /** CRUD de cupons — só usado em `/admin`, atrás de login (RLS restringe a tabela `cupons` a
@@ -43,12 +62,7 @@ export class AdminCupomService {
     return from(promessa);
   }
 
-  criar(cupom: {
-    codigo: string;
-    tipoDesconto: TipoDescontoCupom;
-    valorDesconto: number;
-    expiraEm?: string;
-  }): Observable<Cupom> {
+  criar(cupom: DadosCupom): Observable<Cupom> {
     const promessa = this.supabaseCliente.obterCliente()
       .from('cupons')
       .insert({
@@ -56,6 +70,10 @@ export class AdminCupomService {
         tipo_desconto: cupom.tipoDesconto,
         valor_desconto: cupom.valorDesconto,
         expira_em: cupom.expiraEm || null,
+        valor_minimo_pedido: cupom.valorMinimoPedido ?? null,
+        limite_uso_por_email: cupom.limiteUsoPorEmail ?? null,
+        categorias: cupom.categorias?.length ? cupom.categorias : null,
+        produtos_ids: cupom.produtosIds?.length ? cupom.produtosIds : null,
       })
       .select()
       .single()

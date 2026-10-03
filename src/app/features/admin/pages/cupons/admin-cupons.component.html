@@ -36,6 +36,42 @@
       [value]="novaDataExpiracao()"
       (input)="atualizarNovaDataExpiracao($any($event.target).value)"
     />
+    <input
+      type="number"
+      min="0"
+      step="0.01"
+      placeholder="Pedido mínimo (opcional)"
+      title="Valor mínimo de pedido (opcional)"
+      [value]="novoValorMinimoPedido()"
+      (input)="atualizarNovoValorMinimoPedido($any($event.target).value)"
+    />
+    <input
+      type="number"
+      min="1"
+      step="1"
+      placeholder="Limite de uso por e-mail (opcional)"
+      title="Quantas vezes o mesmo e-mail pode usar esse cupom (opcional)"
+      [value]="novoLimiteUsoPorEmail()"
+      (input)="atualizarNovoLimiteUsoPorEmail($any($event.target).value)"
+    />
+    <select
+      multiple
+      title="Categorias elegíveis — nenhuma selecionada = sem restrição"
+      (change)="atualizarNovasCategorias($any($event.target))"
+    >
+      @for (categoria of categorias(); track categoria.slug) {
+        <option [value]="categoria.slug">{{ categoria.nome }}</option>
+      }
+    </select>
+    <select
+      multiple
+      title="Produtos elegíveis — nenhum selecionado = sem restrição"
+      (change)="atualizarNovosProdutosIds($any($event.target))"
+    >
+      @for (produto of produtos(); track produto.id) {
+        <option [value]="produto.id">{{ produto.nome }}</option>
+      }
+    </select>
     <button type="submit" class="botao-primario" [disabled]="!podeCriar() || salvando()">
       {{ salvando() ? 'Criando…' : 'Criar cupom' }}
     </button>
@@ -53,6 +89,7 @@
             <th>Código</th>
             <th>Desconto</th>
             <th>Expira em</th>
+            <th>Restrições</th>
             <th>Status</th>
             <th></th>
           </tr>
@@ -69,6 +106,23 @@
                 }
               </td>
               <td>{{ cupom.expiraEm ? (cupom.expiraEm | date: 'dd/MM/yyyy') : 'Nunca' }}</td>
+              <td class="admin-cupons__restricoes">
+                @if (cupom.valorMinimoPedido) {
+                  <span>Mín. {{ cupom.valorMinimoPedido | currency: 'BRL' }}</span>
+                }
+                @if (cupom.limiteUsoPorEmail) {
+                  <span>{{ cupom.limiteUsoPorEmail }}x por e-mail</span>
+                }
+                @if (cupom.categorias?.length) {
+                  <span>{{ cupom.categorias!.length }} categoria(s)</span>
+                }
+                @if (cupom.produtosIds?.length) {
+                  <span>{{ cupom.produtosIds!.length }} produto(s)</span>
+                }
+                @if (!cupom.valorMinimoPedido && !cupom.limiteUsoPorEmail && !cupom.categorias?.length && !cupom.produtosIds?.length) {
+                  <span>—</span>
+                }
+              </td>
               <td>
                 @if (!cupom.ativo) {
                   <span class="admin-cupons__status admin-cupons__status--inativo">Inativo</span>

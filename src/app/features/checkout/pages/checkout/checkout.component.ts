@@ -502,7 +502,13 @@ export class CheckoutComponent implements OnDestroy {
 
     this.validandoCupom.set(true);
     this.erroCupom.set(null);
-    this.cupomService.validar(codigo, this.subtotal()).subscribe({
+    const itens = this.carrinhoService.itensCarrinho().map((item) => ({
+      produtoId: item.produto.id,
+      categorias: item.produto.categorias,
+      precoUnitario: item.variante.precoOverride ?? item.produto.precoBase,
+      quantidade: item.quantidade,
+    }));
+    this.cupomService.validar(codigo, itens, this.email().trim() || undefined).subscribe({
       next: (resultado) => {
         this.validandoCupom.set(false);
         if (!resultado.valido) {

@@ -76,6 +76,51 @@ export class DetalheProdutoComponent {
     return avaliacoes.reduce((soma, a) => soma + a.nota, 0) / avaliacoes.length;
   });
 
+  // Formulário público "Deixar uma avaliação" — entra 'pendente', só aparece na lista acima
+  // depois que o admin aprovar (ver AvaliacaoRepositorio.criar / migration-030).
+  readonly formAvaliacaoAberto = signal(false);
+  readonly novaAvaliacaoNome = signal('');
+  readonly novaAvaliacaoNota = signal(5);
+  readonly novaAvaliacaoComentario = signal('');
+  readonly enviandoAvaliacao = signal(false);
+  readonly avaliacaoEnviada = signal(false);
+  readonly erroAvaliacao = signal<string | null>(null);
+
+  abrirFormAvaliacao(): void {
+    this.formAvaliacaoAberto.set(true);
+    this.avaliacaoEnviada.set(false);
+  }
+
+  enviarAvaliacao(): void {
+    const produto = this.produto();
+    const nome = this.novaAvaliacaoNome().trim();
+    if (!produto || !nome) return;
+
+    this.enviandoAvaliacao.set(true);
+    this.erroAvaliacao.set(null);
+    this.avaliacaoRepositorio
+      .criar({
+        produtoId: produto.id,
+        nomeCliente: nome,
+        nota: this.novaAvaliacaoNota(),
+        comentario: this.novaAvaliacaoComentario().trim() || undefined,
+      })
+      .subscribe({
+        next: () => {
+          this.enviandoAvaliacao.set(false);
+          this.avaliacaoEnviada.set(true);
+          this.formAvaliacaoAberto.set(false);
+          this.novaAvaliacaoNome.set('');
+          this.novaAvaliacaoNota.set(5);
+          this.novaAvaliacaoComentario.set('');
+        },
+        error: () => {
+          this.enviandoAvaliacao.set(false);
+          this.erroAvaliacao.set('Não foi possível enviar sua avaliação. Tente de novo em instantes.');
+        },
+      });
+  }
+
   /** Nome de exibição da categoria (não o slug cru, ex.: "decoracao-e-organizacao") — cai de
    * volta pro slug só se a categoria não for encontrada na lista. */
   readonly nomeCategoriaPrincipal = computed(() => {

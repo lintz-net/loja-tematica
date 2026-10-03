@@ -2,8 +2,10 @@
   <header class="admin-avaliacoes__cabecalho">
     <h1>Avaliações</h1>
     <p class="admin-avaliacoes__ajuda">
-      Cadastro manual de depoimentos reais de clientes (coletados por WhatsApp, e-mail etc.) —
-      não existe formulário público de avaliação. Nunca inventar nome/nota/comentário.
+      Cadastro manual de depoimentos reais de clientes (coletados por WhatsApp, e-mail etc.)
+      continua funcionando aqui (sempre entra já aprovado) — mas clientes também podem deixar
+      uma avaliação direto na página do produto agora. Essas chegam "Pendente" e só aparecem
+      pro público depois de aprovadas abaixo.
     </p>
   </header>
 
@@ -47,15 +49,36 @@
     </button>
   </form>
 
+  @if (!carregando() && avaliacoes().length > 0) {
+    <div class="admin-avaliacoes__filtros">
+      @for (filtro of filtros; track filtro) {
+        <button
+          type="button"
+          class="admin-avaliacoes__filtro"
+          [class.ativo]="filtroStatus() === filtro"
+          (click)="filtroStatus.set(filtro)"
+        >
+          {{ rotulosFiltro[filtro] }}
+          @if (filtro === 'pendente' && quantidadePendentes() > 0) {
+            ({{ quantidadePendentes() }})
+          }
+        </button>
+      }
+    </div>
+  }
+
   @if (carregando()) {
     <p>Carregando avaliações…</p>
   } @else if (avaliacoes().length === 0) {
     <p>Nenhuma avaliação cadastrada ainda.</p>
+  } @else if (avaliacoesFiltradas().length === 0) {
+    <p>Nenhuma avaliação {{ rotulosFiltro[filtroStatus()].toLowerCase() }} no momento.</p>
   } @else {
     <div class="admin-avaliacoes__tabela-wrap">
       <table class="admin-avaliacoes__tabela">
         <thead>
           <tr>
+            <th>Status</th>
             <th>Cliente</th>
             <th>Nota</th>
             <th>Produto</th>
@@ -65,14 +88,41 @@
           </tr>
         </thead>
         <tbody>
-          @for (avaliacao of avaliacoes(); track avaliacao.id) {
+          @for (avaliacao of avaliacoesFiltradas(); track avaliacao.id) {
             <tr>
+              <td>
+                <span
+                  class="admin-avaliacoes__status"
+                  [class.admin-avaliacoes__status--pendente]="avaliacao.status === 'pendente'"
+                  [class.admin-avaliacoes__status--rejeitada]="avaliacao.status === 'rejeitada'"
+                >
+                  {{ rotulosFiltro[avaliacao.status] }}
+                </span>
+              </td>
               <td>{{ avaliacao.nomeCliente }}</td>
               <td>{{ avaliacao.nota }} ★</td>
               <td>{{ nomeDoProduto(avaliacao.produtoId) }}</td>
               <td>{{ avaliacao.comentario || '—' }}</td>
               <td>{{ avaliacao.criadoEm | date: 'dd/MM/yyyy' }}</td>
               <td class="admin-avaliacoes__acoes">
+                @if (avaliacao.status === 'pendente') {
+                  <button
+                    type="button"
+                    class="botao-secundario"
+                    [disabled]="idModerando() === avaliacao.id"
+                    (click)="moderar(avaliacao, 'aprovada')"
+                  >
+                    Aprovar
+                  </button>
+                  <button
+                    type="button"
+                    class="botao-secundario"
+                    [disabled]="idModerando() === avaliacao.id"
+                    (click)="moderar(avaliacao, 'rejeitada')"
+                  >
+                    Rejeitar
+                  </button>
+                }
                 <button
                   type="button"
                   class="admin-avaliacoes__excluir"

@@ -13,10 +13,10 @@
 
 .admin-cupons__form {
   display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr 1fr auto;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr auto;
   gap: 10px;
   margin-bottom: 32px;
-  align-items: center;
+  align-items: start;
 
   input,
   select {
@@ -25,12 +25,25 @@
     border-radius: var(--raio-padrao);
     font-family: inherit;
   }
+
+  select[multiple] {
+    min-height: 90px;
+  }
 }
 
 @media (max-width: 900px) {
   .admin-cupons__form {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+.admin-cupons__restricoes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.82rem;
+  color: var(--cor-texto-suave);
+  white-space: normal;
 }
 
 .admin-cupons__tabela-wrap {

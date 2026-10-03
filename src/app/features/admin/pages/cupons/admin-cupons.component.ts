@@ -2,6 +2,9 @@ import { Component, inject, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Cupom, TipoDescontoCupom } from '../../../../core/modelos/cupom.model';
 import { AdminCupomService } from '../../../../core/servicos/admin-cupom.service';
+import { CatalogoRepositorio } from '../../../../core/servicos/catalogo.repositorio';
+import { Produto } from '../../../../core/modelos/produto.model';
+import { Categoria } from '../../../../core/modelos/categoria.model';
 
 @Component({
   selector: 'app-admin-cupons',
@@ -12,6 +15,7 @@ import { AdminCupomService } from '../../../../core/servicos/admin-cupom.service
 })
 export class AdminCuponsComponent {
   private readonly adminCupomService = inject(AdminCupomService);
+  private readonly catalogoRepositorio = inject(CatalogoRepositorio);
 
   readonly carregando = signal(true);
   readonly cupons = signal<Cupom[]>([]);
@@ -20,11 +24,18 @@ export class AdminCuponsComponent {
   readonly codigoAlternando = signal<string | null>(null);
   readonly codigoExcluindo = signal<string | null>(null);
 
+  readonly categorias = signal<Categoria[]>([]);
+  readonly produtos = signal<Produto[]>([]);
+
   // Formulário de novo cupom
   readonly novoCodigo = signal('');
   readonly novoTipoDesconto = signal<TipoDescontoCupom>('percentual');
   readonly novoValorDesconto = signal<number | null>(null);
   readonly novaDataExpiracao = signal('');
+  readonly novoValorMinimoPedido = signal<number | null>(null);
+  readonly novoLimiteUsoPorEmail = signal<number | null>(null);
+  readonly novasCategorias = signal<string[]>([]);
+  readonly novosProdutosIds = signal<string[]>([]);
 
   readonly podeCriar = (): boolean =>
     this.novoCodigo().trim().length > 0 &&
@@ -33,6 +44,8 @@ export class AdminCuponsComponent {
 
   constructor() {
     this.carregar();
+    this.catalogoRepositorio.obterCategorias().subscribe((categorias) => this.categorias.set(categorias));
+    this.catalogoRepositorio.obterProdutos().subscribe((produtos) => this.produtos.set(produtos));
   }
 
   private carregar(): void {
@@ -65,6 +78,22 @@ export class AdminCuponsComponent {
     this.novaDataExpiracao.set(valor);
   }
 
+  atualizarNovoValorMinimoPedido(valor: string): void {
+    this.novoValorMinimoPedido.set(valor ? Number(valor) : null);
+  }
+
+  atualizarNovoLimiteUsoPorEmail(valor: string): void {
+    this.novoLimiteUsoPorEmail.set(valor ? Number(valor) : null);
+  }
+
+  atualizarNovasCategorias(selecionadas: HTMLSelectElement): void {
+    this.novasCategorias.set(Array.from(selecionadas.selectedOptions).map((o) => o.value));
+  }
+
+  atualizarNovosProdutosIds(selecionados: HTMLSelectElement): void {
+    this.novosProdutosIds.set(Array.from(selecionados.selectedOptions).map((o) => o.value));
+  }
+
   criarCupom(): void {
     if (!this.podeCriar()) return;
 
@@ -78,6 +107,10 @@ export class AdminCuponsComponent {
         expiraEm: this.novaDataExpiracao()
           ? new Date(this.novaDataExpiracao()).toISOString()
           : undefined,
+        valorMinimoPedido: this.novoValorMinimoPedido() ?? undefined,
+        limiteUsoPorEmail: this.novoLimiteUsoPorEmail() ?? undefined,
+        categorias: this.novasCategorias(),
+        produtosIds: this.novosProdutosIds(),
       })
       .subscribe({
         next: (cupom) => {
@@ -86,6 +119,10 @@ export class AdminCuponsComponent {
           this.novoCodigo.set('');
           this.novoValorDesconto.set(null);
           this.novaDataExpiracao.set('');
+          this.novoValorMinimoPedido.set(null);
+          this.novoLimiteUsoPorEmail.set(null);
+          this.novasCategorias.set([]);
+          this.novosProdutosIds.set([]);
         },
         error: (erro) => {
           this.salvando.set(false);

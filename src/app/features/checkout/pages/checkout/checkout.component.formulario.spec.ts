@@ -197,6 +197,23 @@ describe('CheckoutComponent — formulário (CEP, cupom, frete, navegação, car
       expect(comp.erroCupom()).toBeNull();
     });
 
+    it('chama o serviço com os itens do carrinho e o e-mail informado', () => {
+      cupomServiceSpy.validar.and.returnValue(
+        of({ valido: true as const, codigo: 'PROMO10', tipoDesconto: 'percentual' as const, valorDesconto: 10, desconto: 9 })
+      );
+      const fixture = configurar();
+      const comp = fixture.componentInstance;
+      comp.atualizarEmail('cliente@teste.com');
+      comp.codigoCupom.set('PROMO10');
+
+      comp.aplicarCupom();
+
+      const [codigo, itens, email] = cupomServiceSpy.validar.calls.mostRecent().args;
+      expect(codigo).toBe('PROMO10');
+      expect(email).toBe('cliente@teste.com');
+      expect(Array.isArray(itens)).toBeTrue();
+    });
+
     it('mostra o motivo quando o servidor recusa o cupom', () => {
       cupomServiceSpy.validar.and.returnValue(of({ valido: false, motivo: 'Cupom expirado' }));
       const fixture = configurar();
