@@ -65,6 +65,84 @@ export async function avancarStatusParaConfirmado(codigoPedido: string): Promise
   });
 }
 
+interface ItemPedidoParaEstoque {
+  produtoSlug: string;
+  tamanho: string;
+  cor: string;
+  quantidade: number;
+}
+
+interface VarianteProduto {
+  id: string;
+  produtoId: string;
+  sku: string;
+  tamanho: string;
+  cor: string;
+  quantidadeEstoque: number;
+  precoOverride?: number;
+}
+
+/** Baixa o estoque (`produtos.variantes[].quantidadeEstoque`) de cada item do pedido quando o
+ * pagamento é aprovado. `estoque_baixado` garante que isso só acontece uma vez por pedido —
+ * tanto o webhook (pode notificar o mesmo pagamento mais de uma vez) quanto o pagamento por
+ * cartão (confirma status na hora, síncrono) chamam essa função, e o PATCH condicional abaixo
+ * (`estoque_baixado=eq.false`) funciona como uma trava: só quem conseguir virar a flag pra
+ * true de fato baixa o estoque, uma segunda chamada concorrente não acha a linha e desiste.
+ *
+ * Busca o produto pelo slug salvo no snapshot do pedido (`produtoSlug`) e casa a variante por
+ * tamanho+cor — `pedidos.itens` é só um snapshot jsonb (nome/slug/imagem/tamanho/cor), sem
+ * `produtoId`/`varianteId`, então não tem join direto por id. Best-effort: se o produto ou a
+ * variante não existir mais (produto excluído/variante removida desde a compra), loga e
+ * continua pros outros itens — nunca falha a confirmação do pagamento por causa disso, o
+ * admin sempre pode corrigir o estoque manualmente como já fazia antes dessa automação
+ * existir. */
+export async function baixarEstoquePedido(codigoPedido: string): Promise<void> {
+  const reivindicado = await restSupabase<{ itens: ItemPedidoParaEstoque[] }[]>(
+    `pedidos?codigo=eq.${encodeURIComponent(codigoPedido)}&estoque_baixado=eq.false&select=itens`,
+    {
+      method: 'PATCH',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({ estoque_baixado: true }),
+    }
+  );
+  const pedido = reivindicado[0];
+  if (!pedido) return; // já baixado antes (outra chamada venceu a corrida), ou pedido não existe.
+
+  for (const item of pedido.itens) {
+    try {
+      const produtos = await restSupabase<{ id: string; variantes: VarianteProduto[] }[]>(
+        `produtos?slug=eq.${encodeURIComponent(item.produtoSlug)}&select=id,variantes`
+      );
+      const produto = produtos[0];
+      if (!produto) {
+        console.error(`Baixa de estoque: produto "${item.produtoSlug}" não encontrado (pedido ${codigoPedido}).`);
+        continue;
+      }
+
+      const variantes = produto.variantes.map((v) =>
+        v.tamanho === item.tamanho && v.cor === item.cor
+          ? { ...v, quantidadeEstoque: Math.max(0, v.quantidadeEstoque - item.quantidade) }
+          : v
+      );
+      const variante = produto.variantes.find((v) => v.tamanho === item.tamanho && v.cor === item.cor);
+      if (!variante) {
+        console.error(
+          `Baixa de estoque: variante ${item.tamanho}/${item.cor} não encontrada em "${item.produtoSlug}" (pedido ${codigoPedido}).`
+        );
+        continue;
+      }
+
+      await restSupabase(`produtos?id=eq.${encodeURIComponent(produto.id)}`, {
+        method: 'PATCH',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({ variantes }),
+      });
+    } catch (erro) {
+      console.error(`Baixa de estoque falhou pro item "${item.produtoSlug}" (pedido ${codigoPedido}):`, erro);
+    }
+  }
+}
+
 export function corsHeaders(): Record<string, string> {
   return {
     'Access-Control-Allow-Origin': '*',

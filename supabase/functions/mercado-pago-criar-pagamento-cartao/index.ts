@@ -14,6 +14,7 @@
 import {
   STATUS_MP_PARA_STATUS_PAGAMENTO,
   avancarStatusParaConfirmado,
+  baixarEstoquePedido,
   chamarMercadoPago,
   corsHeaders,
   restSupabase,
@@ -152,6 +153,7 @@ Deno.serve(async (req: Request) => {
   });
   if (statusPagamento === 'aprovado') {
     await avancarStatusParaConfirmado(codigoPedido);
+    await baixarEstoquePedido(codigoPedido);
   }
 
   return respostaJson({

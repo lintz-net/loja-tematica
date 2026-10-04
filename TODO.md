@@ -560,8 +560,39 @@
   carrinho, não um subtotal pronto, e computar elegibilidade/desconto lá, nunca confiando em
   nada vindo do cliente). `/admin/cupons` ganhou campos pra mínimo de pedido, limite por
   e-mail e seletores múltiplos de categoria/produto, com coluna "Restrições" na listagem.
-- **PWA**: testar "Adicionar à tela inicial" de verdade no celular — só dá pra validar isso
-  contra o site publicado (produção, HTTPS), não em `ng serve`.
+- ~~**Baixa automática de estoque na aprovação do pagamento**~~ — **implementado em
+  2026-10-04, falta rodar `migration-032-baixa-estoque-pedido.sql` em produção.** Descoberto
+  durante uma comparação com a Vendizap (concorrente) que **não existia baixa de estoque
+  automática nenhuma** — `produtos.variantes[].quantidadeEstoque` só mudava por edição manual
+  do admin em `/admin/produtos`. Na prática dois clientes podiam "comprar" a última unidade de
+  um tamanho/cor ao mesmo tempo sem o site perceber. Nova função compartilhada
+  `baixarEstoquePedido(codigoPedido)` em `_shared/mercado-pago.ts`, chamada pelas duas Edge
+  Functions que confirmam pagamento aprovado (`mercado-pago-webhook` — Pix/assíncrono — e
+  `mercado-pago-criar-pagamento-cartao` — síncrono). Casa cada item do snapshot
+  `pedidos.itens` (sem `produtoId`/`varianteId`, só `produtoSlug`+`tamanho`+`cor`) com a
+  variante correspondente em `produtos.variantes` e decrementa, nunca abaixo de zero.
+  Idempotente via nova coluna `pedidos.estoque_baixado` (PATCH condicional
+  `estoque_baixado=eq.false` — funciona como trava contra dupla baixa, já que o webhook pode
+  notificar o mesmo pagamento mais de uma vez). Best-effort: produto/variante não encontrado
+  (ex.: produto excluído depois da compra) só loga erro e segue pros outros itens, nunca
+  derruba a confirmação do pagamento.
+- **Fluxo Vendizap-style pra formas de pagamento fora do Mercado Pago** (Pix manual, dinheiro,
+  maquininha) — **deixado de propósito pra depois, especificado aqui só pra não perder o
+  contexto da pesquisa**. Hoje seu checkout é 100% atrelado ao Mercado Pago: pedido só existe
+  com pagamento em andamento/aprovado por eles. A Vendizap (pesquisado e confirmado em
+  2026-10-04 na Central de Ajuda deles) funciona diferente: pedido é criado e **estoque
+  baixado na finalização do pedido**, independente de pagamento — útil pra reservar estoque
+  quando a forma de pagamento escolhida não é processada automaticamente (Pix informado na
+  mão, dinheiro, maquininha, "pagar depois"). Nesses casos o pedido fica com status pendente
+  até o vendedor confirmar manualmente o recebimento no painel; se o pedido for cancelado, o
+  estoque volta. Se um dia você quiser aceitar essas formas de pagamento (hoje não aceita),
+  precisaria de: (1) permitir criar pedido sem gateway nenhum, com um campo pra forma de
+  pagamento "manual"; (2) baixar estoque na criação do pedido nesse caso (reservando, não
+  esperando aprovação — diferente do que foi implementado acima, que baixa só na aprovação);
+  (3) tela/ação em `/admin/pedidos` pra confirmar recebimento manualmente; (4) lógica de
+  devolver estoque se o admin cancelar um pedido manual não pago. Não implementar sem decisão
+  explícita — é bem mais invasivo que a baixa automática na aprovação (item acima), que já
+  cobre o caso de uso atual (só Mercado Pago) sem precisar de reserva nem confirmação manual.
 
 ## Marketing: tráfego pago e pixels de conversão
 
