@@ -16,6 +16,7 @@ function linhaConfiguracao(sobrescritas: Record<string, unknown> = {}) {
     tiktok_url: null,
     cidades_frete_gratis: null,
     mensagens_barra_anuncio: null,
+    aceita_pagamento_manual: false,
     ...sobrescritas,
   };
 }
@@ -29,6 +30,7 @@ function dadosConfiguracao(sobrescritas: Partial<ConfiguracaoLoja> = {}): Config
     whatsappMensagem: 'Olá! Preciso de ajuda.',
     cidadesFreteGratis: [],
     mensagensBarraAnuncio: [],
+    aceitaPagamentoManual: false,
     ...sobrescritas,
   };
 }

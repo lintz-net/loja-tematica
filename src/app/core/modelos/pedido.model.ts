@@ -32,7 +32,10 @@ export interface Pedido {
   documentoCliente?: string;
   endereco: EnderecoPedido;
   itens: ItemPedido[];
-  formaPagamento: 'cartao' | 'pix';
+  /** 'manual' = "Combinar pagamento" (ver ConfiguracaoLoja.aceitaPagamentoManual) — pedido
+   * criado sem passar pelo Mercado Pago, `statusPagamento` fica undefined até o admin
+   * confirmar o recebimento manualmente em `/admin/pedidos`. */
+  formaPagamento: 'cartao' | 'pix' | 'manual';
   parcelas: number;
   valorFrete: number;
   valorTotal: number;

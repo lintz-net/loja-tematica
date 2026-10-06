@@ -18,4 +18,9 @@ export interface ConfiguracaoLoja {
   /** Mensagens rotativas da barra de anúncio acima do cabeçalho (frete grátis, parcelamento
    * sem juros, prazo de entrega etc.) — vazio faz a barra não aparecer. */
   mensagensBarraAnuncio: string[];
+  /** Habilita uma terceira opção no checkout, "Combinar pagamento" — pedido é criado sem
+   * passar pelo Mercado Pago, pagamento fica pendente até o admin confirmar manualmente em
+   * `/admin/pedidos`. Padrão desligado: Pix/cartão via Mercado Pago seguem sendo as únicas
+   * opções até o lojista optar por isso. */
+  aceitaPagamentoManual: boolean;
 }

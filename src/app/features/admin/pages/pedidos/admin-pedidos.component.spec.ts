@@ -62,7 +62,11 @@ describe('AdminPedidosComponent', () => {
   }
 
   beforeEach(() => {
-    pedidoServiceSpy = jasmine.createSpyObj('PedidoService', ['listarTodos', 'atualizarStatus']);
+    pedidoServiceSpy = jasmine.createSpyObj('PedidoService', [
+      'listarTodos',
+      'atualizarStatus',
+      'confirmarPagamentoManual',
+    ]);
     envioServiceSpy = jasmine.createSpyObj('EnvioService', ['listarTodos', 'comprarEtiqueta']);
     envioServiceSpy.listarTodos.and.returnValue(of(new Map()));
   });
@@ -343,6 +347,33 @@ describe('AdminPedidosComponent', () => {
 
       expect(fixture.componentInstance.erro()).toContain('Não foi possível atualizar o pedido');
       expect(fixture.componentInstance.codigoSalvando()).toBeNull();
+    });
+  });
+
+  describe('confirmarPagamentoManual', () => {
+    it('atualiza o pedido na lista local quando dá certo', () => {
+      const pedido = criarPedido({ formaPagamento: 'manual' });
+      pedidoServiceSpy.listarTodos.and.returnValue(of([pedido]));
+      const pedidoAtualizado = { ...pedido, statusPagamento: 'aprovado' as const };
+      pedidoServiceSpy.confirmarPagamentoManual.and.returnValue(of(pedidoAtualizado));
+      const fixture = configurar();
+
+      fixture.componentInstance.confirmarPagamentoManual(pedido);
+
+      expect(fixture.componentInstance.pedidos()[0].statusPagamento).toBe('aprovado');
+      expect(fixture.componentInstance.codigoConfirmandoPagamento()).toBeNull();
+    });
+
+    it('mostra erro quando a confirmação falha', () => {
+      const pedido = criarPedido({ formaPagamento: 'manual' });
+      pedidoServiceSpy.listarTodos.and.returnValue(of([pedido]));
+      pedidoServiceSpy.confirmarPagamentoManual.and.returnValue(throwError(() => new Error('falhou')));
+      const fixture = configurar();
+
+      fixture.componentInstance.confirmarPagamentoManual(pedido);
+
+      expect(fixture.componentInstance.erro()).toContain('Não foi possível confirmar o pagamento');
+      expect(fixture.componentInstance.codigoConfirmandoPagamento()).toBeNull();
     });
   });
 });

@@ -31,6 +31,7 @@ function configuracaoBase(): ConfiguracaoLoja {
     whatsappMensagem: '',
     cidadesFreteGratis: [],
     mensagensBarraAnuncio: [],
+    aceitaPagamentoManual: false,
   };
 }
 

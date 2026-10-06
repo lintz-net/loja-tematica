@@ -410,7 +410,21 @@
               >
                 Cartão de crédito
               </button>
+              @if (aceitaPagamentoManual()) {
+                <button
+                  type="button"
+                  [class.selecionado]="formaPagamento() === 'manual'"
+                  (click)="selecionarFormaPagamento('manual')"
+                >
+                  Combinar pagamento
+                </button>
+              }
             </div>
+            @if (formaPagamento() === 'manual') {
+              <p class="checkout__ajuda">
+                O pedido é registrado agora e combinamos o pagamento depois, fora do site.
+              </p>
+            }
 
           }
           @case ('revisao') {

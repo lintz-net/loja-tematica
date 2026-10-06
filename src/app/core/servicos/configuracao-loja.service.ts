@@ -14,6 +14,7 @@ interface LinhaConfiguracaoLoja {
   tiktok_url: string | null;
   cidades_frete_gratis: CidadeFreteGratis[] | null;
   mensagens_barra_anuncio: string[] | null;
+  aceita_pagamento_manual: boolean;
 }
 
 function linhaParaConfiguracao(linha: LinhaConfiguracaoLoja): ConfiguracaoLoja {
@@ -27,6 +28,7 @@ function linhaParaConfiguracao(linha: LinhaConfiguracaoLoja): ConfiguracaoLoja {
     tiktokUrl: linha.tiktok_url ?? undefined,
     cidadesFreteGratis: linha.cidades_frete_gratis ?? [],
     mensagensBarraAnuncio: linha.mensagens_barra_anuncio ?? [],
+    aceitaPagamentoManual: linha.aceita_pagamento_manual ?? false,
   };
 }
 
@@ -82,6 +84,7 @@ export class ConfiguracaoLojaService {
         tiktok_url: dados.tiktokUrl || null,
         cidades_frete_gratis: dados.cidadesFreteGratis,
         mensagens_barra_anuncio: dados.mensagensBarraAnuncio,
+        aceita_pagamento_manual: dados.aceitaPagamentoManual,
         atualizado_em: new Date().toISOString(),
       })
       .eq('id', 'loja')

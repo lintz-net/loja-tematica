@@ -58,7 +58,33 @@
                   <span class="admin-pedidos__detalhe">cupom {{ pedido.cupomCodigo }}</span>
                 }
               </td>
-              <td>{{ pedido.formaPagamento === 'pix' ? 'Pix' : 'Cartão' }}</td>
+              <td>
+                {{
+                  pedido.formaPagamento === 'pix'
+                    ? 'Pix'
+                    : pedido.formaPagamento === 'cartao'
+                      ? 'Cartão'
+                      : 'A combinar'
+                }}
+                @if (pedido.formaPagamento === 'manual' && pedido.statusPagamento !== 'aprovado') {
+                  <br />
+                  <button
+                    type="button"
+                    class="botao-secundario"
+                    [disabled]="codigoConfirmandoPagamento() === pedido.codigo"
+                    (click)="confirmarPagamentoManual(pedido)"
+                  >
+                    {{
+                      codigoConfirmandoPagamento() === pedido.codigo
+                        ? 'Confirmando…'
+                        : 'Confirmar pagamento'
+                    }}
+                  </button>
+                } @else if (pedido.formaPagamento === 'manual') {
+                  <br />
+                  <span class="admin-pedidos__detalhe">Pagamento confirmado</span>
+                }
+              </td>
               <td>
                 @if (pedido.freteTransportadora) {
                   {{ pedido.freteTransportadora }} · {{ pedido.freteServicoNome }}

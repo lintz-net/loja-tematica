@@ -576,23 +576,24 @@
   notificar o mesmo pagamento mais de uma vez). Best-effort: produto/variante não encontrado
   (ex.: produto excluído depois da compra) só loga erro e segue pros outros itens, nunca
   derruba a confirmação do pagamento.
-- **Fluxo Vendizap-style pra formas de pagamento fora do Mercado Pago** (Pix manual, dinheiro,
-  maquininha) — **deixado de propósito pra depois, especificado aqui só pra não perder o
-  contexto da pesquisa**. Hoje seu checkout é 100% atrelado ao Mercado Pago: pedido só existe
-  com pagamento em andamento/aprovado por eles. A Vendizap (pesquisado e confirmado em
-  2026-10-04 na Central de Ajuda deles) funciona diferente: pedido é criado e **estoque
-  baixado na finalização do pedido**, independente de pagamento — útil pra reservar estoque
-  quando a forma de pagamento escolhida não é processada automaticamente (Pix informado na
-  mão, dinheiro, maquininha, "pagar depois"). Nesses casos o pedido fica com status pendente
-  até o vendedor confirmar manualmente o recebimento no painel; se o pedido for cancelado, o
-  estoque volta. Se um dia você quiser aceitar essas formas de pagamento (hoje não aceita),
-  precisaria de: (1) permitir criar pedido sem gateway nenhum, com um campo pra forma de
-  pagamento "manual"; (2) baixar estoque na criação do pedido nesse caso (reservando, não
-  esperando aprovação — diferente do que foi implementado acima, que baixa só na aprovação);
-  (3) tela/ação em `/admin/pedidos` pra confirmar recebimento manualmente; (4) lógica de
-  devolver estoque se o admin cancelar um pedido manual não pago. Não implementar sem decisão
-  explícita — é bem mais invasivo que a baixa automática na aprovação (item acima), que já
-  cobre o caso de uso atual (só Mercado Pago) sem precisar de reserva nem confirmação manual.
+- ~~**Fluxo Vendizap-style pra formas de pagamento fora do Mercado Pago**~~ — **implementado
+  em 2026-10-06, versão simplificada (uma opção genérica, não múltiplas sub-formas como a
+  Vendizap), falta rodar `migration-033-pagamento-manual.sql` em produção.** Novo toggle em
+  `/admin/config` — `ConfiguracaoLoja.aceitaPagamentoManual`, **padrão desligado**: Pix/cartão
+  via Mercado Pago continuam sendo as únicas opções até o lojista habilitar. Quando ligado,
+  aparece uma terceira opção no checkout, "Combinar pagamento" — pedido é criado normalmente
+  (sem chamar o Mercado Pago) e o estoque é reservado na hora (via nova Edge Function
+  `registrar-pagamento-manual`, que reaproveita `baixarEstoquePedido` — igual ao modelo da
+  Vendizap: baixa na criação do pedido, não espera aprovação, já que não existe aprovação
+  automática nesse fluxo). Em `/admin/pedidos`, pedidos com `formaPagamento: 'manual'` ganham
+  um botão "Confirmar pagamento" que marca `statusPagamento: 'aprovado'` quando o admin recebe
+  de verdade (dinheiro, Pix combinado etc.) — reusa o mesmo campo que já existia pros outros
+  dois fluxos, então qualquer lógica existente que olha `statusPagamento` (ex.:
+  `aguardaConfirmacaoManual`, entrega local) também passa a funcionar pra esses pedidos.
+  **Não implementado**: devolver estoque automaticamente se o admin cancelar um pedido manual
+  não pago (hoje precisa ajustar o estoque na mão, igual sempre foi antes de toda essa
+  automação existir) — deixado de fora por simplicidade, considerar se virar problema na
+  prática.
 
 ## Marketing: tráfego pago e pixels de conversão
 

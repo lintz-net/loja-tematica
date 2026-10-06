@@ -58,6 +58,7 @@ export class AdminPedidosComponent {
   readonly erro = signal<string | null>(null);
   readonly codigoSalvando = signal<string | null>(null);
   readonly codigoComprandoEtiqueta = signal<string | null>(null);
+  readonly codigoConfirmandoPagamento = signal<string | null>(null);
 
   /** "Aguardando confirmação manual" — entrega local (grátis, sem etiqueta do Melhor Envio,
    * ver `checkout.component.ts` → `ID_FRETE_LOCAL`) nunca gera evento de webhook, então a
@@ -158,6 +159,26 @@ export class AdminPedidosComponent {
       this.erro.set(`Falha ao comprar etiqueta do pedido ${pedido.codigo}: ${resultado.error}`);
     }
     this.carregarEnvios();
+  }
+
+  /** "Combinar pagamento" (ver ConfiguracaoLoja.aceitaPagamentoManual) — admin confirma que
+   * recebeu de verdade (dinheiro, Pix combinado etc.), marcando statusPagamento 'aprovado'
+   * pra esse pedido se comportar igual aos pagos via Mercado Pago dali pra frente (statusPagamento
+   * é usado por outras partes do admin, ex.: `aguardaConfirmacaoManual` acima). */
+  confirmarPagamentoManual(pedido: Pedido): void {
+    this.codigoConfirmandoPagamento.set(pedido.codigo);
+    this.pedidoService.confirmarPagamentoManual(pedido.codigo).subscribe({
+      next: (pedidoAtualizado) => {
+        this.pedidos.update((atual) =>
+          atual.map((p) => (p.codigo === pedido.codigo ? pedidoAtualizado : p))
+        );
+        this.codigoConfirmandoPagamento.set(null);
+      },
+      error: () => {
+        this.erro.set(`Não foi possível confirmar o pagamento do pedido ${pedido.codigo}.`);
+        this.codigoConfirmandoPagamento.set(null);
+      },
+    });
   }
 
   atualizarStatus(codigo: string, status: string): void {

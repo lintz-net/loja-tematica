@@ -279,6 +279,59 @@ describe('PedidoService', () => {
     });
   });
 
+  describe('registrarPagamentoManual', () => {
+    it('chama a Edge Function de registro manual com o código do pedido', (done) => {
+      fetchSpy.and.resolveTo(new Response('{"ok":true}', { status: 200 }));
+
+      service.registrarPagamentoManual('VT-ABC123').subscribe(() => {
+        const [url, init] = fetchSpy.calls.mostRecent().args;
+        expect(url).toContain('/functions/v1/registrar-pagamento-manual');
+        const corpo = JSON.parse((init as RequestInit).body as string);
+        expect(corpo.codigoPedido).toBe('VT-ABC123');
+        done();
+      });
+    });
+
+    it('erra quando a Edge Function responde status de erro', (done) => {
+      fetchSpy.and.resolveTo(new Response('{"error":"falhou"}', { status: 500 }));
+
+      service.registrarPagamentoManual('VT-ABC123').subscribe({
+        error: (erro) => {
+          expect(erro.message).toContain('500');
+          done();
+        },
+      });
+    });
+  });
+
+  describe('confirmarPagamentoManual', () => {
+    it('atualiza status_pagamento pra aprovado pelo código', (done) => {
+      tabelaFake.single.and.returnValue(
+        Promise.resolve({ data: linhaPedidoCrua({ status_pagamento: 'aprovado' }), error: null })
+      );
+
+      service.confirmarPagamentoManual('VT-ABC123').subscribe((pedido) => {
+        expect(tabelaFake.update).toHaveBeenCalledWith({ status_pagamento: 'aprovado' });
+        expect(tabelaFake.eq).toHaveBeenCalledWith('codigo', 'VT-ABC123');
+        expect(pedido.statusPagamento).toBe('aprovado');
+        done();
+      });
+    });
+
+    it('propaga o erro quando a confirmação falha', (done) => {
+      tabelaFake.single.and.returnValue(
+        Promise.resolve({ data: null, error: new Error('falhou') })
+      );
+
+      service.confirmarPagamentoManual('VT-ABC123').subscribe({
+        error: (erro) => {
+          expect(erro.message).toBe('falhou');
+          done();
+        },
+      });
+    });
+  });
+
   describe('obterPorCodigo', () => {
     it('mapeia a linha (snake_case) pro Pedido (camelCase)', (done) => {
       restSpy.rpc.and.returnValue(of([linhaPedidoCrua()]));

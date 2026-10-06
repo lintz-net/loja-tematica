@@ -157,6 +157,16 @@
       </div>
     </div>
 
+    <label class="admin-config__checkbox">
+      <input
+        type="checkbox"
+        [checked]="aceitaPagamentoManual()"
+        (change)="alternarAceitaPagamentoManual($any($event.target).checked)"
+      />
+      Aceitar "Combinar pagamento" no checkout (pedido criado sem Mercado Pago — você confirma
+      o recebimento manualmente em Pedidos)
+    </label>
+
     <button type="submit" class="botao-primario" [disabled]="!podeSalvar() || salvando()">
       {{ salvando() ? 'Salvando…' : 'Salvar' }}
     </button>

@@ -210,6 +210,27 @@ export class PedidoService {
     return from(promessa);
   }
 
+  /** Chamada logo após criar um pedido com formaPagamento 'manual' ("Combinar pagamento") —
+   * reserva o estoque na hora, já que esse fluxo não passa pela aprovação do Mercado Pago que
+   * dispara a baixa nos outros dois (ver `registrar-pagamento-manual`, Edge Function). */
+  registrarPagamentoManual(codigoPedido: string): Observable<void> {
+    const promessa = fetch(`${environment.supabaseUrl}/functions/v1/registrar-pagamento-manual`, {
+      method: 'POST',
+      headers: {
+        apikey: environment.supabaseKey,
+        Authorization: `Bearer ${environment.supabaseKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ codigoPedido }),
+    }).then(async (resposta) => {
+      if (!resposta.ok) {
+        throw new Error(`Falha ao registrar pagamento manual (${resposta.status})`);
+      }
+    });
+
+    return from(promessa);
+  }
+
   /** Usa a função `obter_pedido_por_codigo` (RPC) em vez de select direto na tabela — a
    * policy de select é restrita a admins autenticados, então o rastreio público por código
    * passa por essa função (SECURITY DEFINER) que só devolve o pedido pedido, sem abrir
@@ -241,6 +262,25 @@ export class PedidoService {
    * pelo e-mail da sessão pra quem não é admin), então um cliente nunca vê pedido alheio. */
   listarMeusPedidos(): Observable<Pedido[]> {
     return this.listarTodos();
+  }
+
+  /** Botão "Confirmar pagamento" em `/admin/pedidos`, só aparece pra pedidos com
+   * formaPagamento 'manual' ("Combinar pagamento") — marca statusPagamento 'aprovado' depois
+   * que o admin recebe de verdade (dinheiro, Pix combinado etc. fora do Mercado Pago). Mesma
+   * observação de `listarTodos` — só roda no browser, autenticado. */
+  confirmarPagamentoManual(codigo: string): Observable<Pedido> {
+    const promessa = this.supabaseCliente.obterCliente()
+      .from('pedidos')
+      .update({ status_pagamento: 'aprovado' })
+      .eq('codigo', codigo)
+      .select()
+      .single()
+      .then(({ data, error }) => {
+        if (error) throw error;
+        return linhaParaPedido(data as LinhaPedido);
+      });
+
+    return from(promessa);
   }
 
   /** Mesma observação de `listarTodos` — só roda no browser, autenticado. */

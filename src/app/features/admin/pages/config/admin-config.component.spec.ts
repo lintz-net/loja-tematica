@@ -13,6 +13,7 @@ function criarConfiguracao(sobrescritas: Partial<ConfiguracaoLoja> = {}): Config
     whatsappMensagem: 'Olá! Preciso de ajuda.',
     cidadesFreteGratis: [],
     mensagensBarraAnuncio: [],
+    aceitaPagamentoManual: false,
     ...sobrescritas,
   };
 }
@@ -142,6 +143,19 @@ describe('AdminConfigComponent', () => {
       );
       expect(comp.salvando()).toBeFalse();
       expect(comp.salvo()).toBeTrue();
+    });
+
+    it('inclui aceitaPagamentoManual no payload', () => {
+      configuracaoLojaServiceSpy.atualizar.and.returnValue(of(criarConfiguracao()));
+      const fixture = configurar();
+      const comp = fixture.componentInstance;
+      comp.alternarAceitaPagamentoManual(true);
+
+      comp.salvar();
+
+      expect(configuracaoLojaServiceSpy.atualizar).toHaveBeenCalledWith(
+        jasmine.objectContaining({ aceitaPagamentoManual: true })
+      );
     });
 
     it('não chama o serviço quando o formulário é inválido', () => {

@@ -13,6 +13,7 @@ function formatarData(iso: string): string {
 const ROTULOS_FORMA_PAGAMENTO: Record<Pedido['formaPagamento'], string> = {
   pix: 'Pix',
   cartao: 'Cartão de crédito',
+  manual: 'Combinado fora do site',
 };
 
 /** Monta o conteúdo (linhas de texto) do comprovante — separado da geração do PDF em si

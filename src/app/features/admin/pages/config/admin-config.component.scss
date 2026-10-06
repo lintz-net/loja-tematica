@@ -91,6 +91,17 @@
   }
 }
 
+.admin-config__checkbox {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px !important;
+
+  input[type='checkbox'] {
+    width: auto;
+    margin: 0;
+  }
+}
+
 .admin-config__adicionar-cidade {
   display: flex;
   gap: 8px;

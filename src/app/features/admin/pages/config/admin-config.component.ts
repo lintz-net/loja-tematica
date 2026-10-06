@@ -38,6 +38,11 @@ export class AdminConfigComponent {
     ...this.configuracaoAtual.mensagensBarraAnuncio,
   ]);
   readonly novaMensagemBarraAnuncio = signal('');
+  readonly aceitaPagamentoManual = signal(this.configuracaoAtual.aceitaPagamentoManual);
+
+  alternarAceitaPagamentoManual(valor: boolean): void {
+    this.aceitaPagamentoManual.set(valor);
+  }
 
   adicionarMensagemBarraAnuncio(): void {
     const mensagem = this.novaMensagemBarraAnuncio().trim();
@@ -85,6 +90,7 @@ export class AdminConfigComponent {
       tiktokUrl: this.tiktokUrl().trim() || undefined,
       cidadesFreteGratis: this.cidadesFreteGratis(),
       mensagensBarraAnuncio: this.mensagensBarraAnuncio(),
+      aceitaPagamentoManual: this.aceitaPagamentoManual(),
     };
 
     this.salvando.set(true);

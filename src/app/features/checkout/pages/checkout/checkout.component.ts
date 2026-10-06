@@ -153,7 +153,13 @@ export class CheckoutComponent implements OnDestroy {
   // navegador — número/CVV nunca chegam no nosso backend). Parcelamento sem juros: quem
   // divide o valor entre as parcelas é o próprio Mercado Pago (mesmo transaction_amount), a
   // loja só decide até quantas parcelas oferecer (ver parcelamento.constantes.ts).
-  readonly formaPagamento = signal<'cartao' | 'pix'>('pix');
+  readonly formaPagamento = signal<'cartao' | 'pix' | 'manual'>('pix');
+
+  /** "Combinar pagamento" só aparece quando o lojista habilita em `/admin/config` (padrão
+   * desligado — ver ConfiguracaoLoja.aceitaPagamentoManual). */
+  readonly aceitaPagamentoManual = computed(
+    () => this.configuracaoLojaService.configuracao()?.aceitaPagamentoManual ?? false
+  );
   readonly bandeirasAceitas = LOGOS_CARTAO;
 
   /** Nome da transportadora vem dinâmico da cotação do Melhor Envio — sem logo salvo pra
@@ -223,9 +229,10 @@ export class CheckoutComponent implements OnDestroy {
     );
   });
 
-  private readonly ROTULOS_PAGAMENTO: Record<'cartao' | 'pix', string> = {
+  private readonly ROTULOS_PAGAMENTO: Record<'cartao' | 'pix' | 'manual', string> = {
     pix: 'Pix',
     cartao: 'Cartão de crédito',
+    manual: 'Combinar pagamento',
   };
   readonly formaPagamentoRotulo = computed(() => this.ROTULOS_PAGAMENTO[this.formaPagamento()]);
 
@@ -535,7 +542,7 @@ export class CheckoutComponent implements OnDestroy {
     this.freteSelecionadoId.set(id);
   }
 
-  selecionarFormaPagamento(forma: 'cartao' | 'pix'): void {
+  selecionarFormaPagamento(forma: 'cartao' | 'pix' | 'manual'): void {
     this.formaPagamento.set(forma);
     // Carrega cedo (ao escolher cartão, não só no clique de pagar) pra dar tempo do
     // fingerprint ficar pronto antes da cobrança — fire-and-forget, nunca bloqueia nada. O
@@ -823,6 +830,11 @@ export class CheckoutComponent implements OnDestroy {
           this.parcelasFinalizadas.set(parcelasPedido);
           this.carrinhoService.limparCarrinho();
 
+          if (this.formaPagamento() === 'manual') {
+            this.registrarPedidoManual(pedido.codigo);
+            return;
+          }
+
           if (this.formaPagamento() === 'pix') {
             this.gerarPagamentoPix(pedido.codigo, valorTotalPedido);
             return;
@@ -870,6 +882,22 @@ export class CheckoutComponent implements OnDestroy {
           );
         },
       });
+  }
+
+  /** "Combinar pagamento" — pedido já foi criado (sem passar pelo Mercado Pago), só falta
+   * reservar o estoque (ver `registrar-pagamento-manual`, Edge Function — a role anon não
+   * pode editar `produtos` direto). Se a reserva falhar, o pedido continua válido mesmo assim
+   * (igual ao Pix: falha aqui não derruba o checkout) — o admin ainda confere/ajusta estoque
+   * na mão como sempre fez antes dessa automação existir. */
+  private registrarPedidoManual(codigoPedido: string): void {
+    this.pedidoService.registrarPagamentoManual(codigoPedido).subscribe({
+      next: () => this.finalizandoPedido.set(false),
+      error: (erro) => {
+        console.error('Falha ao reservar estoque do pedido manual:', erro);
+        this.finalizandoPedido.set(false);
+      },
+    });
+    this.pedidoFinalizado.set(true);
   }
 
   /** Botão "Tentar novamente" da tela de erro — se o pedido já foi criado (só o pagamento
