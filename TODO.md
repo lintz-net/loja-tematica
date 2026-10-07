@@ -578,7 +578,11 @@
   derruba a confirmação do pagamento.
 - ~~**Fluxo Vendizap-style pra formas de pagamento fora do Mercado Pago**~~ — **implementado
   em 2026-10-06, versão simplificada (uma opção genérica, não múltiplas sub-formas como a
-  Vendizap), falta rodar `migration-033-pagamento-manual.sql` em produção.** Novo toggle em
+  Vendizap). Bug encontrado em teste real no dia seguinte (2026-10-07) e corrigido: a
+  migration-033 esqueceu de atualizar a constraint `pedidos_forma_pagamento_check` (só aceitava
+  `'cartao'`/`'pix'`), então todo pedido com "Combinar pagamento" falhava no insert
+  (23514) — corrigido em `migration-034-corrige-constraint-forma-pagamento.sql`. Rodar os dois
+  (033 e 034) em produção.** Novo toggle em
   `/admin/config` — `ConfiguracaoLoja.aceitaPagamentoManual`, **padrão desligado**: Pix/cartão
   via Mercado Pago continuam sendo as únicas opções até o lojista habilitar. Quando ligado,
   aparece uma terceira opção no checkout, "Combinar pagamento" — pedido é criado normalmente
