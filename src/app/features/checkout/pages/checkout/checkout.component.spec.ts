@@ -124,6 +124,10 @@ describe('CheckoutComponent — modoRetomada', () => {
       ['status aprovado', { statusPagamento: 'aprovado' }],
       ['status cancelado', { statusPagamento: 'cancelado' }],
       ['status expirado', { statusPagamento: 'expirado' }],
+      [
+        'formaPagamento manual (sem cobrança no Mercado Pago pra retomar, mesmo pendente)',
+        { formaPagamento: 'manual', statusPagamento: 'pendente' },
+      ],
     ];
 
     for (const [descricao, sobrescritas] of casosRedirecionamento) {

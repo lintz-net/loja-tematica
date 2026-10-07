@@ -324,11 +324,13 @@ export class CheckoutComponent implements OnDestroy {
 
     this.pedidoService.obterPorCodigo(codigoRetomada).subscribe({
       next: (pedido) => {
-        // Nada pra retomar: pedido não existe, já foi pago/cancelado — manda pra tela de
+        // Nada pra retomar: pedido não existe, já foi pago/cancelado, ou é "Combinar
+        // pagamento" (sem cobrança nenhuma no Mercado Pago pra gerar aqui) — manda pra tela de
         // acompanhamento em vez de mostrar um formulário de pagamento que não serve pra nada
         // nesses casos.
         const podeRetomar =
           pedido &&
+          pedido.formaPagamento !== 'manual' &&
           (pedido.statusPagamento === 'pendente' || pedido.statusPagamento === 'recusado');
 
         if (!podeRetomar) {
