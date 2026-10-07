@@ -74,13 +74,24 @@ export class PedidoComponent {
    * fluxo de retomada em si (gerar Pix de novo, ou pedir os dados do cartão de novo, sem
    * recriar o pedido) mora em /checkout/:codigoRetomada (checkout.component.ts,
    * modoRetomada), reaproveitando a mesma tela de revisão do "Como comprar" em vez de
-   * duplicar essa UI aqui. */
+   * duplicar essa UI aqui. Exclui 'manual' ("Combinar pagamento") — esses pedidos não têm
+   * cobrança nenhuma no Mercado Pago pra retomar, /checkout/:codigoRetomada nem suporta esse
+   * caso (ver aguardandoConfirmacaoManual, que mostra o aviso certo pra esses). */
   readonly podeRetomarPagamento = computed(() => {
     const pedido = this.pedido();
     return (
       !!pedido &&
+      pedido.formaPagamento !== 'manual' &&
       (pedido.statusPagamento === 'pendente' || pedido.statusPagamento === 'recusado')
     );
+  });
+
+  /** "Combinar pagamento" — pedido pendente de confirmação manual do admin (ver
+   * ConfiguracaoLoja.aceitaPagamentoManual), sem nada que o cliente precise/possa fazer aqui
+   * além de esperar — diferente de podeRetomarPagamento, não mostra botão nenhum. */
+  readonly aguardandoConfirmacaoManual = computed(() => {
+    const pedido = this.pedido();
+    return !!pedido && pedido.formaPagamento === 'manual' && pedido.statusPagamento !== 'aprovado';
   });
 
   /** Cancela a inscrição Realtime da consulta anterior, se houver — evita acumular listeners

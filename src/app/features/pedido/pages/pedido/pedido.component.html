@@ -55,6 +55,13 @@
           Tentar pagar de novo
         </a>
       </div>
+    } @else if (aguardandoConfirmacaoManual()) {
+      <div class="pedido__secao pedido__pagamento">
+        <h2>Pagamento</h2>
+        <p class="pedido__envio-aviso">
+          Pagamento combinado — aguardando a loja confirmar o recebimento.
+        </p>
+      </div>
     }
 
     @if (envio(); as envio) {

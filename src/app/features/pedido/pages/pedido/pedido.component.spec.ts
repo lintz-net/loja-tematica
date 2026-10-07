@@ -218,6 +218,8 @@ describe('PedidoComponent', () => {
       ['cartão pendente', { formaPagamento: 'cartao', statusPagamento: 'pendente' }, true],
       ['cartão recusado', { formaPagamento: 'cartao', statusPagamento: 'recusado' }, true],
       ['cartão aprovado', { formaPagamento: 'cartao', statusPagamento: 'aprovado' }, false],
+      ['manual pendente (não tem o que retomar no Mercado Pago)', { formaPagamento: 'manual', statusPagamento: 'pendente' }, false],
+      ['manual aprovado', { formaPagamento: 'manual', statusPagamento: 'aprovado' }, false],
       ['pedido inexistente', null, false],
     ];
 
@@ -230,6 +232,27 @@ describe('PedidoComponent', () => {
         fixture.detectChanges();
 
         expect(fixture.componentInstance.podeRetomarPagamento()).toBe(esperado);
+      });
+    }
+  });
+
+  describe('aguardandoConfirmacaoManual', () => {
+    const casos: Array<[string, Partial<Pedido> | null, boolean]> = [
+      ['manual pendente', { formaPagamento: 'manual', statusPagamento: 'pendente' }, true],
+      ['manual aprovado', { formaPagamento: 'manual', statusPagamento: 'aprovado' }, false],
+      ['pix pendente (não é manual)', { formaPagamento: 'pix', statusPagamento: 'pendente' }, false],
+      ['pedido inexistente', null, false],
+    ];
+
+    for (const [descricao, sobrescritas, esperado] of casos) {
+      it(`${descricao} -> ${esperado}`, () => {
+        const pedido = sobrescritas ? criarPedido(sobrescritas) : null;
+        pedidoServiceSpy.obterPorCodigo.and.returnValue(of(pedido));
+
+        const fixture = configurar();
+        fixture.detectChanges();
+
+        expect(fixture.componentInstance.aguardandoConfirmacaoManual()).toBe(esperado);
       });
     }
   });
