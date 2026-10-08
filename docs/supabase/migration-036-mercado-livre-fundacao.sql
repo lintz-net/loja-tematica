@@ -24,7 +24,10 @@ create table if not exists estoque_sku (
 );
 
 -- 2. movimentos_estoque — histórico + idempotência (reservar/liberar nunca aplicam duas vezes
--- o mesmo movimento, graças ao unique abaixo).
+-- o mesmo movimento, graças ao unique abaixo). `canal` de propósito sem `check` — ainda não
+-- decidido qual valor o checkout da própria loja vai usar ('loja'? nome da loja?) quando for
+-- migrado pra chamar reservar_estoque; adicionar o check depois que isso (e os nomes de canal
+-- do ML/Shopee/WhatsApp) estiver fechado de vez, numa migration à parte.
 create table if not exists movimentos_estoque (
   id uuid primary key default gen_random_uuid(),
   sku text not null references estoque_sku(sku),
@@ -119,8 +122,13 @@ create unique index if not exists idx_fila_sincronizacao_coalesce
   on fila_sincronizacao (tipo, anuncio_id)
   where status = 'pendente';
 
--- 9. eventos_webhook_mercado_livre — notificações recebidas, com dedupe (mesmo padrão de
--- eventos_webhook_melhor_envio/eventos_webhook_mercado_pago).
+-- 9. eventos_webhook_mercado_livre — notificações recebidas (mesma estrutura de log de
+-- eventos_webhook_melhor_envio/eventos_webhook_mercado_pago). SEM constraint de unicidade em
+-- (topico, recurso): a especificação pede dedupe só numa janela de tempo curta, não pra
+-- sempre — um unique permanente bloquearia notificações legítimas futuras do mesmo
+-- anúncio/pedido (ex.: dois eventos de troca de estoque em dias diferentes pro mesmo item têm
+-- o mesmo topico+recurso). Essa dedupe fica por conta da Edge Function de webhook (Fase 3),
+-- consultando linhas recentes antes de inserir — não dá pra resolver só com constraint aqui.
 create table if not exists eventos_webhook_mercado_livre (
   id uuid primary key default gen_random_uuid(),
   topico text not null,
@@ -194,6 +202,14 @@ language plpgsql
 security definer
 as $$
 begin
+  -- p_quantidade negativo/zero/nulo aumentaria o estoque em vez de reservar (a conta vira
+  -- quantidade - negativo) — chamada reachable pela chave anon, então vale validar aqui
+  -- mesmo, não só confiar no chamador.
+  if p_quantidade is null or p_quantidade <= 0 then
+    return query select false, (select quantidade from estoque_sku where sku = p_sku);
+    return;
+  end if;
+
   -- idempotência: a mesma venda (canal+referencia+sku) processada de novo não baixa duas vezes.
   if exists (
     select 1 from movimentos_estoque
@@ -232,7 +248,14 @@ returns table(ok boolean, nova_quantidade integer)
 language plpgsql
 security definer
 as $$
+declare
+  v_delta_original integer;
 begin
+  if p_quantidade is null or p_quantidade <= 0 then
+    return query select false, (select quantidade from estoque_sku where sku = p_sku);
+    return;
+  end if;
+
   if exists (
     select 1 from movimentos_estoque
     where canal = p_canal and referencia = p_referencia and sku = p_sku and tipo = 'cancelamento'
@@ -241,21 +264,25 @@ begin
     return;
   end if;
 
-  if not exists (
-    select 1 from movimentos_estoque
-    where canal = p_canal and referencia = p_referencia and sku = p_sku and tipo = 'venda'
-  ) then
+  -- Busca a quantidade de verdade baixada na reserva original (delta negativo), em vez de
+  -- confiar de novo no p_quantidade que o chamador está mandando agora — evita que um bug de
+  -- chamada (ex.: p_quantidade errado) devolva mais ou menos estoque do que foi tirado.
+  select delta into v_delta_original
+  from movimentos_estoque
+  where canal = p_canal and referencia = p_referencia and sku = p_sku and tipo = 'venda';
+
+  if v_delta_original is null or -v_delta_original <> p_quantidade then
     return query select false, (select quantidade from estoque_sku where sku = p_sku);
     return;
   end if;
 
   update estoque_sku
-     set quantidade = quantidade + p_quantidade, atualizado_em = now()
+     set quantidade = quantidade - v_delta_original, atualizado_em = now()
    where sku = p_sku
   returning true, quantidade into ok, nova_quantidade;
 
   insert into movimentos_estoque (sku, delta, tipo, canal, referencia)
-  values (p_sku, p_quantidade, 'cancelamento', p_canal, p_referencia);
+  values (p_sku, -v_delta_original, 'cancelamento', p_canal, p_referencia);
 
   return next;
 end;
