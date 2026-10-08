@@ -701,12 +701,18 @@ parte do `buildMlItem()` — bloqueia só a Fase 1 (publicação), não a Fase 0
 
 **Plano de fases** (cada uma testável sozinha com usuário de teste do ML, só avança quando os
 critérios de aceite da atual batem):
-- **Fase 0 — Fundação**: app no portal de developers do ML (redirect URI fixa, PKCE, tópicos
-  `orders_v2`+`items`), usuários de teste, migrations (`estoque_sku`, `movimentos_estoque`,
-  `anuncios_canais`, `fila_sincronizacao`, credenciais, webhooks, pedidos), `reservar_estoque`/
-  `liberar_estoque` com testes de concorrência, checkout da loja migra pra `reservar_estoque`.
-  Aceite: duas reservas simultâneas da última unidade → uma `ok=true`/uma `ok=false`; reserva
-  repetida não baixa duas vezes.
+- **Fase 0 — Fundação**: **migrations e funções de estoque prontas e validadas em
+  2026-10-08** (`migration-036-mercado-livre-fundacao.sql` — as dez tabelas +
+  `configuracao_integracoes` + `reservar_estoque`/`liberar_estoque`, com `estoque_sku` já
+  semeada a partir do catálogo atual). Testado via RPC direto na API (chave anon, já que as
+  duas funções têm `grant execute ... to anon`): reserva idempotente, liberação idempotente,
+  liberar pedido nunca reservado dá `ok=false`, reservar mais que o estoque disponível dá
+  `ok=false` sem nunca ir negativo — todos os cenários bateram. **Falta ainda**: app no portal
+  de developers do ML (redirect URI fixa, PKCE, tópicos `orders_v2`+`items`), usuários de
+  teste, e migrar o checkout da loja Angular pra chamar `reservar_estoque` (hoje o checkout
+  ainda não usa essa função — continua só com `baixarEstoquePedido`, implementado em
+  2026-10-04, que mexe direto em `produtos.variantes`, não em `estoque_sku`). Aceite da parte
+  de banco já cumprido; falta o aceite completo da fase (que inclui o checkout migrado).
 - **Fase 1 — Conexão e publicação**: OAuth completo (`mercado-livre-oauth-iniciar`,
   `mercado-livre-oauth-callback`), cache de categorias + mapeamento de atributos,
   `mercado-livre-processar-fila` com backoff, jobs de publicar/atualizar anúncio e descrição,
