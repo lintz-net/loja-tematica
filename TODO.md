@@ -599,6 +599,157 @@
   automação existir) — deixado de fora por simplicidade, considerar se virar problema na
   prática.
 
+## Integração Supabase ↔ Mercado Livre (e catálogo WhatsApp Business)
+
+**Status em 2026-10-08: estratégia desenhada e decisões de negócio fechadas, nada
+implementado ainda.** Especificação completa colada pelo usuário em 2026-10-08 (baseada em
+documentação oficial do Mercado Livre) — resumo técnico suficiente pra retomar sem precisar
+reler o original. **Todos os nomes de tabela/função/Edge Function abaixo já traduzidos pro
+português**, a pedido do usuário — mantém o mesmo padrão do resto do schema (`pedidos`,
+`cupons`, `tokens_melhor_envio`, `eventos_webhook_melhor_envio`) e das Edge Functions
+existentes (`validar-cupom`, `mercado-pago-webhook`, `melhor-envio-webhook` — sempre nome
+completo do canal, nunca abreviado tipo "me-" ou "ml-").
+
+**Escopo do MVP**: publicar/atualizar anúncios no Mercado Livre a partir do catálogo do
+Supabase, manter preço/estoque sincronizados em poucos minutos, receber pedidos do ML baixando
+estoque de forma atômica (sem sobrevenda), nunca perder uma atualização (tudo via fila com
+retry). Shopee entra depois (Fase 6), reaproveitando a mesma arquitetura. WhatsApp Catalog
+entra como canal de saída simples (Fase 5, pode rodar em paralelo à Fase 2). Fora do escopo:
+Shopee na v1, NF-e (decisão aberta), perguntas/pós-venda/devoluções, múltiplas contas ML.
+
+**Dono dos dados**: cadastro/descrição/fotos/preço/estoque são donos do Supabase (Supabase →
+ML, sobrescreve edição feita direto no painel do ML); pedidos e status do anúncio (ativo
+/pausado/moderado) são donos do ML (ML → Supabase, só leitura pro status do anúncio).
+
+**Arquitetura**: três fluxos share a mesma fila (`fila_sincronizacao`) — saída (mudança em
+produto/preço/estoque dispara trigger → job → Edge Function `mercado-livre-processar-fila`
+envia pro ML), entrada (`mercado-livre-webhook` só grava evento + enfileira, nunca chama a API
+do ML diretamente — responde 200 em <500ms sempre; quem processa de verdade depois é a função
+de processar fila) e reconciliação agendada (pg_cron compara Supabase×ML periodicamente e
+corrige divergências). Banco é o único lugar que decide estoque; Edge Functions só transportam
+dado.
+
+**Tabelas novas** (todas RLS ativo, só `service_role`/security definer — zero acesso
+anon/authenticated): `estoque_sku` (saldo por SKU, fonte da verdade — nome com sufixo pra não
+confundir com `produtos.variantes[].quantidadeEstoque`, que continua existindo mas deixa de ser
+a fonte de verdade pra quem tem canal de venda externo), `movimentos_estoque` (histórico +
+idempotência, único por `(canal, referencia, sku, tipo)`), `anuncios_canais` (mapeamento
+SKU↔anúncio por canal, `status`/`status_remoto`/`hash_payload`/`buffer_seguranca`),
+`credenciais_mercado_livre` (tokens OAuth), `estados_oauth_mercado_livre` (state temporário do
+PKCE), `categorias_mercado_livre` + `mapeamentos_atributos_mercado_livre` (categorias
+/atributos do ML cacheados), `fila_sincronizacao` (fila — `status`/`executar_apos`
+/`tentativas`/`travado_em`), `eventos_webhook_mercado_livre` (notificações recebidas, dedupe —
+mesmo padrão de `eventos_webhook_melhor_envio`/`eventos_webhook_mercado_pago`),
+`pedidos_mercado_livre` (pedidos do ML, `bruto jsonb` + `precisa_atencao`),
+`configuracao_integracoes` (flag `mercado_livre_habilitado`, pra pausa global). Índice único
+parcial em `fila_sincronizacao (tipo, anuncio_id) where status = 'pendente'` pra coalescer
+pushes repetidos do mesmo anúncio.
+
+**Estoque atômico**: `reservar_estoque(sku, quantidade, canal, referencia)` e
+`liberar_estoque(...)` — funções SQL `security definer`, idempotentes via `movimentos_estoque`
+(mesma `(canal, referencia, sku, tipo)` não baixa/devolve duas vezes). Checkout da loja Angular
+passa a chamar `reservar_estoque` antes de confirmar pagamento (hoje a loja não tem lock nenhum
+contra venda simultânea da última unidade — ver TODO de baixa de estoque na aprovação do
+pagamento, implementado em 2026-10-04, que vai precisar migrar pra essa função quando essa
+integração for implementada). Trigger `after update of quantidade on estoque_sku` enfileira job
+de push de estoque pra cada canal ativo do SKU.
+
+**OAuth**: access token expira em 6h, refresh token é de uso único (cada renovação invalida o
+anterior) — renovação precisa ser serializada (`SELECT ... FOR UPDATE` ou advisory lock) pra
+duas Edge Functions concorrentes não se invalidarem. Cron a cada 30min renova preventivamente
+tokens que expiram em <1h. `invalid_grant` no refresh → `credenciais_mercado_livre.status =
+'requer_reautenticacao'`, pausa a fila do ML, alerta o admin (flag
+`configuracao_integracoes.mercado_livre_habilitado` permite pausar sem perder jobs da fila).
+
+**Fila (`mercado-livre-processar-fila`)**: cron a cada 1min, `SELECT ... FOR UPDATE SKIP
+LOCKED` (dois workers nunca pegam o mesmo job), jobs presos em `executando` por >5min voltam
+pra `pendente`. Backoff `30s × 2^tentativas` (cap 1h) + jitter, `max_tentativas = 8` (12 pra
+jobs de pedido — perder pedido é o pior cenário). Erros 400/403/404 não retentam (vão direto
+pra `falhou`/`morto` com a mensagem da API pro admin corrigir); 401/429/5xx retentam.
+
+**Decisões de negócio já fechadas** (2026-10-08):
+- **Tipo de anúncio padrão**: Clássico (comissão menor) — **usuário pediu pra documentar que
+  isso pode evoluir depois** (ex.: Premium pra categorias específicas de giro rápido/mais
+  competitivas). Não hardcoded como permanente — deixar o campo fácil de mudar por categoria
+  futuramente, mesmo que o MVP comece com uma constante global.
+- **Preço no ML**: com acréscimo sobre o preço da loja pra cobrir a comissão do ML (~12-16%+
+  dependendo da categoria/tipo de anúncio) — precisa de uma regra (% fixo ou tabela por
+  categoria) guardada em `anuncios_canais` ou numa config nova, aplicada na montagem do payload
+  do anúncio.
+- **Logística**: Mercado Envios (ME2), não envio próprio/Melhor Envio pros pedidos do ML —
+  favorece visibilidade do anúncio e é o padrão esperado pelo comprador do ML.
+- **Estoque de segurança**: usar, buffer padrão de 1 unidade (`anuncios_canais.buffer_seguranca`
+  default 1).
+- **Momento da baixa de estoque**: assim que o pedido do ML existe e não está cancelado
+  (proposta original da spec) — reduz a janela de sobrevenda entre canais, já que o ML reserva
+  o estoque do lado dele na criação do pedido mesmo antes do pagamento confirmar.
+- **Nota fiscal**: vendas como pessoa física (sem CNPJ) — sem emissão de NF-e por enquanto,
+  mesmo modelo que a loja já usa hoje (comprovante não-fiscal). Revisitar se algum dia migrar
+  pra CNPJ/volume que exija.
+
+**Decisão em aberto — confirmar com certeza só na Fase 1, não bloqueia o início**: a conta do
+Mercado Livre já opera no modelo **User Products** (preço/estoque por variação, sem enviar
+título) ou ainda no modelo clássico? Checado em 2026-10-08: o usuário tem só conta Mercado
+Pago, **zero anúncios criados no Mercado Livre ainda** (conta de vendedor nova, "Crie seu
+primeiro anúncio"). Contas novas hoje em dia já nascem em User Products (o clássico é legado,
+mantido só pra quem vendia antes da migração que o ML vem fazendo desde 2025) — bem provável
+que já seja esse o caso, mas não foi confirmado com certeza (precisaria de um anúncio de teste
+ou consulta à API). Confirmar de verdade na Fase 1 via API, checando se o seller tem a tag
+`user_product_seller` numa chamada a `/users/{id}` (mais confiável que inspecionar o painel,
+e só é possível depois do OAuth/Fase 0 estar pronto). Isso muda os endpoints de preço/estoque e
+parte do `buildMlItem()` — bloqueia só a Fase 1 (publicação), não a Fase 0 (fundação).
+
+**Plano de fases** (cada uma testável sozinha com usuário de teste do ML, só avança quando os
+critérios de aceite da atual batem):
+- **Fase 0 — Fundação**: app no portal de developers do ML (redirect URI fixa, PKCE, tópicos
+  `orders_v2`+`items`), usuários de teste, migrations (`estoque_sku`, `movimentos_estoque`,
+  `anuncios_canais`, `fila_sincronizacao`, credenciais, webhooks, pedidos), `reservar_estoque`/
+  `liberar_estoque` com testes de concorrência, checkout da loja migra pra `reservar_estoque`.
+  Aceite: duas reservas simultâneas da última unidade → uma `ok=true`/uma `ok=false`; reserva
+  repetida não baixa duas vezes.
+- **Fase 1 — Conexão e publicação**: OAuth completo (`mercado-livre-oauth-iniciar`,
+  `mercado-livre-oauth-callback`), cache de categorias + mapeamento de atributos,
+  `mercado-livre-processar-fila` com backoff, jobs de publicar/atualizar anúncio e descrição,
+  **confirmar modelo clássico vs. User Products antes de começar**. Aceite: 5 produtos
+  publicados; produto com atributo faltando vira `invalido` com mensagem do ML; rede cair no
+  meio de um POST não duplica anúncio.
+- **Fase 2 — Estoque e preço**: trigger de push de estoque com coalescência, push de preço,
+  buffer de segurança. Aceite: mudança de estoque reflete no ML em <2min; 10 mudanças seguidas
+  geram no máximo 1-2 chamadas; estoque zero pausa o anúncio, reposição reativa sozinho.
+- **Fase 3 — Pedidos e webhooks**: `mercado-livre-webhook` (<500ms, nunca chama API do ML
+  direto), processamento de `orders_v2` com baixa idempotente, cancelamento devolve estoque,
+  jobs de notificações perdidas (`missed_feeds`) + busca horária de pedidos (rede de segurança
+  contra notificação perdida). Aceite: compra de teste baixa estoque no Supabase e na loja
+  Angular; notificação repetida 3x baixa uma vez só; desligar webhook por 30min e religar
+  recupera tudo; venda do ML da última unidade já vendida na loja gera `precisa_atencao` +
+  alerta.
+- **Fase 4 — Operação**: reconciliação diária + limpeza, painel de integração em
+  `/admin/integracoes` (status conexão, contadores de jobs pendentes/falhos/mortos, pedidos
+  `precisa_atencao`, anúncios `invalido`, alertas), decisão/implementação de NF-e se aplicável,
+  ligar conta real com poucos produtos e acompanhar por 2 semanas.
+- **Fase 5 — WhatsApp Business Catalog** (pode rodar em paralelo à Fase 2): catálogo criado no
+  Commerce Manager da Meta e vinculado ao WhatsApp Business (catálogo criado só dentro do app
+  do WhatsApp não é gerenciável por integração). Etapa 1 (feed agendado): Edge Function
+  `whatsapp-feed`, GET público gerando CSV/XML a partir de `anuncios_canais` com
+  `canal='whatsapp'`, token secreto na URL, cache de 5-10min, Commerce Manager busca de hora
+  em hora. Etapa 2 (opcional, Catalog API/Graph API em tempo quase real) só se a Etapa 1 não
+  bastar. Venda fechada pelo WhatsApp (sem checkout automático — cliente manda carrinho por
+  mensagem) é registrada manualmente no admin, chamando `reservar_estoque` com
+  `canal='whatsapp'`, propagando o novo saldo aos outros canais.
+- **Fase 6 — Shopee**: fora do MVP, reaproveita fila/estoque/mapeamento da mesma arquitetura.
+
+**Próximo passo concreto quando for começar a implementar**: Fase 0 — migrations +
+`reservar_estoque`/`liberar_estoque` + testes de concorrência SQL. Antes disso, usuário
+precisa: criar o app no portal de developers do ML, confirmar o modelo clássico/User Products,
+e ter uma conta de vendedor de teste do ML pronta.
+
+**Pré-requisito resolvido em 2026-10-08**: `estoque_sku` precisa de SKU único por variação
+como chave primária, mas o catálogo (importado da OZKLO) tinha 34 SKUs duplicados/colidindo
+entre produtos (ex.: `SMURFPM` repetido em 14 variações, entre dois produtos diferentes) —
+corrigido em `migration-035-corrige-skus-duplicados.sql` (mantém o SKU original na primeira
+variação de cada grupo, acrescenta sufixo numérico nas demais). Rodar essa migration antes de
+criar `estoque_sku`, senão a carga inicial da tabela vai falhar por violação de chave única.
+
 ## Marketing: tráfego pago e pixels de conversão
 
 - **Pixels de conversão** (Meta Pixel, TikTok Pixel, Google Ads tag, GA4) — precisam
