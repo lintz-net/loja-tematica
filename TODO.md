@@ -707,7 +707,13 @@ critérios de aceite da atual batem):
   semeada a partir do catálogo atual). Testado via RPC direto na API (chave anon, já que as
   duas funções têm `grant execute ... to anon`): reserva idempotente, liberação idempotente,
   liberar pedido nunca reservado dá `ok=false`, reservar mais que o estoque disponível dá
-  `ok=false` sem nunca ir negativo — todos os cenários bateram. **Falta ainda**: app no portal
+  `ok=false` sem nunca ir negativo — todos os cenários bateram. **Revisão própria (mesmo dia)
+  achou e corrigiu 3 problemas reais**: `liberar_estoque` confiava no `p_quantidade` do
+  chamador em vez de derivar da quantidade realmente baixada em `movimentos_estoque` (bug de
+  chamada inflaria/esvaziaria estoque sem avisar); nenhuma das duas funções validava
+  `p_quantidade <= 0` (negativo faria `reservar_estoque` *aumentar* o estoque); comentário em
+  `eventos_webhook_mercado_livre` prometia dedupe por `(topico, recurso)` que nunca existiu de
+  verdade. Revalidado depois da correção, todos os cenários passaram. **Falta ainda**: app no portal
   de developers do ML (redirect URI fixa, PKCE, tópicos `orders_v2`+`items`), usuários de
   teste, e migrar o checkout da loja Angular pra chamar `reservar_estoque` (hoje o checkout
   ainda não usa essa função — continua só com `baixarEstoquePedido`, implementado em
