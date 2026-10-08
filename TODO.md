@@ -719,6 +719,13 @@ critérios de aceite da atual batem):
   ainda não usa essa função — continua só com `baixarEstoquePedido`, implementado em
   2026-10-04, que mexe direto em `produtos.variantes`, não em `estoque_sku`). Aceite da parte
   de banco já cumprido; falta o aceite completo da fase (que inclui o checkout migrado).
+  **Decisão (2026-10-08) sobre a migração do checkout**: deixada de propósito pra mais perto
+  da Fase 3, não faz agora — mexer no checkout real antes do ML existir faria `estoque_sku`
+  ficar sendo usado sem nenhum canal externo consumindo ainda, risco desnecessário adiantado.
+  Quando migrar: reservar na **criação do pedido** (não na aprovação do pagamento, que é como
+  `baixarEstoquePedido` funciona hoje) — consistente com o momento de baixa já decidido pro
+  Mercado Livre ("assim que o pedido existe e não está cancelado"), fecha a janela de
+  sobrevenda entre canais. Se o pagamento falhar/expirar, chama `liberar_estoque` pra devolver.
 - **Fase 1 — Conexão e publicação**: OAuth completo (`mercado-livre-oauth-iniciar`,
   `mercado-livre-oauth-callback`), cache de categorias + mapeamento de atributos,
   `mercado-livre-processar-fila` com backoff, jobs de publicar/atualizar anúncio e descrição,
